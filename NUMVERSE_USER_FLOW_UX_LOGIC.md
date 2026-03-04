@@ -129,6 +129,7 @@ User vào tab "Hôm nay"
 `UX logic`:
 - Free user luôn nhận được một phiên bản có ích, không bị chặn trắng màn hình.
 - Các phần sâu hơn là `optional deepening`, không phải điều kiện để hiểu màn đầu.
+- `Tháng này`, `Năm nay`, `Giai đoạn active` là các màn detail riêng, không chỉ là card bung dài từ màn home.
 
 ### Flow `TODAY-FLOW-02` - PRO user mở tab `Hôm nay`
 
@@ -144,6 +145,7 @@ User vào tab "Hôm nay"
 `UX logic`:
 - PRO không nên bị thêm friction không cần thiết.
 - Detail của `Ngày`, `Tháng`, `Năm`, `Giai đoạn active` mở thẳng.
+- Các detail này có thể có dữ liệu generate và cache riêng theo từng `time bucket`.
 
 ### Flow `TODAY-FLOW-03` - Free user mở sâu bằng Soul Point
 
@@ -365,20 +367,27 @@ AI-01
 - PRO không nên qua bước confirm bằng Soul Point.
 - Cảm giác phải là `liền mạch`, `thân thiện`, `truy cập ngay`.
 
-### Flow `AI-FLOW-04` - Nội dung AI nên bám dữ liệu nào
+### Flow `AI-FLOW-04` - Context payload MVP của `NumAI`
 
 ```text
 NumAI nhận ngữ cảnh từ:
--> hồ sơ chính
--> luận giải life-based
--> dữ liệu hôm nay
--> dữ liệu tương hợp nếu user đang hỏi về người khác
--> lịch sử chat gần nhất
+-> thread_summary
+-> 20 tin nhắn gần nhất
+-> active_profile
+-> snapshot_facts
+-> user_question
+-> context_type
 ```
 
+`Backend logic`:
+- Edge Function lấy `active prompt template` từ database theo `prompt_key` của chức năng chat.
+- Prompt template được version hóa để hỗ trợ đổi prompt, rollback, và audit mà không cần deploy app.
+- Mỗi request chat nên log lại `prompt_template_id` và `prompt_version` vào generation run.
+
 `UX logic`:
-- AI không nên trả lời kiểu generic nếu trong app đã có dữ liệu nền.
-- Mỗi câu trả lời nên bám vào numerology profile của user.
+- Ở MVP, chatbot dùng một payload context cố định cho mọi request.
+- Chưa dùng `intent detection` để bơm thêm `daily_facts` hoặc `compatibility_facts`.
+- AI vẫn phải bám vào `snapshot_facts` và mạch hội thoại gần nhất để trả lời.
 
 ## 5.5. Tab `Tôi`
 
@@ -469,6 +478,14 @@ Nếu là PRO
 -> xem TODAY-01
 -> vào sâu trực tiếp
 ```
+
+`Data logic`:
+- `TODAY-01` dùng `daily preview cache` theo ngày.
+- `TODAY-02` dùng detail theo ngày.
+- `TODAY-03` dùng detail theo tháng hiện tại.
+- `TODAY-04` dùng detail theo năm hiện tại.
+- `TODAY-05` dùng detail theo `active phase` hiện tại.
+- `TODAY-03`, `TODAY-04`, `TODAY-05` nên được generate lazy khi user mở màn detail, rồi cache lại cho lần sau.
 
 ## 6.3. Logic của `NumAI`
 

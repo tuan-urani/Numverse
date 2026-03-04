@@ -109,6 +109,7 @@ Các mức truy cập:
 - Màn đầu chỉ có `Hero card` và `Action card` là nội dung chính.
 - `Tháng này`, `Năm nay`, `Giai đoạn active` chỉ nên là card tóm tắt.
 - Free user xem bản ngắn, PRO hoặc Soul Point mới mở sâu phần chi tiết.
+- Các card này nên dẫn sang màn detail riêng, không bung toàn bộ nội dung dài ngay tại home.
 
 ### Screen `TODAY-02` - `Xem sâu hôm nay`
 
@@ -169,6 +170,7 @@ Các mức truy cập:
 
 `Note`:
 - Màn này giúp user hiểu `context` của tháng, không cạnh tranh sự chú ý với `Hôm nay`.
+- Đây là màn detail riêng, có thể dùng content generate và cache theo `year-month`.
 
 ### Screen `TODAY-04` - `Năm nay`
 
@@ -199,6 +201,7 @@ Các mức truy cập:
 
 `Note`:
 - Dùng ngôn ngữ định hướng và tóm lược, không trình bày như “bài luận”.
+- Đây là màn detail riêng, có thể dùng content generate và cache theo `year`.
 
 ### Screen `TODAY-05` - `Giai đoạn active`
 
@@ -230,6 +233,7 @@ Các mức truy cập:
 
 `Note`:
 - Màn này là lớp `context sâu`, không nên nằm ở top của tab `Hôm nay`.
+- Đây là màn detail riêng, có thể dùng content generate và cache theo `phase key`.
 
 ### Screen `TODAY-06` - Sheet mở khóa `PRO / Soul Point`
 
@@ -604,6 +608,7 @@ Các mức truy cập:
 - Màn chat nên có prompt input cố định ở đáy màn.
 - Không cần nhồi nhiều chrome UI, ưu tiên tập trung vào hội thoại.
 - Nếu là `PRO User`, phần CTA gửi chat không cần hiển thị logic tiêu hao `Soul Point`.
+- Ở MVP, backend của `NumAI` dùng context payload cố định thay vì intent-based context retrieval.
 
 ### Screen `AI-03` - Sheet mở khóa chat `NumAI`
 

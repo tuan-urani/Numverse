@@ -71,6 +71,17 @@ Bao gồm:
   - Đỉnh cao hiện tại đang active
   - Thử thách hiện tại đang active
 
+Cấu trúc nội dung:
+- `Màn Hôm nay` chỉ hiển thị lớp `preview / quick read`
+  - Hero card
+  - Action card
+  - preview cho `Tháng này`, `Năm nay`, `Giai đoạn active`
+- Có các màn detail riêng:
+  - `Xem sâu hôm nay`
+  - `Chi tiết tháng này`
+  - `Chi tiết năm nay`
+  - `Chi tiết giai đoạn active`
+
 Ý nghĩa của tab:
 - Trả lời câu hỏi: `Hôm nay / tháng này / năm nay mình nên chú ý điều gì?`
 
@@ -141,6 +152,10 @@ Nguyên tắc hiện tại:
 - `NumAI` được mở cho cả `Free User` và `PRO User`.
 - Nếu là `Free User`, mỗi lượt chat sẽ cần tiêu hao một lượng `Soul Point` nhất định.
 - Nếu là `PRO User`, có thể chat thuận tiện hơn mà không phải mở lẻ từng lượt bằng `Soul Point`.
+- Ở giai đoạn hiện tại, `NumAI` dùng một `context payload` cố định cho mọi request chatbot.
+- Payload MVP hiện tại gồm: `thread_summary`, `recent_messages`, `active_profile`, `snapshot_facts`, `user_question`, `context_type`.
+- Chưa dùng cơ chế `intent detection` để tự động bơm thêm `daily_facts` hoặc `compatibility_facts`.
+- Prompt cho các chức năng AI được lưu ở database theo mô hình `versioned prompt templates`, và backend sẽ lấy `active prompt version` để gọi Gemini.
 
 ## 4.5. Tab `Tôi`
 Đây là tab tài khoản / cá nhân thay cho `Settings`.
@@ -180,6 +195,19 @@ Trả lời câu hỏi:
 - `Luận giải` được mở miễn phí toàn bộ vì đây là phần `life-time`.
 - `Hôm nay` là nơi phù hợp nhất để tạo subscription vì đây là giá trị lặp lại.
 - `NumAI` được mở cho mọi người dùng, nhưng cách sử dụng sẽ khác nhau giữa `Free` và `PRO`.
+
+### Quyết định kỹ thuật cho AI generation
+
+- `Code / deterministic` tính ra bộ số và cấu trúc numerology.
+- `Gemini` chỉ dùng để diễn giải, viết narrative, và trả lời chat.
+- Prompt không được hard-code ở mobile app.
+- Prompt được lưu trong database để có thể thay đổi mà không cần deploy app.
+- Prompt phải có `version`, `status`, `model_name`, `output schema`, và được log lại trong mỗi lần generate.
+- `Life-based` narrative được cache theo `snapshot`.
+- `Time-based` được tách thành:
+  - `daily preview cache` cho màn `Hôm nay`
+  - `detail cache` riêng cho `tháng`, `năm`, `giai đoạn active`
+- `Chi tiết tháng / năm / giai đoạn active` chỉ generate khi user thực sự mở màn detail, không generate sẵn mỗi ngày.
 
 ## 6.2. Tab `Luận giải`
 Định hướng:
