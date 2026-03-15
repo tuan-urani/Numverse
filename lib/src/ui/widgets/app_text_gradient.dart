@@ -13,7 +13,7 @@ class AppTextGradient extends StatelessWidget {
     required this.text,
     this.style,
     this.gradient = const LinearGradient(
-      colors: [AppColors.primary, AppColors.white],
+      colors: [AppColors.richGold, AppColors.goldBright],
     ),
     this.textAlign = TextAlign.start,
   });
@@ -30,7 +30,7 @@ class AppTextGradient extends StatelessWidget {
       child: Text(
         text,
         textAlign: textAlign,
-        style: style ?? AppStyles.h4(color: AppColors.black),
+        style: style ?? AppStyles.h4(color: AppColors.textPrimary),
       ),
     );
   }

@@ -1,51 +1,114 @@
-import 'dart:async';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppShared {
-  static const String keyName = 'app';
-  static const String keyBox = '${keyName}_shared';
-
-  static const String _keyFcmToken = '${keyName}_keyFCMToken';
-  static const String _keyTokenValue = '${keyName}_keyTokenValue';
-  static const String _keyLanguageCode = '${keyName}_keyLanguageCode';
-
-  final SharedPreferences _prefs;
-  final StreamController<String?> _tokenValueController =
-      StreamController<String?>.broadcast();
-
   AppShared(this._prefs);
 
-  Future<void> setTokenFcm(String firebaseToken) async {
-    await _prefs.setString(_keyFcmToken, firebaseToken);
+  static const String _keySessionSnapshot = 'numverse_session_snapshot';
+  static const String _keyHasVisited = 'numverse_has_visited';
+  static const String _keyLedgerActivePrefix = 'numverse_ledger_active_';
+  static const String _keyLedgerTempPrefix = 'numverse_ledger_temp_';
+  static const String _keySupabaseUserId = 'numverse_supabase_user_id';
+  static const String _keySupabaseAccessToken =
+      'numverse_supabase_access_token';
+  static const String _keySupabaseRefreshToken =
+      'numverse_supabase_refresh_token';
+
+  final SharedPreferences _prefs;
+
+  String? getSessionSnapshot() {
+    return _prefs.getString(_keySessionSnapshot);
   }
 
-  String? getTokenFcm() => _prefs.getString(_keyFcmToken);
-
-  Future<void> setLanguageCode(String languageCode) async {
-    await _prefs.setString(_keyLanguageCode, languageCode);
+  Future<void> setSessionSnapshot(String value) async {
+    await _prefs.setString(_keySessionSnapshot, value);
   }
 
-  String? getLanguageCode() => _prefs.getString(_keyLanguageCode);
-
-  Future<void> setTokenValue(String tokenValue) async {
-    await _prefs.setString(_keyTokenValue, tokenValue);
-    _tokenValueController.add(tokenValue);
+  Future<void> clearSessionSnapshot() async {
+    await _prefs.remove(_keySessionSnapshot);
   }
 
-  String? getTokenValue() => _prefs.getString(_keyTokenValue);
-
-  Stream<String?> watchTokenValue() => _tokenValueController.stream;
-
-  Future<int> clear() async {
-    await _prefs.remove(_keyFcmToken);
-    await _prefs.remove(_keyTokenValue);
-    await _prefs.remove(_keyLanguageCode);
-    _tokenValueController.add(null);
-    return 1;
+  bool getHasVisited() {
+    return _prefs.getBool(_keyHasVisited) ?? false;
   }
 
-  void dispose() {
-    _tokenValueController.close();
+  Future<void> setHasVisited(bool value) async {
+    await _prefs.setBool(_keyHasVisited, value);
+  }
+
+  String? getNumerologyLedgerActive(String localeCode) {
+    return _prefs.getString(
+      '$_keyLedgerActivePrefix${_normalizeLocaleCode(localeCode)}',
+    );
+  }
+
+  Future<void> setNumerologyLedgerActive({
+    required String localeCode,
+    required String value,
+  }) async {
+    await _prefs.setString(
+      '$_keyLedgerActivePrefix${_normalizeLocaleCode(localeCode)}',
+      value,
+    );
+  }
+
+  Future<void> setNumerologyLedgerTemp({
+    required String localeCode,
+    required String value,
+  }) async {
+    await _prefs.setString(
+      '$_keyLedgerTempPrefix${_normalizeLocaleCode(localeCode)}',
+      value,
+    );
+  }
+
+  Future<void> activateNumerologyLedgerTemp(String localeCode) async {
+    final String normalizedLocaleCode = _normalizeLocaleCode(localeCode);
+    final String tempKey = '$_keyLedgerTempPrefix$normalizedLocaleCode';
+    final String activeKey = '$_keyLedgerActivePrefix$normalizedLocaleCode';
+    final String? rawValue = _prefs.getString(tempKey);
+    if (rawValue == null || rawValue.isEmpty) {
+      return;
+    }
+
+    await _prefs.setString(activeKey, rawValue);
+    await _prefs.remove(tempKey);
+  }
+
+  Future<void> clearNumerologyLedgerTemp(String localeCode) async {
+    await _prefs.remove(
+      '$_keyLedgerTempPrefix${_normalizeLocaleCode(localeCode)}',
+    );
+  }
+
+  Future<void> setSupabaseAuthSession({
+    required String userId,
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    await _prefs.setString(_keySupabaseUserId, userId);
+    await _prefs.setString(_keySupabaseAccessToken, accessToken);
+    await _prefs.setString(_keySupabaseRefreshToken, refreshToken);
+  }
+
+  String? getSupabaseUserId() {
+    return _prefs.getString(_keySupabaseUserId);
+  }
+
+  String? getSupabaseAccessToken() {
+    return _prefs.getString(_keySupabaseAccessToken);
+  }
+
+  String? getSupabaseRefreshToken() {
+    return _prefs.getString(_keySupabaseRefreshToken);
+  }
+
+  Future<void> clearSupabaseAuthSession() async {
+    await _prefs.remove(_keySupabaseUserId);
+    await _prefs.remove(_keySupabaseAccessToken);
+    await _prefs.remove(_keySupabaseRefreshToken);
+  }
+
+  String _normalizeLocaleCode(String localeCode) {
+    return localeCode.trim().toLowerCase();
   }
 }

@@ -1,0 +1,26 @@
+import 'package:test/src/locale/keys/common_locale_key.dart';
+
+final Map<String, String> commonJa = <String, String>{
+  CommonLocaleKey.commonLoading: '読み込み中...',
+  CommonLocaleKey.commonError: 'エラー',
+  CommonLocaleKey.commonSuccess: '成功',
+  CommonLocaleKey.commonRetry: '再試行',
+  CommonLocaleKey.commonCancel: 'キャンセル',
+  CommonLocaleKey.commonConfirm: '確認',
+  CommonLocaleKey.commonContinue: '続ける',
+  CommonLocaleKey.commonStartNow: '今すぐ開始',
+  CommonLocaleKey.commonExploreNow: '今すぐ探索',
+  CommonLocaleKey.commonViewDetail: '詳細を見る',
+  CommonLocaleKey.commonSave: '保存',
+  CommonLocaleKey.commonDelete: '削除',
+  CommonLocaleKey.commonEdit: '編集',
+  CommonLocaleKey.commonComingSoon: '準備中',
+  CommonLocaleKey.commonEmpty: 'データがありません',
+  CommonLocaleKey.loginSessionExpires: 'ログインセッションが期限切れです！',
+  CommonLocaleKey.success: '成功',
+  CommonLocaleKey.error: 'エラー',
+  CommonLocaleKey.ok: 'OK',
+  CommonLocaleKey.cancel: 'キャンセル',
+  CommonLocaleKey.widgetCancel: 'キャンセル',
+  CommonLocaleKey.widgetConfirm: '確認',
+};

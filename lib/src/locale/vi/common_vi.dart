@@ -1,0 +1,26 @@
+import 'package:test/src/locale/keys/common_locale_key.dart';
+
+final Map<String, String> commonVi = <String, String>{
+  CommonLocaleKey.commonLoading: 'Đang tải...',
+  CommonLocaleKey.commonError: 'Lỗi',
+  CommonLocaleKey.commonSuccess: 'Thành công',
+  CommonLocaleKey.commonRetry: 'Thử lại',
+  CommonLocaleKey.commonCancel: 'Hủy',
+  CommonLocaleKey.commonConfirm: 'Xác nhận',
+  CommonLocaleKey.commonContinue: 'Tiếp tục',
+  CommonLocaleKey.commonStartNow: 'Bắt đầu ngay',
+  CommonLocaleKey.commonExploreNow: 'Khám phá ngay',
+  CommonLocaleKey.commonViewDetail: 'Xem chi tiết',
+  CommonLocaleKey.commonSave: 'Lưu',
+  CommonLocaleKey.commonDelete: 'Xóa',
+  CommonLocaleKey.commonEdit: 'Chỉnh sửa',
+  CommonLocaleKey.commonComingSoon: 'Sắp ra mắt',
+  CommonLocaleKey.commonEmpty: 'Chưa có dữ liệu',
+  CommonLocaleKey.loginSessionExpires: 'Phiên đăng nhập đã hết hạn!',
+  CommonLocaleKey.success: 'Thành công',
+  CommonLocaleKey.error: 'Lỗi',
+  CommonLocaleKey.ok: 'OK',
+  CommonLocaleKey.cancel: 'Hủy',
+  CommonLocaleKey.widgetCancel: 'Hủy',
+  CommonLocaleKey.widgetConfirm: 'Xác nhận',
+};

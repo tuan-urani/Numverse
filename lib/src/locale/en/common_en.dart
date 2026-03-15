@@ -1,0 +1,26 @@
+import 'package:test/src/locale/keys/common_locale_key.dart';
+
+final Map<String, String> commonEn = <String, String>{
+  CommonLocaleKey.commonLoading: 'Loading...',
+  CommonLocaleKey.commonError: 'Error',
+  CommonLocaleKey.commonSuccess: 'Success',
+  CommonLocaleKey.commonRetry: 'Retry',
+  CommonLocaleKey.commonCancel: 'Cancel',
+  CommonLocaleKey.commonConfirm: 'Confirm',
+  CommonLocaleKey.commonContinue: 'Continue',
+  CommonLocaleKey.commonStartNow: 'Start now',
+  CommonLocaleKey.commonExploreNow: 'Explore now',
+  CommonLocaleKey.commonViewDetail: 'View details',
+  CommonLocaleKey.commonSave: 'Save',
+  CommonLocaleKey.commonDelete: 'Delete',
+  CommonLocaleKey.commonEdit: 'Edit',
+  CommonLocaleKey.commonComingSoon: 'Coming soon',
+  CommonLocaleKey.commonEmpty: 'No content yet',
+  CommonLocaleKey.loginSessionExpires: 'Login session expires!',
+  CommonLocaleKey.success: 'Success',
+  CommonLocaleKey.error: 'Error',
+  CommonLocaleKey.ok: 'OK',
+  CommonLocaleKey.cancel: 'Cancel',
+  CommonLocaleKey.widgetCancel: 'Cancel',
+  CommonLocaleKey.widgetConfirm: 'Confirm',
+};

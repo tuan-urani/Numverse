@@ -1,131 +1,140 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import 'app_colors.dart';
+import 'package:test/src/utils/app_colors.dart';
 
 class AppStyles {
-  // Font Families
-  static const String fontFamily = 'ZenMaruGothic';
-  static const String fontHiraginoKakuProW6 = 'ZenMaruGothic';
-  static const String fontHiraginoKakuStd = 'ZenMaruGothic';
+  AppStyles._();
+
+  static const String fontFamily = 'BeVietnamPro';
+  static const String fontDisplayFamily = 'PlayfairDisplay';
+  static const String fontNumberFamily = 'Cinzel';
+
+  static TextStyle _body(
+    double size,
+    FontWeight weight,
+    Color color,
+    double height,
+  ) => GoogleFonts.beVietnamPro(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: height,
+  );
+
+  static TextStyle _display(
+    double size,
+    FontWeight weight,
+    Color color,
+    double height,
+  ) => GoogleFonts.playfairDisplay(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: height,
+    letterSpacing: 0.3,
+  );
+
+  static TextStyle _number(
+    double size,
+    FontWeight weight,
+    Color color,
+    double height,
+  ) => GoogleFonts.cinzel(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: height,
+    letterSpacing: 0.4,
+  );
 
   static TextStyle h40({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w700,
-    double? height,
-  }) => _textStyle(45.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _display(40, fontWeight, color, 1.2);
 
-  // Text Styles
   static TextStyle h1({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w700,
-    double? height,
-  }) => _textStyle(32.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _display(32, fontWeight, color, 1.2);
 
   static TextStyle h2({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
-    FontWeight fontWeight = FontWeight.w600,
-    double? height,
-  }) => _textStyle(28.0, color, fontWeight, height, fontFamily: fontFamily);
+    Color color = AppColors.textPrimary,
+    FontWeight fontWeight = FontWeight.w700,
+  }) => _display(28, fontWeight, color, 1.25);
 
   static TextStyle headlineLarge({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w700,
-    double? height,
-  }) => _textStyle(36.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _display(36, fontWeight, color, 1.2);
 
   static TextStyle titleLarge({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w700,
-    double? height,
-  }) => _textStyle(26.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _display(24, fontWeight, color, 1.25);
 
   static TextStyle h3({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w600,
-    double? height,
-  }) => _textStyle(24.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _display(20, fontWeight, color, 1.3);
 
   static TextStyle h4({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
-    FontWeight fontWeight = FontWeight.w500,
-    double? height,
-  }) => _textStyle(20.0, color, fontWeight, height, fontFamily: fontFamily);
+    Color color = AppColors.textPrimary,
+    FontWeight fontWeight = FontWeight.w600,
+  }) => _body(18, fontWeight, color, 1.35);
 
   static TextStyle h5({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w500,
-    double? height,
-  }) => _textStyle(18.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _body(16, fontWeight, color, 1.4);
 
   static TextStyle bodyLarge({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w400,
-    double? height,
-  }) => _textStyle(16.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _body(16, fontWeight, color, 1.45);
 
   static TextStyle bodyMedium({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w400,
-    double? height,
-  }) => _textStyle(14.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _body(14, fontWeight, color, 1.45);
 
   static TextStyle bodySmall({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textPrimary,
     FontWeight fontWeight = FontWeight.w400,
-    double? height,
-  }) => _textStyle(12.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _body(12, fontWeight, color, 1.4);
 
   static TextStyle caption({
-    String fontFamily = fontFamily,
-    Color color = AppColors.black,
+    Color color = AppColors.textMuted,
     FontWeight fontWeight = FontWeight.w400,
-    double? height,
-  }) => _textStyle(10.0, color, fontWeight, height, fontFamily: fontFamily);
+  }) => _body(11, fontWeight, color, 1.35);
 
-  // Button Styles
   static TextStyle buttonLarge({
-    String fontFamily = fontFamily,
-    Color color = AppColors.white,
+    Color color = AppColors.midnight,
     FontWeight fontWeight = FontWeight.w600,
-  }) => _textStyle(16.0, color, fontWeight, 1.5, fontFamily: fontFamily);
+  }) => _body(16, fontWeight, color, 1.3);
 
   static TextStyle buttonMedium({
-    String fontFamily = fontFamily,
-    Color color = AppColors.white,
-    FontWeight fontWeight = FontWeight.w500,
-  }) => _textStyle(14.0, color, fontWeight, 1.4, fontFamily: fontFamily);
+    Color color = AppColors.midnight,
+    FontWeight fontWeight = FontWeight.w600,
+  }) => _body(14, fontWeight, color, 1.3);
 
   static TextStyle buttonSmall({
-    String fontFamily = fontFamily,
-    Color color = AppColors.white,
-    FontWeight fontWeight = FontWeight.w500,
-  }) => _textStyle(12.0, color, fontWeight, 1.3, fontFamily: fontFamily);
+    Color color = AppColors.midnight,
+    FontWeight fontWeight = FontWeight.w600,
+  }) => _body(12, fontWeight, color, 1.25);
 
-  // Helper method for text styles
-  static TextStyle _textStyle(
-    double fontSize,
-    Color color,
-    FontWeight fontWeight,
-    double? height, {
-    required String fontFamily,
-  }) {
-    return TextStyle(
-      fontFamily: fontFamily,
-      fontSize: fontSize,
-      color: color,
-      fontWeight: fontWeight,
-      height: height,
-    );
-  }
+  static TextStyle numberLarge({
+    Color color = AppColors.richGold,
+    FontWeight fontWeight = FontWeight.w700,
+  }) => _number(48, fontWeight, color, 1.1);
+
+  static TextStyle numberMedium({
+    Color color = AppColors.richGold,
+    FontWeight fontWeight = FontWeight.w700,
+  }) => _number(32, fontWeight, color, 1.1);
+
+  static TextStyle numberSmall({
+    Color color = AppColors.richGold,
+    FontWeight fontWeight = FontWeight.w700,
+  }) => _number(24, fontWeight, color, 1.1);
 }

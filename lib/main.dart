@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import 'package:test/src/di/di_graph_setup.dart';
 import 'package:test/src/locale/translation_manager.dart';
+import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
+import 'package:test/src/utils/app_styles.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +18,7 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData baseTheme = ThemeData.dark(useMaterial3: true);
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: AppPages.splash,
@@ -23,6 +26,34 @@ class App extends StatelessWidget {
       translations: TranslationManager(),
       locale: TranslationManager.defaultLocale,
       fallbackLocale: TranslationManager.fallbackLocale,
+      theme: baseTheme.copyWith(
+        scaffoldBackgroundColor: AppColors.background,
+        colorScheme: baseTheme.colorScheme.copyWith(
+          primary: AppColors.richGold,
+          secondary: AppColors.goldBright,
+          surface: AppColors.card,
+          onSurface: AppColors.textPrimary,
+          error: AppColors.error,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.deepViolet.withValues(alpha: 0.7),
+          labelStyle: AppStyles.bodySmall(color: AppColors.textMuted),
+          hintStyle: AppStyles.bodySmall(color: AppColors.textMuted),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColors.richGold),
+          ),
+        ),
+      ),
     );
   }
 }
