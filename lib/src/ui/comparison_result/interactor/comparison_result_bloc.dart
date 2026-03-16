@@ -22,8 +22,8 @@ class ComparisonResultBloc
   final INumerologyContentRepository _contentRepository;
 
   void load({
-    required UserProfile? selfProfile,
-    required ComparisonProfile? targetProfile,
+    required UserProfile selfProfile,
+    required ComparisonProfile targetProfile,
     required String languageCode,
   }) {
     add(
@@ -39,11 +39,11 @@ class ComparisonResultBloc
     ComparisonResultLoaded event,
     Emitter<ComparisonResultState> emit,
   ) {
-    final UserProfile? selfProfile = event.selfProfile;
-    final ComparisonProfile? targetProfile = event.targetProfile;
+    final UserProfile selfProfile = event.selfProfile;
+    final ComparisonProfile targetProfile = event.targetProfile;
     final String languageCode = event.languageCode.trim().toLowerCase();
-    final String selfId = selfProfile?.id ?? 'guest';
-    final String targetId = targetProfile?.id ?? 'default-target';
+    final String selfId = selfProfile.id;
+    final String targetId = targetProfile.id;
 
     if (state.selfProfileId == selfId &&
         state.targetProfileId == targetId &&
@@ -101,20 +101,7 @@ class ComparisonResultBloc
     );
   }
 
-  _ProfileMetrics _buildSelfMetrics(UserProfile? profile) {
-    if (profile == null) {
-      final DateTime fallbackBirthDate = DateTime(1998, 8, 12);
-      const String fallbackName = 'Nguyen Van Minh';
-      return _ProfileMetrics(
-        name: fallbackName,
-        formattedDate: _formatDate(fallbackBirthDate),
-        lifePath: NumerologyHelper.getLifePathNumber(fallbackBirthDate),
-        soul: NumerologyHelper.getSoulUrgeNumber(fallbackName),
-        personality: NumerologyHelper.getPersonalityNumber(fallbackName),
-        expression: NumerologyHelper.getExpressionNumber(fallbackName),
-      );
-    }
-
+  _ProfileMetrics _buildSelfMetrics(UserProfile profile) {
     return _ProfileMetrics(
       name: profile.name,
       formattedDate: _formatDate(profile.birthDate),
@@ -125,21 +112,7 @@ class ComparisonResultBloc
     );
   }
 
-  _TargetMetrics _buildTargetMetrics(ComparisonProfile? profile) {
-    if (profile == null) {
-      final DateTime fallbackBirthDate = DateTime(1999, 3, 15);
-      const String fallbackName = 'Lan';
-      return _TargetMetrics(
-        name: fallbackName,
-        relation: 'lover',
-        formattedDate: _formatDate(fallbackBirthDate),
-        lifePath: NumerologyHelper.getLifePathNumber(fallbackBirthDate),
-        soul: NumerologyHelper.getSoulUrgeNumber(fallbackName),
-        personality: NumerologyHelper.getPersonalityNumber(fallbackName),
-        expression: NumerologyHelper.getExpressionNumber(fallbackName),
-      );
-    }
-
+  _TargetMetrics _buildTargetMetrics(ComparisonProfile profile) {
     return _TargetMetrics(
       name: profile.name,
       relation: profile.relation,

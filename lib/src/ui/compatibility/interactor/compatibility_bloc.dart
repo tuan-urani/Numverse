@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
 import 'package:test/src/helper/numerology_helper.dart';
+import 'package:test/src/ui/compatibility/interactor/compatibility_constants.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_event.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_state.dart';
 
@@ -11,7 +12,7 @@ class CompatibilityBloc extends Bloc<CompatibilityEvent, CompatibilityState> {
     on<CompatibilityCompareProfileSelected>(_onCompareProfileSelected);
   }
 
-  static const int comparisonCost = 20;
+  static const int comparisonCost = kCompatibilityComparisonCost;
 
   void addCompareProfile({
     required String name,

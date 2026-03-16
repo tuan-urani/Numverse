@@ -14,8 +14,8 @@ final class ComparisonResultLoaded extends ComparisonResultEvent {
     required this.languageCode,
   });
 
-  final UserProfile? selfProfile;
-  final ComparisonProfile? targetProfile;
+  final UserProfile selfProfile;
+  final ComparisonProfile targetProfile;
   final String languageCode;
 
   @override

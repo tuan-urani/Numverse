@@ -41,8 +41,18 @@ class ComparisonResultPage extends StatelessWidget {
         child: BlocBuilder<MainSessionBloc, MainSessionState>(
           bloc: sessionCubit,
           builder: (BuildContext context, MainSessionState sessionState) {
+            final selfProfile = sessionState.currentProfile;
+            if (selfProfile == null || targetProfile == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  _onBack(context);
+                }
+              });
+              return const SizedBox.shrink();
+            }
+
             bloc.load(
-              selfProfile: sessionState.currentProfile,
+              selfProfile: selfProfile,
               targetProfile: targetProfile,
               languageCode: Get.locale?.languageCode ?? 'vi',
             );

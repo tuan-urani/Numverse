@@ -108,6 +108,10 @@ class AppShared {
     await _prefs.remove(_keySupabaseRefreshToken);
   }
 
+  Future<void> clearAll() async {
+    await _prefs.clear();
+  }
+
   String _normalizeLocaleCode(String localeCode) {
     return localeCode.trim().toLowerCase();
   }

@@ -222,6 +222,54 @@ class PagesLocaleKey {
   static const String profileCoreMissionLabel = 'profile_core_mission_label';
   static const String profileCoreSoulLabel = 'profile_core_soul_label';
   static const String profileGuestWarning = 'profile_guest_warning';
+  static const String profileGuestAuthAction = 'profile_guest_auth_action';
+  static const String profileGuestAuthTitle = 'profile_guest_auth_title';
+  static const String profileGuestAuthSubtitle = 'profile_guest_auth_subtitle';
+  static const String profileManageProfilesTitle =
+      'profile_manage_profiles_title';
+  static const String profileManageProfilesSubtitle =
+      'profile_manage_profiles_subtitle';
+  static const String profileManageProfilesAddHint =
+      'profile_manage_profiles_add_hint';
+  static const String profileManageProfilesDeleteConfirm =
+      'profile_manage_profiles_delete_confirm';
+  static const String profileAuthDialogTitle = 'profile_auth_dialog_title';
+  static const String profileAuthDialogSubtitle =
+      'profile_auth_dialog_subtitle';
+  static const String profileAuthTabLogin = 'profile_auth_tab_login';
+  static const String profileAuthTabRegister = 'profile_auth_tab_register';
+  static const String profileAuthNameLabel = 'profile_auth_name_label';
+  static const String profileAuthConfirmPasswordLabel =
+      'profile_auth_confirm_password_label';
+  static const String profileAuthNameHint = 'profile_auth_name_hint';
+  static const String profileAuthEmailHint = 'profile_auth_email_hint';
+  static const String profileAuthPasswordHint = 'profile_auth_password_hint';
+  static const String profileAuthConfirmPasswordHint =
+      'profile_auth_confirm_password_hint';
+  static const String profileAuthNameFromProfile =
+      'profile_auth_name_from_profile';
+  static const String profileAuthLoginSuccess = 'profile_auth_login_success';
+  static const String profileAuthRegisterSuccess =
+      'profile_auth_register_success';
+  static const String profileAuthSuccessSubtitle =
+      'profile_auth_success_subtitle';
+  static const String profileAuthValidateNameRequired =
+      'profile_auth_validate_name_required';
+  static const String profileAuthValidateEmailRequired =
+      'profile_auth_validate_email_required';
+  static const String profileAuthValidateEmailInvalid =
+      'profile_auth_validate_email_invalid';
+  static const String profileAuthValidatePasswordRequired =
+      'profile_auth_validate_password_required';
+  static const String profileAuthValidatePasswordMin =
+      'profile_auth_validate_password_min';
+  static const String profileAuthValidateConfirmRequired =
+      'profile_auth_validate_confirm_required';
+  static const String profileAuthValidateConfirmMismatch =
+      'profile_auth_validate_confirm_mismatch';
+  static const String profileAuthRegisterAction =
+      'profile_auth_register_action';
+  static const String profileAuthProcessing = 'profile_auth_processing';
   static const String profileMenuSettingsSubtitle =
       'profile_menu_settings_subtitle';
   static const String profileMenuPrivacySubtitle =
@@ -531,4 +579,58 @@ class PagesLocaleKey {
   static const String genericAdviceOne = 'generic_advice_one';
   static const String genericAdviceTwo = 'generic_advice_two';
   static const String genericAdviceThree = 'generic_advice_three';
+
+  static const String adminTitle = 'admin_title';
+  static const String adminSubtitle = 'admin_subtitle';
+  static const String adminLoginTitle = 'admin_login_title';
+  static const String adminLoginSubtitle = 'admin_login_subtitle';
+  static const String adminEmailLabel = 'admin_email_label';
+  static const String adminEmailHint = 'admin_email_hint';
+  static const String adminPasswordLabel = 'admin_password_label';
+  static const String adminPasswordHint = 'admin_password_hint';
+  static const String adminLoginAction = 'admin_login_action';
+  static const String adminLogoutAction = 'admin_logout_action';
+  static const String adminLocaleLabel = 'admin_locale_label';
+  static const String adminReleaseLabel = 'admin_release_label';
+  static const String adminContentTypeLabel = 'admin_content_type_label';
+  static const String adminSearchHint = 'admin_search_hint';
+  static const String adminRefreshAction = 'admin_refresh_action';
+  static const String adminPublishAction = 'admin_publish_action';
+  static const String adminCreateDraftAction = 'admin_create_draft_action';
+  static const String adminCreateDraftTitle = 'admin_create_draft_title';
+  static const String adminVersionLabel = 'admin_version_label';
+  static const String adminVersionHint = 'admin_version_hint';
+  static const String adminNotesLabel = 'admin_notes_label';
+  static const String adminNotesHint = 'admin_notes_hint';
+  static const String adminCreateAction = 'admin_create_action';
+  static const String adminContentsTitle = 'admin_contents_title';
+  static const String adminEmptyContents = 'admin_empty_contents';
+  static const String adminEditorTitle = 'admin_editor_title';
+  static const String adminTypeLabel = 'admin_type_label';
+  static const String adminNumberKeyLabel = 'admin_number_key_label';
+  static const String adminPayloadLabel = 'admin_payload_label';
+  static const String adminSaveAction = 'admin_save_action';
+  static const String adminDraftTag = 'admin_draft_tag';
+  static const String adminReadOnlyTag = 'admin_read_only_tag';
+  static const String adminReleaseStatusActive = 'admin_release_status_active';
+  static const String adminReleaseStatusDraft = 'admin_release_status_draft';
+  static const String adminReleaseStatusArchived =
+      'admin_release_status_archived';
+  static const String adminMessageSaveSuccess = 'admin_message_save_success';
+  static const String adminMessagePublishSuccess =
+      'admin_message_publish_success';
+  static const String adminMessageDraftSuccess = 'admin_message_draft_success';
+  static const String adminErrorNotConfigured = 'admin_error_not_configured';
+  static const String adminErrorForbidden = 'admin_error_forbidden';
+  static const String adminErrorUnauthorized = 'admin_error_unauthorized';
+  static const String adminErrorGeneric = 'admin_error_generic';
+  static const String adminErrorSelectRelease = 'admin_error_select_release';
+  static const String adminErrorReleaseNotDraft =
+      'admin_error_release_not_draft';
+  static const String adminErrorMissingFields = 'admin_error_missing_fields';
+  static const String adminErrorInvalidJson = 'admin_error_invalid_json';
+  static const String adminErrorInvalidPayload = 'admin_error_invalid_payload';
+  static const String adminErrorDuplicateVersion =
+      'admin_error_duplicate_version';
+  static const String adminErrorMissingVersion = 'admin_error_missing_version';
 }

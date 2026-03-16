@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
-import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
 import 'package:test/src/ui/lucky_number/components/lucky_number_content.dart';
 import 'package:test/src/ui/lucky_number/components/lucky_number_header.dart';
 import 'package:test/src/ui/lucky_number/interactor/lucky_number_bloc.dart';
@@ -15,14 +14,7 @@ class LuckyNumberPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LuckyNumberBloc bloc = Get.isRegistered<LuckyNumberBloc>()
-        ? Get.find<LuckyNumberBloc>()
-        : Get.put<LuckyNumberBloc>(
-            LuckyNumberBloc(
-              contentRepository: Get.find<INumerologyContentRepository>(),
-              languageCode: Get.locale?.languageCode ?? 'vi',
-            ),
-          );
+    final LuckyNumberBloc bloc = Get.find<LuckyNumberBloc>();
 
     return AppMysticalScaffold(
       child: SafeArea(

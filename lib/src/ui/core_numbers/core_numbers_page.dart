@@ -38,9 +38,14 @@ class CoreNumbersPage extends StatelessWidget {
           bloc: sessionCubit,
           builder: (BuildContext context, MainSessionState sessionState) {
             final String languageCode = Get.locale?.languageCode ?? 'vi';
+            final currentProfile = sessionState.currentProfile;
+            final lifeBasedSnapshot = currentProfile == null
+                ? null
+                : sessionState.lifeBasedByProfileId[currentProfile.id];
             bloc.syncProfile(
-              sessionState.currentProfile,
+              currentProfile,
               languageCode: languageCode,
+              lifeBasedSnapshot: lifeBasedSnapshot,
             );
             return AppStateView(
               status: sessionState.viewState,

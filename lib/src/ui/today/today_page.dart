@@ -14,17 +14,17 @@ class TodayPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final MainSessionBloc sessionCubit = Get.find<MainSessionBloc>();
-    if (sessionCubit.state.viewState == AppViewStateStatus.loading) {
-      sessionCubit.initialize();
+    final MainSessionBloc sessionBloc = Get.find<MainSessionBloc>();
+    if (sessionBloc.state.viewState == AppViewStateStatus.loading) {
+      sessionBloc.initialize();
     }
 
     return BlocBuilder<MainSessionBloc, MainSessionState>(
-      bloc: sessionCubit,
+      bloc: sessionBloc,
       builder: (BuildContext context, MainSessionState sessionState) {
         return AppStateView(
           status: sessionState.viewState,
-          onRetry: sessionCubit.initialize,
+          onRetry: sessionBloc.initialize,
           success: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),

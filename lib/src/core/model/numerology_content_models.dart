@@ -172,11 +172,26 @@ class NumerologyAngelNumberContent {
   });
 
   factory NumerologyAngelNumberContent.fromJson(Map<String, dynamic> json) {
+    final List<String> coreMeanings = _firstNonEmptyStringList(<Object?>[
+      json['core_meanings'],
+      json['meaning'],
+    ]);
+    final List<String> universeMessages = _firstNonEmptyStringList(<Object?>[
+      json['universe_messages'],
+      json['messages'],
+      json['message_from_universe'],
+    ]);
+    final List<String> guidance = _firstNonEmptyStringList(<Object?>[
+      json['guidance'],
+      json['actions'],
+      json['advice'],
+    ]);
+
     return NumerologyAngelNumberContent(
       title: (json['title'] as String? ?? '').trim(),
-      coreMeanings: _parseStringList(json['core_meanings']),
-      universeMessages: _parseStringList(json['universe_messages']),
-      guidance: _parseStringList(json['guidance']),
+      coreMeanings: coreMeanings,
+      universeMessages: universeMessages,
+      guidance: guidance,
     );
   }
 
@@ -207,6 +222,16 @@ class NumerologyAngelNumberContent {
       _ => const <String>[],
     };
     return list;
+  }
+
+  static List<String> _firstNonEmptyStringList(List<Object?> candidates) {
+    for (final Object? raw in candidates) {
+      final List<String> parsed = _parseStringList(raw);
+      if (parsed.isNotEmpty) {
+        return parsed;
+      }
+    }
+    return const <String>[];
   }
 }
 
@@ -259,6 +284,8 @@ class NumerologyNumberLibraryContent {
 
 class NumerologyTodayPersonalNumberContent {
   const NumerologyTodayPersonalNumberContent({
+    required this.dayCardTitle,
+    required this.dayCardSubtitle,
     required this.quote,
     required this.dailyRhythm,
     required this.detail,
@@ -271,6 +298,18 @@ class NumerologyTodayPersonalNumberContent {
     Map<String, dynamic> json,
   ) {
     return NumerologyTodayPersonalNumberContent(
+      dayCardTitle:
+          (json['day_card_title'] as String? ??
+                  json['dayCardTitle'] as String? ??
+                  json['hero_title'] as String? ??
+                  '')
+              .trim(),
+      dayCardSubtitle:
+          (json['day_card_subtitle'] as String? ??
+                  json['dayCardSubtitle'] as String? ??
+                  json['hero_subtitle'] as String? ??
+                  '')
+              .trim(),
       quote: (json['quote'] as String? ?? '').trim(),
       dailyRhythm:
           (json['daily_rhythm'] as String? ??
@@ -288,6 +327,8 @@ class NumerologyTodayPersonalNumberContent {
     );
   }
 
+  final String dayCardTitle;
+  final String dayCardSubtitle;
   final String quote;
   final String dailyRhythm;
   final List<String> detail;
@@ -298,6 +339,8 @@ class NumerologyTodayPersonalNumberContent {
   @override
   String toString() {
     return 'NumerologyTodayPersonalNumberContent('
+        'dayCardTitle: $dayCardTitle, '
+        'dayCardSubtitle: $dayCardSubtitle, '
         'quote: $quote, '
         'dailyRhythm: $dailyRhythm, '
         'detail: $detail, '

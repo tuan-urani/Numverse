@@ -99,6 +99,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       return;
     }
 
+    if (_shouldSkipOnboarding()) {
+      Get.offNamed(AppPages.main);
+      return;
+    }
+
     final AppShared appShared = Get.find<AppShared>();
     final bool hasVisited = appShared.getHasVisited();
 
@@ -109,6 +114,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     }
 
     Get.offNamed(AppPages.main);
+  }
+
+  bool _shouldSkipOnboarding() {
+    final dynamic rawArguments = Get.arguments;
+    if (rawArguments is! Map<dynamic, dynamic>) {
+      return false;
+    }
+    final dynamic rawSkipValue = rawArguments['skipOnboarding'];
+    return rawSkipValue == true;
   }
 
   Future<void> _prepareTimeLifeSnapshots() async {

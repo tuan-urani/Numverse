@@ -202,7 +202,47 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileCoreLifePathLabel: 'Số chủ đạo',
   PagesLocaleKey.profileCoreMissionLabel: 'Sứ mệnh',
   PagesLocaleKey.profileCoreSoulLabel: 'Linh hồn',
-  PagesLocaleKey.profileGuestWarning: 'Chưa đăng nhập - Dữ liệu có thể bị mất',
+  PagesLocaleKey.profileGuestWarning:
+      'Dữ liệu của bạn đang lưu cục bộ và có thể bị mất. Hãy đăng ký hoặc đăng nhập để sao lưu.',
+  PagesLocaleKey.profileGuestAuthAction: 'Đăng ký / Đăng nhập',
+  PagesLocaleKey.profileGuestAuthTitle: 'Đăng ký / Đăng nhập để sao lưu',
+  PagesLocaleKey.profileGuestAuthSubtitle:
+      'Đồng bộ hồ sơ của bạn lên cloud để không bị mất dữ liệu khi đổi thiết bị.',
+  PagesLocaleKey.profileManageProfilesTitle: 'Quản lý profile',
+  PagesLocaleKey.profileManageProfilesSubtitle:
+      'Chọn profile đang xem, thêm mới hoặc xoá profile không dùng.',
+  PagesLocaleKey.profileManageProfilesAddHint:
+      'Bạn có thể tạo nhiều profile để xem cho bản thân và người thân.',
+  PagesLocaleKey.profileManageProfilesDeleteConfirm:
+      'Bạn có chắc muốn xoá profile này?',
+  PagesLocaleKey.profileAuthDialogTitle: 'Xác thực tài khoản',
+  PagesLocaleKey.profileAuthDialogSubtitle:
+      'Đăng nhập hoặc đăng ký để bảo vệ dữ liệu của bạn',
+  PagesLocaleKey.profileAuthTabLogin: 'Đăng nhập',
+  PagesLocaleKey.profileAuthTabRegister: 'Đăng ký',
+  PagesLocaleKey.profileAuthNameLabel: 'Họ và tên',
+  PagesLocaleKey.profileAuthConfirmPasswordLabel: 'Xác nhận mật khẩu',
+  PagesLocaleKey.profileAuthNameHint: 'Nhập họ tên của bạn',
+  PagesLocaleKey.profileAuthEmailHint: 'example@email.com',
+  PagesLocaleKey.profileAuthPasswordHint: 'Ít nhất 6 ký tự',
+  PagesLocaleKey.profileAuthConfirmPasswordHint: 'Nhập lại mật khẩu',
+  PagesLocaleKey.profileAuthNameFromProfile:
+      'Họ tên đã được lấy từ hồ sơ của bạn',
+  PagesLocaleKey.profileAuthLoginSuccess: 'Đăng nhập thành công!',
+  PagesLocaleKey.profileAuthRegisterSuccess: 'Đăng ký thành công!',
+  PagesLocaleKey.profileAuthSuccessSubtitle:
+      'Dữ liệu của bạn đã được bảo vệ an toàn',
+  PagesLocaleKey.profileAuthValidateNameRequired: 'Vui lòng nhập họ tên',
+  PagesLocaleKey.profileAuthValidateEmailRequired: 'Vui lòng nhập email',
+  PagesLocaleKey.profileAuthValidateEmailInvalid: 'Email không hợp lệ',
+  PagesLocaleKey.profileAuthValidatePasswordRequired: 'Vui lòng nhập mật khẩu',
+  PagesLocaleKey.profileAuthValidatePasswordMin:
+      'Mật khẩu phải có ít nhất 6 ký tự',
+  PagesLocaleKey.profileAuthValidateConfirmRequired:
+      'Vui lòng nhập lại mật khẩu',
+  PagesLocaleKey.profileAuthValidateConfirmMismatch: 'Mật khẩu không khớp',
+  PagesLocaleKey.profileAuthRegisterAction: 'Đăng ký ngay',
+  PagesLocaleKey.profileAuthProcessing: 'Đang xử lý...',
   PagesLocaleKey.profileMenuSettingsSubtitle: 'Tùy chỉnh ứng dụng',
   PagesLocaleKey.profileMenuPrivacySubtitle: 'Bảo mật và quyền riêng tư',
   PagesLocaleKey.profileMenuHelpSubtitle: 'Câu hỏi thường gặp',
@@ -532,4 +572,64 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.genericAdviceOne: 'Ưu tiên 1 hành động quan trọng trong ngày.',
   PagesLocaleKey.genericAdviceTwo: 'Giao tiếp rõ ràng, lắng nghe sâu.',
   PagesLocaleKey.genericAdviceThree: 'Giữ linh hoạt khi điều kiện thay đổi.',
+  PagesLocaleKey.adminTitle: 'Admin Ledger',
+  PagesLocaleKey.adminSubtitle:
+      'Quản lý release và nội dung thần số học dành cho đội content.',
+  PagesLocaleKey.adminLoginTitle: 'Đăng nhập quản trị',
+  PagesLocaleKey.adminLoginSubtitle:
+      'Dùng tài khoản Supabase đã được cấp quyền admin.',
+  PagesLocaleKey.adminEmailLabel: 'Email',
+  PagesLocaleKey.adminEmailHint: 'you@company.com',
+  PagesLocaleKey.adminPasswordLabel: 'Mật khẩu',
+  PagesLocaleKey.adminPasswordHint: 'Nhập mật khẩu',
+  PagesLocaleKey.adminLoginAction: 'Đăng nhập',
+  PagesLocaleKey.adminLogoutAction: 'Đăng xuất',
+  PagesLocaleKey.adminLocaleLabel: 'Ngôn ngữ dữ liệu',
+  PagesLocaleKey.adminReleaseLabel: 'Release',
+  PagesLocaleKey.adminContentTypeLabel: 'Loại nội dung',
+  PagesLocaleKey.adminSearchHint: 'Tìm theo type hoặc number key...',
+  PagesLocaleKey.adminRefreshAction: 'Tải lại',
+  PagesLocaleKey.adminPublishAction: 'Publish draft',
+  PagesLocaleKey.adminCreateDraftAction: 'Tạo draft mới',
+  PagesLocaleKey.adminCreateDraftTitle: 'Tạo release draft mới',
+  PagesLocaleKey.adminVersionLabel: 'Version',
+  PagesLocaleKey.adminVersionHint: 'mobile_assets_20260315_v13',
+  PagesLocaleKey.adminNotesLabel: 'Ghi chú',
+  PagesLocaleKey.adminNotesHint: 'Ghi chú release (không bắt buộc)',
+  PagesLocaleKey.adminCreateAction: 'Tạo',
+  PagesLocaleKey.adminContentsTitle: 'Danh sách content',
+  PagesLocaleKey.adminEmptyContents: 'Không có nội dung theo bộ lọc hiện tại.',
+  PagesLocaleKey.adminEditorTitle: 'Trình chỉnh sửa',
+  PagesLocaleKey.adminTypeLabel: 'Type',
+  PagesLocaleKey.adminNumberKeyLabel: 'Number key',
+  PagesLocaleKey.adminPayloadLabel: 'Payload JSON',
+  PagesLocaleKey.adminSaveAction: 'Lưu nội dung',
+  PagesLocaleKey.adminDraftTag: 'Release draft',
+  PagesLocaleKey.adminReadOnlyTag: 'Release chỉ đọc',
+  PagesLocaleKey.adminReleaseStatusActive: 'active',
+  PagesLocaleKey.adminReleaseStatusDraft: 'draft',
+  PagesLocaleKey.adminReleaseStatusArchived: 'archived',
+  PagesLocaleKey.adminMessageSaveSuccess: 'Lưu nội dung thành công.',
+  PagesLocaleKey.adminMessagePublishSuccess: 'Publish release thành công.',
+  PagesLocaleKey.adminMessageDraftSuccess: 'Tạo draft thành công.',
+  PagesLocaleKey.adminErrorNotConfigured:
+      'Bản build này chưa cấu hình Supabase.',
+  PagesLocaleKey.adminErrorForbidden:
+      'Tài khoản này chưa được cấp quyền admin.',
+  PagesLocaleKey.adminErrorUnauthorized:
+      'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
+  PagesLocaleKey.adminErrorGeneric: 'Thao tác thất bại. Vui lòng thử lại.',
+  PagesLocaleKey.adminErrorSelectRelease: 'Vui lòng chọn release trước.',
+  PagesLocaleKey.adminErrorReleaseNotDraft:
+      'Chỉ release draft mới có thể sửa hoặc publish.',
+  PagesLocaleKey.adminErrorMissingFields:
+      'Vui lòng nhập type và number key trước khi lưu.',
+  PagesLocaleKey.adminErrorInvalidJson:
+      'Payload JSON không hợp lệ. Vui lòng kiểm tra định dạng.',
+  PagesLocaleKey.adminErrorInvalidPayload:
+      'Payload chưa đạt điều kiện validate hiện tại.',
+  PagesLocaleKey.adminErrorDuplicateVersion:
+      'Version đã tồn tại. Hãy dùng version khác.',
+  PagesLocaleKey.adminErrorMissingVersion:
+      'Vui lòng nhập version trước khi tạo draft.',
 };

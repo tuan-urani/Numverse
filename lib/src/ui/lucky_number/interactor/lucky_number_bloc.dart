@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
-import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/ui/lucky_number/interactor/lucky_number_event.dart';
 import 'package:test/src/ui/lucky_number/interactor/lucky_number_state.dart';
 
@@ -10,22 +9,26 @@ class LuckyNumberBloc extends Bloc<LuckyNumberEvent, LuckyNumberState> {
   LuckyNumberBloc({
     required INumerologyContentRepository contentRepository,
     required String languageCode,
+    required int Function() luckyNumberProvider,
     DateTime Function()? nowProvider,
   }) : _contentRepository = contentRepository,
        _languageCode = languageCode,
+       _luckyNumberProvider = luckyNumberProvider,
        _nowProvider = nowProvider ?? DateTime.now,
        super(
          _buildState(
            now: (nowProvider ?? DateTime.now)(),
            contentRepository: contentRepository,
-           languageCode: languageCode,
-         ),
-       ) {
+            languageCode: languageCode,
+            luckyNumber: luckyNumberProvider(),
+          ),
+        ) {
     on<LuckyNumberRefreshed>(_onRefreshed);
   }
 
   final INumerologyContentRepository _contentRepository;
   final String _languageCode;
+  final int Function() _luckyNumberProvider;
   final DateTime Function() _nowProvider;
 
   void refresh() {
@@ -41,6 +44,7 @@ class LuckyNumberBloc extends Bloc<LuckyNumberEvent, LuckyNumberState> {
         now: _nowProvider(),
         contentRepository: _contentRepository,
         languageCode: _languageCode,
+        luckyNumber: _luckyNumberProvider(),
       ),
     );
   }
@@ -49,8 +53,8 @@ class LuckyNumberBloc extends Bloc<LuckyNumberEvent, LuckyNumberState> {
     required DateTime now,
     required INumerologyContentRepository contentRepository,
     required String languageCode,
+    required int luckyNumber,
   }) {
-    final int luckyNumber = NumerologyHelper.luckyNumber(now);
     final content = contentRepository.getLuckyNumberContent(
       number: luckyNumber,
       languageCode: languageCode,

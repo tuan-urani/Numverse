@@ -205,7 +205,47 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileCoreMissionLabel: 'Mission',
   PagesLocaleKey.profileCoreSoulLabel: 'Soul urge',
   PagesLocaleKey.profileGuestWarning:
-      'Not logged in yet - your data may be lost',
+      'Your data is currently local-only and may be lost. Sign up or sign in to back it up.',
+  PagesLocaleKey.profileGuestAuthAction: 'Sign up / Sign in',
+  PagesLocaleKey.profileGuestAuthTitle: 'Sign up / Sign in to back up',
+  PagesLocaleKey.profileGuestAuthSubtitle:
+      'Sync your profile to cloud so your data stays safe across devices.',
+  PagesLocaleKey.profileManageProfilesTitle: 'Manage profiles',
+  PagesLocaleKey.profileManageProfilesSubtitle:
+      'Select the active profile, add a new one, or remove unused profiles.',
+  PagesLocaleKey.profileManageProfilesAddHint:
+      'You can keep multiple profiles for yourself and people you care about.',
+  PagesLocaleKey.profileManageProfilesDeleteConfirm:
+      'Are you sure you want to delete this profile?',
+  PagesLocaleKey.profileAuthDialogTitle: 'Account authentication',
+  PagesLocaleKey.profileAuthDialogSubtitle:
+      'Sign in or sign up to protect your data',
+  PagesLocaleKey.profileAuthTabLogin: 'Sign in',
+  PagesLocaleKey.profileAuthTabRegister: 'Sign up',
+  PagesLocaleKey.profileAuthNameLabel: 'Full name',
+  PagesLocaleKey.profileAuthConfirmPasswordLabel: 'Confirm password',
+  PagesLocaleKey.profileAuthNameHint: 'Enter your full name',
+  PagesLocaleKey.profileAuthEmailHint: 'example@email.com',
+  PagesLocaleKey.profileAuthPasswordHint: 'At least 6 characters',
+  PagesLocaleKey.profileAuthConfirmPasswordHint: 'Re-enter password',
+  PagesLocaleKey.profileAuthNameFromProfile:
+      'Name was prefilled from your profile',
+  PagesLocaleKey.profileAuthLoginSuccess: 'Signed in successfully!',
+  PagesLocaleKey.profileAuthRegisterSuccess: 'Signed up successfully!',
+  PagesLocaleKey.profileAuthSuccessSubtitle:
+      'Your data is now safely protected',
+  PagesLocaleKey.profileAuthValidateNameRequired: 'Please enter your full name',
+  PagesLocaleKey.profileAuthValidateEmailRequired: 'Please enter your email',
+  PagesLocaleKey.profileAuthValidateEmailInvalid: 'Invalid email address',
+  PagesLocaleKey.profileAuthValidatePasswordRequired:
+      'Please enter your password',
+  PagesLocaleKey.profileAuthValidatePasswordMin:
+      'Password must be at least 6 characters',
+  PagesLocaleKey.profileAuthValidateConfirmRequired:
+      'Please confirm your password',
+  PagesLocaleKey.profileAuthValidateConfirmMismatch: 'Passwords do not match',
+  PagesLocaleKey.profileAuthRegisterAction: 'Sign up now',
+  PagesLocaleKey.profileAuthProcessing: 'Processing...',
   PagesLocaleKey.profileMenuSettingsSubtitle: 'Customize the app',
   PagesLocaleKey.profileMenuPrivacySubtitle: 'Security and privacy controls',
   PagesLocaleKey.profileMenuHelpSubtitle: 'Frequently asked questions',
@@ -535,4 +575,64 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.genericAdviceOne: 'Prioritize one meaningful action today.',
   PagesLocaleKey.genericAdviceTwo: 'Communicate clearly and listen deeply.',
   PagesLocaleKey.genericAdviceThree: 'Stay flexible when conditions change.',
+  PagesLocaleKey.adminTitle: 'Ledger Admin',
+  PagesLocaleKey.adminSubtitle:
+      'Manage numerology content releases for non-technical editors.',
+  PagesLocaleKey.adminLoginTitle: 'Admin sign in',
+  PagesLocaleKey.adminLoginSubtitle:
+      'Use your Supabase account with admin access.',
+  PagesLocaleKey.adminEmailLabel: 'Email',
+  PagesLocaleKey.adminEmailHint: 'you@company.com',
+  PagesLocaleKey.adminPasswordLabel: 'Password',
+  PagesLocaleKey.adminPasswordHint: 'Enter your password',
+  PagesLocaleKey.adminLoginAction: 'Sign in',
+  PagesLocaleKey.adminLogoutAction: 'Sign out',
+  PagesLocaleKey.adminLocaleLabel: 'Locale',
+  PagesLocaleKey.adminReleaseLabel: 'Release',
+  PagesLocaleKey.adminContentTypeLabel: 'Content type',
+  PagesLocaleKey.adminSearchHint: 'Search by type or number key...',
+  PagesLocaleKey.adminRefreshAction: 'Refresh',
+  PagesLocaleKey.adminPublishAction: 'Publish draft',
+  PagesLocaleKey.adminCreateDraftAction: 'Create draft',
+  PagesLocaleKey.adminCreateDraftTitle: 'Create new draft release',
+  PagesLocaleKey.adminVersionLabel: 'Version',
+  PagesLocaleKey.adminVersionHint: 'mobile_assets_20260315_v13',
+  PagesLocaleKey.adminNotesLabel: 'Notes',
+  PagesLocaleKey.adminNotesHint: 'Optional release notes',
+  PagesLocaleKey.adminCreateAction: 'Create',
+  PagesLocaleKey.adminContentsTitle: 'Contents',
+  PagesLocaleKey.adminEmptyContents: 'No content found for current filter.',
+  PagesLocaleKey.adminEditorTitle: 'Editor',
+  PagesLocaleKey.adminTypeLabel: 'Type',
+  PagesLocaleKey.adminNumberKeyLabel: 'Number key',
+  PagesLocaleKey.adminPayloadLabel: 'Payload JSON',
+  PagesLocaleKey.adminSaveAction: 'Save content',
+  PagesLocaleKey.adminDraftTag: 'Draft release',
+  PagesLocaleKey.adminReadOnlyTag: 'Read-only release',
+  PagesLocaleKey.adminReleaseStatusActive: 'active',
+  PagesLocaleKey.adminReleaseStatusDraft: 'draft',
+  PagesLocaleKey.adminReleaseStatusArchived: 'archived',
+  PagesLocaleKey.adminMessageSaveSuccess: 'Content saved successfully.',
+  PagesLocaleKey.adminMessagePublishSuccess: 'Release published successfully.',
+  PagesLocaleKey.adminMessageDraftSuccess: 'Draft created successfully.',
+  PagesLocaleKey.adminErrorNotConfigured:
+      'Supabase is not configured in this build.',
+  PagesLocaleKey.adminErrorForbidden:
+      'This account does not have admin permission.',
+  PagesLocaleKey.adminErrorUnauthorized:
+      'Session is invalid. Please sign in again.',
+  PagesLocaleKey.adminErrorGeneric: 'Action failed. Please try again.',
+  PagesLocaleKey.adminErrorSelectRelease: 'Please select a release first.',
+  PagesLocaleKey.adminErrorReleaseNotDraft:
+      'Only draft releases can be edited or published.',
+  PagesLocaleKey.adminErrorMissingFields:
+      'Please fill type and number key before saving.',
+  PagesLocaleKey.adminErrorInvalidJson:
+      'Payload JSON is invalid. Please check format.',
+  PagesLocaleKey.adminErrorInvalidPayload:
+      'Payload does not satisfy current schema validation.',
+  PagesLocaleKey.adminErrorDuplicateVersion:
+      'Version already exists. Use another version string.',
+  PagesLocaleKey.adminErrorMissingVersion:
+      'Please enter version before creating draft.',
 };

@@ -103,6 +103,10 @@ class TodayLocaleKey {
       'today_profile_switcher_add_hint';
   static const String todayProfileSwitcherDeleteConfirm =
       'today_profile_switcher_delete_confirm';
+  static const String todayViewingLabel = 'today_viewing_label';
+  static const String todayViewingGuest = 'today_viewing_guest';
+  static const String todayQuickSwitchTitle = 'today_quick_switch_title';
+  static const String todayQuickSwitchHint = 'today_quick_switch_hint';
 
   static const String todayPersonalHeroTitle = 'today_personal_hero_title';
   static const String todayPersonalHeroBody = 'today_personal_hero_body';

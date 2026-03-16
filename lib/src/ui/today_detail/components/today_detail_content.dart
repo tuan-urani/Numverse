@@ -24,7 +24,10 @@ class TodayDetailContent extends StatelessWidget {
       children: <Widget>[
         _AnimatedReveal(
           delay: 0,
-          child: _PersonalDayCard(personalDayNumber: personalDayNumber),
+          child: _PersonalDayCard(
+            personalDayNumber: personalDayNumber,
+            content: personalContent,
+          ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
@@ -35,6 +38,11 @@ class TodayDetailContent extends StatelessWidget {
         _AnimatedReveal(
           delay: 160,
           child: _SuggestionCard(content: personalContent),
+        ),
+        const SizedBox(height: 24),
+        _AnimatedReveal(
+          delay: 220,
+          child: _DoAvoidCard(content: personalContent),
         ),
         const SizedBox(height: 12),
       ],
@@ -69,12 +77,18 @@ class _AnimatedReveal extends StatelessWidget {
 }
 
 class _PersonalDayCard extends StatelessWidget {
-  const _PersonalDayCard({required this.personalDayNumber});
+  const _PersonalDayCard({
+    required this.personalDayNumber,
+    required this.content,
+  });
 
   final int personalDayNumber;
+  final NumerologyTodayPersonalNumberContent content;
 
   @override
   Widget build(BuildContext context) {
+    final String title = _resolveTitle();
+    final String subtitle = _resolveSubtitle();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -100,19 +114,44 @@ class _PersonalDayCard extends StatelessWidget {
           _PulsingDayNumber(personalDayNumber: personalDayNumber),
           16.height,
           Text(
-            LocaleKey.todayDetailDayCardTitle.tr,
+            title,
             textAlign: TextAlign.center,
             style: AppStyles.h4(fontWeight: FontWeight.w600),
           ),
           4.height,
           Text(
-            LocaleKey.todayDetailDayCardSubtitle.tr,
+            subtitle,
             textAlign: TextAlign.center,
             style: AppStyles.bodySmall(color: AppColors.textMuted),
           ),
         ],
       ),
     );
+  }
+
+  String _resolveTitle() {
+    if (content.dayCardTitle.isNotEmpty) {
+      return content.dayCardTitle.replaceAll('{number}', '$personalDayNumber');
+    }
+    final String fallback = LocaleKey.todayDetailDayCardTitle.tr;
+    final String replaced = fallback.replaceAll(
+      RegExp(r'\d+'),
+      '$personalDayNumber',
+    );
+    if (replaced != fallback) {
+      return replaced;
+    }
+    return '$fallback $personalDayNumber';
+  }
+
+  String _resolveSubtitle() {
+    if (content.dayCardSubtitle.isNotEmpty) {
+      return content.dayCardSubtitle;
+    }
+    if (content.dailyRhythm.isNotEmpty) {
+      return content.dailyRhythm;
+    }
+    return LocaleKey.todayDetailDayCardSubtitle.tr;
   }
 }
 
@@ -330,6 +369,130 @@ class _DetailCard extends StatelessWidget {
         border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
       ),
       child: child,
+    );
+  }
+}
+
+class _DoAvoidCard extends StatelessWidget {
+  const _DoAvoidCard({required this.content});
+
+  final NumerologyTodayPersonalNumberContent content;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> shouldDo = _resolveShouldDo();
+    final List<String> shouldAvoid = _resolveShouldAvoid();
+    return Column(
+      children: <Widget>[
+        _ActionListCard(
+          title: LocaleKey.todayActionDo.tr,
+          items: shouldDo,
+          accentColor: AppColors.richGold,
+          icon: Icons.check_circle_rounded,
+        ),
+        12.height,
+        _ActionListCard(
+          title: LocaleKey.todayActionAvoid.tr,
+          items: shouldAvoid,
+          accentColor: AppColors.energyPink,
+          icon: Icons.block_rounded,
+        ),
+      ],
+    );
+  }
+
+  List<String> _resolveShouldDo() {
+    if (content.shouldDoActions.isNotEmpty) {
+      return content.shouldDoActions;
+    }
+    if (content.hintActions.length >= 2) {
+      return content.hintActions.take(2).toList(growable: false);
+    }
+    return <String>[
+      LocaleKey.todayActionDoOne.tr,
+      LocaleKey.todayActionDoTwo.tr,
+    ];
+  }
+
+  List<String> _resolveShouldAvoid() {
+    if (content.shouldAvoidActions.isNotEmpty) {
+      return content.shouldAvoidActions;
+    }
+    return <String>[
+      LocaleKey.todayActionAvoidOne.tr,
+      LocaleKey.todayActionAvoidTwo.tr,
+    ];
+  }
+}
+
+class _ActionListCard extends StatelessWidget {
+  const _ActionListCard({
+    required this.title,
+    required this.items,
+    required this.accentColor,
+    required this.icon,
+  });
+
+  final String title;
+  final List<String> items;
+  final Color accentColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.card.withValues(alpha: 0.52),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accentColor.withValues(alpha: 0.34)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(icon, color: accentColor, size: 18),
+              8.width,
+              Text(
+                title,
+                style: AppStyles.h5(
+                  color: accentColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          12.height,
+          for (int index = 0; index < items.length; index++) ...<Widget>[
+            if (index > 0) 10.height,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  margin: const EdgeInsets.only(top: 7),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accentColor.withValues(alpha: 0.95),
+                  ),
+                ),
+                10.width,
+                Expanded(
+                  child: Text(
+                    items[index],
+                    style: AppStyles.bodyMedium(
+                      color: AppColors.textPrimary.withValues(alpha: 0.92),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

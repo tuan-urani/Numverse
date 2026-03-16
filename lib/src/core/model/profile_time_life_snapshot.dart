@@ -43,6 +43,8 @@ class ProfileTimeLifeSnapshot {
   static const String guestProfileId = '__guest__';
 
   static const String universalDayMetric = 'universal_day';
+  static const String universalMonthMetric = 'universal_month_number';
+  static const String universalYearMetric = 'universal_year_number';
   static const String luckyNumberMetric = 'lucky_number';
   static const String dailyMessageNumberMetric = 'daily_message_number';
   static const String personalDayMetric = 'personal_day_number';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
@@ -14,9 +15,22 @@ import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class LoginForm extends StatelessWidget {
-  const LoginForm({required this.onGuest, super.key});
+  const LoginForm({
+    super.key,
+    this.onGuest,
+    this.showGuestAction = true,
+    this.title,
+    this.subtitle,
+    this.submitLabel,
+    this.onLoginSuccess,
+  });
 
-  final VoidCallback onGuest;
+  final VoidCallback? onGuest;
+  final bool showGuestAction;
+  final String? title;
+  final String? subtitle;
+  final String? submitLabel;
+  final VoidCallback? onLoginSuccess;
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +43,13 @@ class LoginForm extends StatelessWidget {
       builder: (BuildContext context, LoginState state) {
         return Column(
           children: <Widget>[
-            AppGlowText(text: LocaleKey.loginTitle.tr, style: AppStyles.h2()),
+            AppGlowText(
+              text: title ?? LocaleKey.loginTitle.tr,
+              style: AppStyles.h2(),
+            ),
             8.height,
             Text(
-              LocaleKey.loginSubtitle.tr,
+              subtitle ?? LocaleKey.loginSubtitle.tr,
               textAlign: TextAlign.center,
               style: AppStyles.bodyMedium(color: AppColors.textSecondary),
             ),
@@ -64,7 +81,7 @@ class LoginForm extends StatelessWidget {
                   AppPrimaryButton(
                     label: state.submitting
                         ? LocaleKey.commonLoading.tr
-                        : LocaleKey.loginAction.tr,
+                        : (submitLabel ?? LocaleKey.loginAction.tr),
                     onPressed: state.canSubmit
                         ? () async {
                             final MainSessionBloc sessionCubit =
@@ -77,10 +94,14 @@ class LoginForm extends StatelessWidget {
                                   name: state.email.split('@').first,
                                 );
                               });
-                            } catch (_) {
+                              onLoginSuccess?.call();
+                            } catch (error) {
+                              if (!context.mounted) {
+                                return;
+                              }
                               Get.snackbar(
                                 LocaleKey.commonError.tr,
-                                LocaleKey.stateErrorSubtitle.tr,
+                                _resolveErrorMessage(error),
                                 backgroundColor: AppColors.deepViolet
                                     .withValues(alpha: 0.9),
                                 colorText: AppColors.textPrimary,
@@ -91,15 +112,17 @@ class LoginForm extends StatelessWidget {
                         : null,
                     leading: const Icon(Icons.login, color: AppColors.midnight),
                   ),
-                  12.height,
-                  AppPrimaryButton(
-                    label: LocaleKey.loginGuestAction.tr,
-                    onPressed: onGuest,
-                    leading: const Icon(
-                      Icons.auto_awesome,
-                      color: AppColors.midnight,
+                  if (showGuestAction) ...<Widget>[
+                    12.height,
+                    AppPrimaryButton(
+                      label: LocaleKey.loginGuestAction.tr,
+                      onPressed: onGuest,
+                      leading: const Icon(
+                        Icons.auto_awesome,
+                        color: AppColors.midnight,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -107,6 +130,29 @@ class LoginForm extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _resolveErrorMessage(Object error) {
+    if (error is DioException) {
+      final dynamic raw = error.response?.data;
+      if (raw is Map<String, dynamic>) {
+        final String message =
+            (raw['msg'] as String? ??
+                    raw['message'] as String? ??
+                    raw['error_description'] as String? ??
+                    raw['error'] as String? ??
+                    '')
+                .trim();
+        if (message.isNotEmpty) {
+          return message;
+        }
+      }
+      final String dioMessage = (error.message ?? '').trim();
+      if (dioMessage.isNotEmpty) {
+        return dioMessage;
+      }
+    }
+    return LocaleKey.stateErrorSubtitle.tr;
   }
 }
 

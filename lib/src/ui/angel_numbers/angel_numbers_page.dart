@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
-import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
 import 'package:test/src/ui/angel_numbers/components/angel_numbers_content.dart';
 import 'package:test/src/ui/angel_numbers/components/angel_numbers_header.dart';
 import 'package:test/src/ui/angel_numbers/interactor/angel_numbers_bloc.dart';
@@ -15,14 +14,7 @@ class AngelNumbersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AngelNumbersBloc bloc = Get.isRegistered<AngelNumbersBloc>()
-        ? Get.find<AngelNumbersBloc>()
-        : Get.put<AngelNumbersBloc>(
-            AngelNumbersBloc(
-              contentRepository: Get.find<INumerologyContentRepository>(),
-              languageCode: Get.locale?.languageCode ?? 'vi',
-            ),
-          );
+    final AngelNumbersBloc bloc = Get.find<AngelNumbersBloc>();
 
     return AppMysticalScaffold(
       child: SafeArea(

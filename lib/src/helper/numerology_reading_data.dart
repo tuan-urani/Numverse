@@ -443,6 +443,15 @@ class NumerologyReadingData {
           'Xây dự án quy mô lớn, tạo di sản tổ chức và giá trị cộng đồng bền vững.',
       advice: 'Kết hợp tầm nhìn xa với kế hoạch thực thi chi tiết, bền bỉ.',
     ),
+    33: LifeCycleContent(
+      theme: 'Phụng sự & Chữa lành',
+      description:
+          'Giai đoạn Master 33 nhấn mạnh phụng sự cộng đồng bằng tình thương, trí tuệ và trách nhiệm tinh thần.',
+      opportunities:
+          'Dẫn dắt các hoạt động giáo dục, chăm sóc, chữa lành hoặc xây nền tảng hỗ trợ dài hạn cho người khác.',
+      advice:
+          'Cho đi có ranh giới, giữ cân bằng năng lượng cá nhân và chuyển lý tưởng thành hành động thực tế từng bước.',
+    ),
   };
 
   static const Map<int, LifeCycleContent> challenges = <int, LifeCycleContent>{

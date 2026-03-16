@@ -256,6 +256,12 @@ class LocaleKey {
       TodayLocaleKey.todayProfileSwitcherAddHint;
   static const String todayProfileSwitcherDeleteConfirm =
       TodayLocaleKey.todayProfileSwitcherDeleteConfirm;
+  static const String todayViewingLabel = TodayLocaleKey.todayViewingLabel;
+  static const String todayViewingGuest = TodayLocaleKey.todayViewingGuest;
+  static const String todayQuickSwitchTitle =
+      TodayLocaleKey.todayQuickSwitchTitle;
+  static const String todayQuickSwitchHint =
+      TodayLocaleKey.todayQuickSwitchHint;
   static const String todayPersonalHeroTitle =
       TodayLocaleKey.todayPersonalHeroTitle;
   static const String todayPersonalHeroBody =
@@ -602,6 +608,64 @@ class LocaleKey {
   static const String profileCoreSoulLabel =
       PagesLocaleKey.profileCoreSoulLabel;
   static const String profileGuestWarning = PagesLocaleKey.profileGuestWarning;
+  static const String profileGuestAuthAction =
+      PagesLocaleKey.profileGuestAuthAction;
+  static const String profileGuestAuthTitle =
+      PagesLocaleKey.profileGuestAuthTitle;
+  static const String profileGuestAuthSubtitle =
+      PagesLocaleKey.profileGuestAuthSubtitle;
+  static const String profileManageProfilesTitle =
+      PagesLocaleKey.profileManageProfilesTitle;
+  static const String profileManageProfilesSubtitle =
+      PagesLocaleKey.profileManageProfilesSubtitle;
+  static const String profileManageProfilesAddHint =
+      PagesLocaleKey.profileManageProfilesAddHint;
+  static const String profileManageProfilesDeleteConfirm =
+      PagesLocaleKey.profileManageProfilesDeleteConfirm;
+  static const String profileAuthDialogTitle =
+      PagesLocaleKey.profileAuthDialogTitle;
+  static const String profileAuthDialogSubtitle =
+      PagesLocaleKey.profileAuthDialogSubtitle;
+  static const String profileAuthTabLogin = PagesLocaleKey.profileAuthTabLogin;
+  static const String profileAuthTabRegister =
+      PagesLocaleKey.profileAuthTabRegister;
+  static const String profileAuthNameLabel =
+      PagesLocaleKey.profileAuthNameLabel;
+  static const String profileAuthConfirmPasswordLabel =
+      PagesLocaleKey.profileAuthConfirmPasswordLabel;
+  static const String profileAuthNameHint = PagesLocaleKey.profileAuthNameHint;
+  static const String profileAuthEmailHint =
+      PagesLocaleKey.profileAuthEmailHint;
+  static const String profileAuthPasswordHint =
+      PagesLocaleKey.profileAuthPasswordHint;
+  static const String profileAuthConfirmPasswordHint =
+      PagesLocaleKey.profileAuthConfirmPasswordHint;
+  static const String profileAuthNameFromProfile =
+      PagesLocaleKey.profileAuthNameFromProfile;
+  static const String profileAuthLoginSuccess =
+      PagesLocaleKey.profileAuthLoginSuccess;
+  static const String profileAuthRegisterSuccess =
+      PagesLocaleKey.profileAuthRegisterSuccess;
+  static const String profileAuthSuccessSubtitle =
+      PagesLocaleKey.profileAuthSuccessSubtitle;
+  static const String profileAuthValidateNameRequired =
+      PagesLocaleKey.profileAuthValidateNameRequired;
+  static const String profileAuthValidateEmailRequired =
+      PagesLocaleKey.profileAuthValidateEmailRequired;
+  static const String profileAuthValidateEmailInvalid =
+      PagesLocaleKey.profileAuthValidateEmailInvalid;
+  static const String profileAuthValidatePasswordRequired =
+      PagesLocaleKey.profileAuthValidatePasswordRequired;
+  static const String profileAuthValidatePasswordMin =
+      PagesLocaleKey.profileAuthValidatePasswordMin;
+  static const String profileAuthValidateConfirmRequired =
+      PagesLocaleKey.profileAuthValidateConfirmRequired;
+  static const String profileAuthValidateConfirmMismatch =
+      PagesLocaleKey.profileAuthValidateConfirmMismatch;
+  static const String profileAuthRegisterAction =
+      PagesLocaleKey.profileAuthRegisterAction;
+  static const String profileAuthProcessing =
+      PagesLocaleKey.profileAuthProcessing;
   static const String profileMenuSettingsSubtitle =
       PagesLocaleKey.profileMenuSettingsSubtitle;
   static const String profileMenuPrivacySubtitle =
@@ -1011,6 +1075,74 @@ class LocaleKey {
   static const String genericAdviceOne = PagesLocaleKey.genericAdviceOne;
   static const String genericAdviceTwo = PagesLocaleKey.genericAdviceTwo;
   static const String genericAdviceThree = PagesLocaleKey.genericAdviceThree;
+
+  static const String adminTitle = PagesLocaleKey.adminTitle;
+  static const String adminSubtitle = PagesLocaleKey.adminSubtitle;
+  static const String adminLoginTitle = PagesLocaleKey.adminLoginTitle;
+  static const String adminLoginSubtitle = PagesLocaleKey.adminLoginSubtitle;
+  static const String adminEmailLabel = PagesLocaleKey.adminEmailLabel;
+  static const String adminEmailHint = PagesLocaleKey.adminEmailHint;
+  static const String adminPasswordLabel = PagesLocaleKey.adminPasswordLabel;
+  static const String adminPasswordHint = PagesLocaleKey.adminPasswordHint;
+  static const String adminLoginAction = PagesLocaleKey.adminLoginAction;
+  static const String adminLogoutAction = PagesLocaleKey.adminLogoutAction;
+  static const String adminLocaleLabel = PagesLocaleKey.adminLocaleLabel;
+  static const String adminReleaseLabel = PagesLocaleKey.adminReleaseLabel;
+  static const String adminContentTypeLabel =
+      PagesLocaleKey.adminContentTypeLabel;
+  static const String adminSearchHint = PagesLocaleKey.adminSearchHint;
+  static const String adminRefreshAction = PagesLocaleKey.adminRefreshAction;
+  static const String adminPublishAction = PagesLocaleKey.adminPublishAction;
+  static const String adminCreateDraftAction =
+      PagesLocaleKey.adminCreateDraftAction;
+  static const String adminCreateDraftTitle =
+      PagesLocaleKey.adminCreateDraftTitle;
+  static const String adminVersionLabel = PagesLocaleKey.adminVersionLabel;
+  static const String adminVersionHint = PagesLocaleKey.adminVersionHint;
+  static const String adminNotesLabel = PagesLocaleKey.adminNotesLabel;
+  static const String adminNotesHint = PagesLocaleKey.adminNotesHint;
+  static const String adminCreateAction = PagesLocaleKey.adminCreateAction;
+  static const String adminContentsTitle = PagesLocaleKey.adminContentsTitle;
+  static const String adminEmptyContents = PagesLocaleKey.adminEmptyContents;
+  static const String adminEditorTitle = PagesLocaleKey.adminEditorTitle;
+  static const String adminTypeLabel = PagesLocaleKey.adminTypeLabel;
+  static const String adminNumberKeyLabel = PagesLocaleKey.adminNumberKeyLabel;
+  static const String adminPayloadLabel = PagesLocaleKey.adminPayloadLabel;
+  static const String adminSaveAction = PagesLocaleKey.adminSaveAction;
+  static const String adminDraftTag = PagesLocaleKey.adminDraftTag;
+  static const String adminReadOnlyTag = PagesLocaleKey.adminReadOnlyTag;
+  static const String adminReleaseStatusActive =
+      PagesLocaleKey.adminReleaseStatusActive;
+  static const String adminReleaseStatusDraft =
+      PagesLocaleKey.adminReleaseStatusDraft;
+  static const String adminReleaseStatusArchived =
+      PagesLocaleKey.adminReleaseStatusArchived;
+  static const String adminMessageSaveSuccess =
+      PagesLocaleKey.adminMessageSaveSuccess;
+  static const String adminMessagePublishSuccess =
+      PagesLocaleKey.adminMessagePublishSuccess;
+  static const String adminMessageDraftSuccess =
+      PagesLocaleKey.adminMessageDraftSuccess;
+  static const String adminErrorNotConfigured =
+      PagesLocaleKey.adminErrorNotConfigured;
+  static const String adminErrorForbidden = PagesLocaleKey.adminErrorForbidden;
+  static const String adminErrorUnauthorized =
+      PagesLocaleKey.adminErrorUnauthorized;
+  static const String adminErrorGeneric = PagesLocaleKey.adminErrorGeneric;
+  static const String adminErrorSelectRelease =
+      PagesLocaleKey.adminErrorSelectRelease;
+  static const String adminErrorReleaseNotDraft =
+      PagesLocaleKey.adminErrorReleaseNotDraft;
+  static const String adminErrorMissingFields =
+      PagesLocaleKey.adminErrorMissingFields;
+  static const String adminErrorInvalidJson =
+      PagesLocaleKey.adminErrorInvalidJson;
+  static const String adminErrorInvalidPayload =
+      PagesLocaleKey.adminErrorInvalidPayload;
+  static const String adminErrorDuplicateVersion =
+      PagesLocaleKey.adminErrorDuplicateVersion;
+  static const String adminErrorMissingVersion =
+      PagesLocaleKey.adminErrorMissingVersion;
 
   // Legacy compatibility keys
   static const String homeTitle = MainLocaleKey.mainTabToday;

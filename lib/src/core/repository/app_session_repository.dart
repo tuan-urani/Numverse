@@ -36,7 +36,7 @@ class LocalAppSessionRepository implements IAppSessionRepository {
 
   @override
   Future<void> clear() async {
-    await _appShared.clearSessionSnapshot();
+    await _appShared.clearAll();
   }
 
   void _logSnapshotChanged(AppSessionSnapshot snapshot) {

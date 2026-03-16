@@ -83,6 +83,11 @@ final Map<String, String> todayEn = <String, String>{
       'Add other people profiles for more readings',
   TodayLocaleKey.todayProfileSwitcherDeleteConfirm:
       'Are you sure you want to delete this profile?',
+  TodayLocaleKey.todayViewingLabel: 'Viewing',
+  TodayLocaleKey.todayViewingGuest: 'Guest',
+  TodayLocaleKey.todayQuickSwitchTitle: 'Switch profile',
+  TodayLocaleKey.todayQuickSwitchHint:
+      'Quickly change the profile currently shown on Today',
   TodayLocaleKey.todayPersonalHeroTitle: 'Your guiding number today',
   TodayLocaleKey.todayPersonalHeroBody:
       'This is a day to slow down, focus and communicate with clarity.',

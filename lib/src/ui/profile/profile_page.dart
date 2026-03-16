@@ -9,6 +9,8 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/profile/components/profile_header.dart';
 import 'package:test/src/ui/profile/components/profile_identity_card.dart';
+import 'package:test/src/ui/profile/components/profile_auth_dialog.dart';
+import 'package:test/src/ui/profile/components/profile_manage_bottom_sheet.dart';
 import 'package:test/src/ui/profile/components/profile_reading_section.dart';
 import 'package:test/src/ui/profile/components/profile_settings_bottom_sheet.dart';
 import 'package:test/src/ui/profile/interactor/profile_state.dart';
@@ -56,7 +58,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     onOpenSettings: () => _showSettingsSheet(context, state),
                   ),
                   20.height,
-                  ProfileIdentityCard(sessionState: state),
+                  ProfileIdentityCard(
+                    sessionState: state,
+                    onTapAuthCta: () => _showAuthDialog(context),
+                    onTapManageProfiles: () => _showProfileManageSheet(context),
+                  ),
                   20.height,
                   ProfileReadingSection(
                     sections: _buildReadingSections(),
@@ -86,6 +92,14 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _showAuthDialog(BuildContext context) async {
+    await ProfileAuthDialog.show(context);
+  }
+
+  Future<void> _showProfileManageSheet(BuildContext context) async {
+    await ProfileManageBottomSheet.show(context, sessionBloc: _sessionBloc);
+  }
+
   Future<void> _showSettingsSheet(
     BuildContext context,
     MainSessionState state,
@@ -110,7 +124,10 @@ class _ProfilePageState extends State<ProfilePage> {
         if (!mounted) {
           return;
         }
-        Get.offAllNamed(AppPages.main);
+        Get.offAllNamed(
+          AppPages.splash,
+          arguments: <String, dynamic>{'skipOnboarding': true},
+        );
       },
     );
   }
@@ -189,17 +206,17 @@ class _ProfilePageState extends State<ProfilePage> {
             AppColors.energyTeal.withValues(alpha: 0.06),
           ],
         ),
-        ProfileReadingSectionItem(
-          id: 'portrait',
-          route: AppPages.personalPortrait,
-          icon: Icons.account_circle_rounded,
-          title: LocaleKey.readingPortraitTitle.tr,
-          description: LocaleKey.readingPortraitBody.tr,
-          lockedDescription: LocaleKey.readingPortraitBody.tr,
-          gradient: <Color>[
-            AppColors.richGold.withValues(alpha: 0.2),
-            AppColors.energyPurple.withValues(alpha: 0.08),
-          ],
-        ),
+        // ProfileReadingSectionItem(
+        //   id: 'portrait',
+        //   route: AppPages.personalPortrait,
+        //   icon: Icons.account_circle_rounded,
+        //   title: LocaleKey.readingPortraitTitle.tr,
+        //   description: LocaleKey.readingPortraitBody.tr,
+        //   lockedDescription: LocaleKey.readingPortraitBody.tr,
+        //   gradient: <Color>[
+        //     AppColors.richGold.withValues(alpha: 0.2),
+        //     AppColors.energyPurple.withValues(alpha: 0.08),
+        //   ],
+        // ),
       ];
 }

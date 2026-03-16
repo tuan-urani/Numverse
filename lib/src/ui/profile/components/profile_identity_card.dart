@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/locale/locale_key.dart';
@@ -10,9 +11,16 @@ import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class ProfileIdentityCard extends StatelessWidget {
-  const ProfileIdentityCard({required this.sessionState, super.key});
+  const ProfileIdentityCard({
+    required this.sessionState,
+    this.onTapAuthCta,
+    this.onTapManageProfiles,
+    super.key,
+  });
 
   final MainSessionState sessionState;
+  final VoidCallback? onTapAuthCta;
+  final VoidCallback? onTapManageProfiles;
 
   @override
   Widget build(BuildContext context) {
@@ -24,21 +32,31 @@ class ProfileIdentityCard extends StatelessWidget {
         ? _formatDate(sessionState.currentProfile!.birthDate)
         : LocaleKey.profileBirthDatePlaceholder.tr;
     final String avatarLabel = hasProfile ? profileName.characters.first : '?';
+    final ProfileLifeBasedSnapshot? lifeBasedSnapshot = hasProfile
+        ? sessionState.lifeBasedByProfileId[sessionState.currentProfile!.id]
+        : null;
 
     final int lifePathNumber = hasProfile
-        ? NumerologyHelper.getLifePathNumber(
-            sessionState.currentProfile!.birthDate,
-          )
+        ? lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.lifePathMetric) ??
+              NumerologyHelper.getLifePathNumber(
+                sessionState.currentProfile!.birthDate,
+              )
         : 0;
     final int soulUrgeNumber = hasProfile
-        ? NumerologyHelper.getSoulUrgeNumber(sessionState.currentProfile!.name)
+        ? lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.soulUrgeMetric) ??
+              NumerologyHelper.getSoulUrgeNumber(
+                sessionState.currentProfile!.name,
+              )
         : 0;
     final int missionNumber = hasProfile
-        ? NumerologyHelper.getMissionNumber(
-            sessionState.currentProfile!.birthDate,
-            sessionState.currentProfile!.name,
-          )
+        ? lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.missionMetric) ??
+              NumerologyHelper.getMissionNumber(
+                sessionState.currentProfile!.birthDate,
+                sessionState.currentProfile!.name,
+              )
         : 0;
+    final bool showGuestBackupWarning =
+        hasProfile && !sessionState.isAuthenticated;
 
     return AppMysticalCard(
       padding: EdgeInsets.zero,
@@ -50,81 +68,75 @@ class ProfileIdentityCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  _AvatarBadge(label: avatarLabel.toUpperCase()),
-                  16.width,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              _TopProfileSection(
+                avatarLabel: avatarLabel.toUpperCase(),
+                profileName: profileName,
+                birthDate: birthDate,
+                showPlanTag: sessionState.isAuthenticated && hasProfile,
+                soulPoints: sessionState.soulPoints,
+                onTap: onTapManageProfiles,
+              ),
+              12.height,
+              if (showGuestBackupWarning) ...<Widget>[
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                    child: Row(
                       children: <Widget>[
-                        Text(
-                          profileName,
-                          style: AppStyles.h4(fontWeight: FontWeight.w600),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 18,
+                          color: AppColors.error,
                         ),
-                        2.height,
-                        Text(
-                          birthDate,
-                          style: AppStyles.bodySmall(
-                            color: AppColors.textMuted,
+                        8.width,
+                        Expanded(
+                          child: Text(
+                            LocaleKey.profileGuestWarning.tr,
+                            style: AppStyles.caption(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                        8.height,
-                        Row(
-                          children: <Widget>[
-                            if (sessionState.isAuthenticated &&
-                                hasProfile) ...<Widget>[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textMuted.withValues(
-                                    alpha: 0.16,
-                                  ),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: AppColors.border.withValues(
-                                      alpha: 0.55,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  LocaleKey.profilePlanFreeTag.tr,
-                                  style: AppStyles.caption(
-                                    color: AppColors.textMuted,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              8.width,
-                            ],
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 13,
+                        8.width,
+                        TextButton(
+                          onPressed: onTapAuthCta,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.richGold,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            side: BorderSide(
+                              color: AppColors.richGold.withValues(alpha: 0.6),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            LocaleKey.profileGuestAuthAction.tr,
+                            style: AppStyles.caption(
                               color: AppColors.richGold,
+                              fontWeight: FontWeight.w700,
                             ),
-                            4.width,
-                            Text(
-                              LocaleKey.profileSoulPointsLabel.trParams(
-                                <String, String>{
-                                  'points': '${sessionState.soulPoints}',
-                                },
-                              ),
-                              style: AppStyles.caption(
-                                color: AppColors.richGold,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-              12.height,
+                ),
+                12.height,
+              ],
               Container(
                 decoration: BoxDecoration(
                   border: Border(
@@ -168,6 +180,125 @@ class ProfileIdentityCard extends StatelessWidget {
     final String month = value.month.toString().padLeft(2, '0');
     final String year = value.year.toString();
     return '$day/$month/$year';
+  }
+}
+
+class _TopProfileSection extends StatelessWidget {
+  const _TopProfileSection({
+    required this.avatarLabel,
+    required this.profileName,
+    required this.birthDate,
+    required this.showPlanTag,
+    required this.soulPoints,
+    required this.onTap,
+  });
+
+  final String avatarLabel;
+  final String profileName;
+  final String birthDate;
+  final bool showPlanTag;
+  final int soulPoints;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget content = Row(
+      children: <Widget>[
+        _AvatarBadge(label: avatarLabel),
+        16.width,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      profileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppStyles.h4(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  if (onTap != null) ...<Widget>[
+                    6.width,
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: AppColors.richGold,
+                    ),
+                  ],
+                ],
+              ),
+              2.height,
+              Text(
+                birthDate,
+                style: AppStyles.bodySmall(color: AppColors.textMuted),
+              ),
+              8.height,
+              Row(
+                children: <Widget>[
+                  if (showPlanTag) ...<Widget>[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      child: Text(
+                        LocaleKey.profilePlanFreeTag.tr,
+                        style: AppStyles.caption(
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    8.width,
+                  ],
+                  const Icon(
+                    Icons.star_rounded,
+                    size: 13,
+                    color: AppColors.richGold,
+                  ),
+                  4.width,
+                  Text(
+                    LocaleKey.profileSoulPointsLabel.trParams(<String, String>{
+                      'points': '$soulPoints',
+                    }),
+                    style: AppStyles.caption(
+                      color: AppColors.richGold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: content,
+        ),
+      ),
+    );
   }
 }
 

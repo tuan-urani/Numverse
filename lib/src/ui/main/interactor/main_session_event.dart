@@ -32,6 +32,23 @@ final class MainSessionLoginRequested extends MainSessionEvent {
   List<Object?> get props => <Object?>[email, password, name];
 }
 
+final class MainSessionRegisterRequested extends MainSessionEvent {
+  const MainSessionRegisterRequested({
+    required this.email,
+    required this.password,
+    required this.name,
+    required this.completer,
+  });
+
+  final String email;
+  final String password;
+  final String name;
+  final Completer<void> completer;
+
+  @override
+  List<Object?> get props => <Object?>[email, password, name];
+}
+
 final class MainSessionLogoutRequested extends MainSessionEvent {
   const MainSessionLogoutRequested({required this.completer});
 

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
 import 'package:test/src/helper/numerology_helper.dart';
@@ -15,8 +16,18 @@ class CoreNumbersBloc extends Bloc<CoreNumbersEvent, CoreNumbersState> {
 
   final INumerologyContentRepository _contentRepository;
 
-  void syncProfile(UserProfile? profile, {required String languageCode}) {
-    add(CoreNumbersProfileSynced(profile: profile, languageCode: languageCode));
+  void syncProfile(
+    UserProfile? profile, {
+    required String languageCode,
+    ProfileLifeBasedSnapshot? lifeBasedSnapshot,
+  }) {
+    add(
+      CoreNumbersProfileSynced(
+        profile: profile,
+        languageCode: languageCode,
+        lifeBasedSnapshot: lifeBasedSnapshot,
+      ),
+    );
   }
 
   void _onProfileSynced(
@@ -30,17 +41,20 @@ class CoreNumbersBloc extends Bloc<CoreNumbersEvent, CoreNumbersState> {
       return;
     }
 
-    final int lifePathNumber = NumerologyHelper.getLifePathNumber(
-      profile.birthDate,
-    );
-    final int soulUrgeNumber = NumerologyHelper.getSoulUrgeNumber(profile.name);
-    final int expressionNumber = NumerologyHelper.getExpressionNumber(
-      profile.name,
-    );
-    final int missionNumber = NumerologyHelper.getMissionNumber(
-      profile.birthDate,
-      profile.name,
-    );
+    final int lifePathNumber =
+        event.lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.lifePathMetric) ??
+        NumerologyHelper.getLifePathNumber(profile.birthDate);
+    final int soulUrgeNumber =
+        event.lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.soulUrgeMetric) ??
+        NumerologyHelper.getSoulUrgeNumber(profile.name);
+    final int expressionNumber =
+        event.lifeBasedSnapshot?.valueOf(
+          ProfileLifeBasedSnapshot.expressionMetric,
+        ) ??
+        NumerologyHelper.getExpressionNumber(profile.name);
+    final int missionNumber =
+        event.lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.missionMetric) ??
+        NumerologyHelper.getMissionNumber(profile.birthDate, profile.name);
 
     emit(
       state.copyWith(

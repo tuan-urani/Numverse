@@ -1,25 +1,48 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:test/src/core/model/app_session_snapshot.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/profile_time_life_snapshot.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
-import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/ui/main/interactor/main_session_event.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
+import 'package:test/src/ui/main/interactor/services/session_auth_service.dart';
+import 'package:test/src/ui/main/interactor/services/session_compare_service.dart';
+import 'package:test/src/ui/main/interactor/services/session_metrics_service.dart';
+import 'package:test/src/ui/main/interactor/services/session_profile_service.dart';
+import 'package:test/src/ui/main/interactor/services/session_prompt_service.dart';
+import 'package:test/src/ui/main/interactor/services/session_reward_service.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 
 class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
-  MainSessionBloc(this._sessionRepository, this._cloudAccountRepository)
-    : super(MainSessionState.initial()) {
+  /// Khởi tạo bloc session trung tâm và đăng ký toàn bộ event handler.
+  MainSessionBloc(
+    this._sessionRepository,
+    this._cloudAccountRepository, {
+    SessionAuthService? authService,
+    SessionProfileService? profileService,
+    SessionMetricsService? metricsService,
+    SessionRewardService? rewardService,
+    SessionCompareService? compareService,
+    SessionPromptService? promptService,
+  }) : _authService = authService ?? const SessionAuthService(),
+       _profileService = profileService ?? const SessionProfileService(),
+       _metricsService = metricsService ?? const SessionMetricsService(),
+       _rewardService = rewardService ?? const SessionRewardService(),
+       _compareService = compareService ?? const SessionCompareService(),
+       _promptService = promptService ?? const SessionPromptService(),
+       super(MainSessionState.initial()) {
     on<MainSessionInitializeRequested>(_onInitializeRequested);
     on<MainSessionLoginRequested>(_onLoginRequested);
+    on<MainSessionRegisterRequested>(_onRegisterRequested);
     on<MainSessionLogoutRequested>(_onLogoutRequested);
     on<MainSessionProfileAdded>(_onProfileAdded);
     on<MainSessionProfileSwitched>(_onProfileSwitched);
@@ -35,27 +58,36 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     on<MainSessionTimeLifeRefreshRequested>(_onTimeLifeRefreshRequested);
   }
 
-  static const int _interactionThreshold = 5;
   static const String guestProfileId = ProfileTimeLifeSnapshot.guestProfileId;
 
   final IAppSessionRepository _sessionRepository;
   final ICloudAccountRepository _cloudAccountRepository;
+  final SessionAuthService _authService;
+  final SessionProfileService _profileService;
+  final SessionMetricsService _metricsService;
+  final SessionRewardService _rewardService;
+  final SessionCompareService _compareService;
+  final SessionPromptService _promptService;
 
+  /// API public để khởi tạo session: dispatch event và chờ hoàn tất.
   Future<void> initialize() async {
     final Completer<void> completer = Completer<void>();
     add(MainSessionInitializeRequested(completer: completer));
     await completer.future;
   }
 
+  /// Xử lý khởi tạo: load snapshot local, hydrate state và refresh metrics cần thiết.
   Future<void> _onInitializeRequested(
     MainSessionInitializeRequested event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Tải snapshot local, hydrate state hiện tại, sau đó đảm bảo dữ liệu
+    // life-based/time-based đã được tính đúng trước khi vào app.
     try {
       emit(state.copyWith(viewState: AppViewStateStatus.loading));
       final AppSessionSnapshot snapshot = await _sessionRepository
           .loadSnapshot();
-      final UserProfile? currentProfile = _resolveCurrentProfile(
+      final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
         snapshot.profiles,
         snapshot.currentProfileId,
       );
@@ -78,6 +110,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           clearErrorMessage: true,
         ),
       );
+      await _normalizeGuestRewardStateIfNeeded(emit);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
     } catch (_) {
@@ -92,6 +125,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public đăng nhập: dispatch event rồi chờ flow login/sync xong.
   Future<void> login({
     required String email,
     required String password,
@@ -109,39 +143,49 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// API public đăng ký: nếu user chưa tồn tại thì tạo account rồi đăng nhập.
+  Future<void> register({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    final Completer<void> completer = Completer<void>();
+    add(
+      MainSessionRegisterRequested(
+        email: email,
+        password: password,
+        name: name,
+        completer: completer,
+      ),
+    );
+    await completer.future;
+  }
+
+  /// Xử lý đăng nhập và đồng bộ dữ liệu giữa local/cloud theo policy hiện tại.
   Future<void> _onLoginRequested(
     MainSessionLoginRequested event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Chuẩn hóa thông tin đăng nhập và xử lý chiến lược sync cloud/local.
+    // - first sync: local wins bootstrap
+    // - account đã có dữ liệu cloud: cloud wins (v1)
     try {
-      final String normalizedEmail = event.email.trim().toLowerCase();
-      final String normalizedName = event.name.trim();
-      final AppSessionSnapshot localSnapshotBeforeAuth = AppSessionSnapshot(
-        isAuthenticated: true,
-        userEmail: normalizedEmail,
-        userName: normalizedName,
-        profiles: state.profiles,
-        lifeBasedByProfileId: state.lifeBasedByProfileId,
-        timeLifeByProfileId: state.timeLifeByProfileId,
-        currentProfileId: state.currentProfile?.id,
-        soulPoints: state.soulPoints,
-        currentStreak: state.currentStreak,
-        dailyEarnings: state.dailyEarnings,
-        lastCheckInAt: state.lastCheckInAt,
-        compareProfiles: state.compareProfiles,
-        selectedCompareProfileId: state.selectedCompareProfileId,
+      final NormalizedIdentity identity = _authService.normalizeIdentity(
+        email: event.email,
+        name: event.name,
       );
+      final AppSessionSnapshot localSnapshotBeforeAuth = _authService
+          .buildLocalSnapshotBeforeAuth(state: state, identity: identity);
 
       if (_cloudAccountRepository.isConfigured) {
         final CloudLoginResult loginResult = await _cloudAccountRepository
             .loginAndSyncFirstTime(
-              email: normalizedEmail,
+              email: identity.email,
               password: event.password,
-              displayName: normalizedName,
+              displayName: identity.name,
               localSnapshot: localSnapshotBeforeAuth,
             );
 
-        // first sync => local snapshot just got uploaded (local wins bootstrap).
         if (loginResult.firstSyncPerformed) {
           await _applySnapshotToState(
             localSnapshotBeforeAuth,
@@ -152,11 +196,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           return;
         }
 
-        // existing cloud account => cloud wins local state for v1.
         final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
             .fetchCloudSessionSnapshot(
-              fallbackEmail: normalizedEmail,
-              fallbackDisplayName: normalizedName,
+              fallbackEmail: identity.email,
+              fallbackDisplayName: identity.name,
             );
         await _applySnapshotToState(
           cloudSnapshot,
@@ -177,32 +220,89 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
-  Future<void> logout() async {
-    final Completer<void> completer = Completer<void>();
-    add(MainSessionLogoutRequested(completer: completer));
-    await completer.future;
-  }
-
-  Future<void> _onLogoutRequested(
-    MainSessionLogoutRequested event,
+  /// Xử lý đăng ký account và đồng bộ dữ liệu sau khi đăng ký thành công.
+  Future<void> _onRegisterRequested(
+    MainSessionRegisterRequested event,
     Emitter<MainSessionState> emit,
   ) async {
     try {
-      await _cloudAccountRepository.clearSession();
-      emit(
-        state.copyWith(
-          isAuthenticated: false,
-          clearUserEmail: true,
-          clearUserName: true,
-        ),
+      final NormalizedIdentity identity = _authService.normalizeIdentity(
+        email: event.email,
+        name: event.name,
       );
-      await _persistSnapshot();
+      final AppSessionSnapshot localSnapshotBeforeAuth = _authService
+          .buildLocalSnapshotBeforeAuth(state: state, identity: identity);
+
+      if (_cloudAccountRepository.isConfigured) {
+        final CloudLoginResult loginResult = await _cloudAccountRepository
+            .registerAndSyncFirstTime(
+              email: identity.email,
+              password: event.password,
+              displayName: identity.name,
+              localSnapshot: localSnapshotBeforeAuth,
+            );
+        if (loginResult.firstSyncPerformed) {
+          await _applySnapshotToState(
+            localSnapshotBeforeAuth,
+            emit,
+            recomputeMetrics: false,
+          );
+          _completeVoid(event.completer);
+          return;
+        }
+
+        final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
+            .fetchCloudSessionSnapshot(
+              fallbackEmail: identity.email,
+              fallbackDisplayName: identity.name,
+            );
+        await _applySnapshotToState(
+          cloudSnapshot,
+          emit,
+          recomputeMetrics: true,
+          forceRecomputeMetrics: true,
+        );
+      } else {
+        await _applySnapshotToState(
+          localSnapshotBeforeAuth,
+          emit,
+          recomputeMetrics: false,
+        );
+      }
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
       _completeError(event.completer, error, stackTrace);
     }
   }
 
+  /// API public đăng xuất: clear cloud session, xóa local storage, reset state.
+  Future<void> logout() async {
+    final Completer<void> completer = Completer<void>();
+    add(MainSessionLogoutRequested(completer: completer));
+    await completer.future;
+  }
+
+  /// Xử lý đăng xuất: clear session cloud và cập nhật trạng thái local.
+  Future<void> _onLogoutRequested(
+    MainSessionLogoutRequested event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    // Đăng xuất khỏi cloud, xoá toàn bộ storage local và reset state về guest.
+    try {
+      await _cloudAccountRepository.clearSession();
+      await _sessionRepository.clear();
+      emit(
+        MainSessionState.initial().copyWith(
+          viewState: AppViewStateStatus.success,
+        ),
+      );
+      _completeVoid(event.completer);
+    } catch (error, stackTrace) {
+      _completeError(event.completer, error, stackTrace);
+    }
+  }
+
+  /// API public thêm profile mới vào session hiện tại.
   Future<void> addProfile({
     required String name,
     required DateTime birthDate,
@@ -218,23 +318,23 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// Xử lý thêm profile mới và tính lại các metrics liên quan.
   Future<void> _onProfileAdded(
     MainSessionProfileAdded event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Tạo profile mới, set làm current profile, persist, rồi tính lại metrics.
     try {
-      final UserProfile profile = UserProfile(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
+      final UserProfile profile = _profileService.createProfile(
         name: event.name,
         birthDate: event.birthDate,
-        createdAt: DateTime.now(),
       );
       final List<UserProfile> profiles = <UserProfile>[
         ...state.profiles,
         profile,
       ];
       emit(state.copyWith(profiles: profiles, currentProfile: profile));
-      await _persistSnapshot();
+      await _persistSnapshot(syncCloud: true);
       await _ensureLifeBasedForCurrentProfile(emit, force: true);
       await _refreshTimeLifeForCurrentProfile(emit);
       _completeVoid(event.completer);
@@ -243,18 +343,21 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public chuyển current profile theo id.
   Future<void> switchProfile(String profileId) async {
     final Completer<void> completer = Completer<void>();
     add(MainSessionProfileSwitched(profileId: profileId, completer: completer));
     await completer.future;
   }
 
+  /// Xử lý chuyển profile đang active và refresh dữ liệu theo profile mới.
   Future<void> _onProfileSwitched(
     MainSessionProfileSwitched event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Chuyển profile active, persist và refresh nhóm số liên quan profile đó.
     try {
-      final UserProfile? profile = _findProfileById(
+      final UserProfile? profile = _profileService.findProfileById(
         state.profiles,
         event.profileId,
       );
@@ -263,7 +366,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         return;
       }
       emit(state.copyWith(currentProfile: profile));
-      await _persistSnapshot();
+      await _persistSnapshot(syncCloud: true);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
       _completeVoid(event.completer);
@@ -272,6 +375,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public cập nhật thông tin profile (tên/ngày sinh).
   Future<void> updateProfile({
     required String profileId,
     required String name,
@@ -289,19 +393,20 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// Xử lý cập nhật profile, làm mới snapshot cũ để tránh dữ liệu stale.
   Future<void> _onProfileUpdated(
     MainSessionProfileUpdated event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Sửa profile, xóa snapshot cũ của profile này rồi tính lại để tránh stale data.
     try {
-      final List<UserProfile> profiles = state.profiles
-          .map(
-            (UserProfile profile) => profile.id == event.profileId
-                ? profile.copyWith(name: event.name, birthDate: event.birthDate)
-                : profile,
-          )
-          .toList();
-      final UserProfile? currentProfile = _resolveCurrentProfile(
+      final List<UserProfile> profiles = _profileService.updateProfile(
+        state.profiles,
+        profileId: event.profileId,
+        name: event.name,
+        birthDate: event.birthDate,
+      );
+      final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
         profiles,
         state.currentProfile?.id,
       );
@@ -319,7 +424,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           timeLifeByProfileId: nextTimeLifeByProfileId,
         ),
       );
-      await _persistSnapshot();
+      await _persistSnapshot(syncCloud: true);
 
       if (currentProfile?.id == event.profileId) {
         await _ensureLifeBasedForCurrentProfile(emit, force: true);
@@ -331,31 +436,37 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public xóa profile khỏi session.
   Future<void> removeProfile(String profileId) async {
     final Completer<void> completer = Completer<void>();
     add(MainSessionProfileRemoved(profileId: profileId, completer: completer));
     await completer.future;
   }
 
+  /// Xử lý xóa profile và dọn dẹp toàn bộ snapshot tương ứng.
   Future<void> _onProfileRemoved(
     MainSessionProfileRemoved event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Xóa profile và toàn bộ snapshot liên quan, chọn lại current profile phù hợp.
     try {
-      final List<UserProfile> profiles = state.profiles
-          .where((UserProfile profile) => profile.id != event.profileId)
-          .toList();
+      final List<UserProfile> profiles = _profileService.removeProfile(
+        state.profiles,
+        profileId: event.profileId,
+      );
       final Map<String, ProfileLifeBasedSnapshot> lifeBasedByProfileId =
           Map<String, ProfileLifeBasedSnapshot>.from(state.lifeBasedByProfileId)
             ..remove(event.profileId);
       final Map<String, ProfileTimeLifeSnapshot> timeLifeByProfileId =
           Map<String, ProfileTimeLifeSnapshot>.from(state.timeLifeByProfileId)
             ..remove(event.profileId);
-      final UserProfile? currentProfile = _resolveCurrentProfile(
+      final String? nextCurrentProfileId =
+          state.currentProfile?.id == event.profileId
+          ? (profiles.isNotEmpty ? profiles.first.id : null)
+          : state.currentProfile?.id;
+      final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
         profiles,
-        state.currentProfile?.id == event.profileId
-            ? (profiles.isNotEmpty ? profiles.first.id : null)
-            : state.currentProfile?.id,
+        nextCurrentProfileId,
       );
       emit(
         state.copyWith(
@@ -365,7 +476,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           currentProfile: currentProfile,
         ),
       );
-      await _persistSnapshot();
+      await _persistSnapshot(syncCloud: true);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
       _completeVoid(event.completer);
@@ -374,6 +485,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public thêm hồ sơ đối chiếu cho tính năng compatibility.
   Future<void> addCompareProfile({
     required String name,
     required String relation,
@@ -391,17 +503,17 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// Xử lý thêm hồ sơ đối chiếu và tự chọn hồ sơ vừa thêm.
   Future<void> _onCompareProfileAdded(
     MainSessionCompareProfileAdded event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Tạo compare profile, chọn luôn profile vừa thêm và persist.
     try {
-      final ComparisonProfile profile = ComparisonProfile(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        name: event.name.trim(),
-        relation: event.relation.trim(),
+      final profile = _compareService.createProfile(
+        name: event.name,
+        relation: event.relation,
         birthDate: event.birthDate,
-        lifePathNumber: NumerologyHelper.getLifePathNumber(event.birthDate),
       );
       emit(
         state.copyWith(
@@ -419,6 +531,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public chọn hồ sơ đối chiếu đang dùng.
   Future<void> selectCompareProfile(String profileId) async {
     final Completer<void> completer = Completer<void>();
     add(
@@ -430,14 +543,18 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// Xử lý chọn hồ sơ đối chiếu nếu profile id hợp lệ.
   Future<void> _onCompareProfileSelected(
     MainSessionCompareProfileSelected event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Validate profile tồn tại trước khi set selected id.
     try {
-      if (!state.compareProfiles.any(
-        (ComparisonProfile profile) => profile.id == event.profileId,
-      )) {
+      final bool profileExists = _compareService.containsProfile(
+        state.compareProfiles,
+        event.profileId,
+      );
+      if (!profileExists) {
         _completeVoid(event.completer);
         return;
       }
@@ -449,18 +566,25 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public cộng soul points cho người dùng hiện tại.
   Future<void> addSoulPoints(int amount) async {
     final Completer<void> completer = Completer<void>();
     add(MainSessionSoulPointsAdded(amount: amount, completer: completer));
     await completer.future;
   }
 
+  /// Xử lý cộng điểm soul points và persist snapshot.
   Future<void> _onSoulPointsAdded(
     MainSessionSoulPointsAdded event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Cộng điểm, lưu snapshot mới.
     try {
-      emit(state.copyWith(soulPoints: state.soulPoints + event.amount));
+      final int nextSoulPoints = _rewardService.addSoulPoints(
+        currentSoulPoints: state.soulPoints,
+        amount: event.amount,
+      );
+      emit(state.copyWith(soulPoints: nextSoulPoints));
       await _persistSnapshot();
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
@@ -468,22 +592,29 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public trừ soul points, trả về false nếu không đủ điểm.
   Future<bool> deductSoulPoints(int amount) async {
     final Completer<bool> completer = Completer<bool>();
     add(MainSessionSoulPointsDeducted(amount: amount, completer: completer));
     return completer.future;
   }
 
+  /// Xử lý trừ điểm soul points với kiểm tra đủ điểm trước khi trừ.
   Future<void> _onSoulPointsDeducted(
     MainSessionSoulPointsDeducted event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Trừ điểm an toàn, không cho âm điểm.
     try {
-      if (state.soulPoints < event.amount) {
+      final int? nextSoulPoints = _rewardService.deductSoulPoints(
+        currentSoulPoints: state.soulPoints,
+        amount: event.amount,
+      );
+      if (nextSoulPoints == null) {
         _completeBool(event.completer, false);
         return;
       }
-      emit(state.copyWith(soulPoints: state.soulPoints - event.amount));
+      emit(state.copyWith(soulPoints: nextSoulPoints));
       await _persistSnapshot();
       _completeBool(event.completer, true);
     } catch (error, stackTrace) {
@@ -491,79 +622,192 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// API public check-in hằng ngày để nhận thưởng streak.
   Future<void> checkIn() async {
     final Completer<void> completer = Completer<void>();
     add(MainSessionCheckedIn(completer: completer));
     await completer.future;
   }
 
+  /// Xử lý check-in hàng ngày và cập nhật streak/reward.
   Future<void> _onCheckedIn(
     MainSessionCheckedIn event,
     Emitter<MainSessionState> emit,
   ) async {
+    // V1: guest xử lý local-only.
+    // Với account đã đăng nhập: claim cloud-authoritative, không fallback local.
     try {
-      if (state.hasCheckedInToday || state.dailyEarnings >= state.dailyLimit) {
+      if (!state.isAuthenticated) {
+        await _normalizeGuestRewardStateIfNeeded(emit);
+        await _checkInGuestLocal(emit);
         _completeVoid(event.completer);
         return;
       }
 
-      final int reward = _rewardByStreak(state.currentStreak);
-      final int nextEarning = (state.dailyEarnings + reward).clamp(
-        0,
-        state.dailyLimit,
-      );
+      if (!_cloudAccountRepository.isConfigured) {
+        await _checkInGuestLocal(emit);
+        _completeVoid(event.completer);
+        return;
+      }
 
-      emit(
-        state.copyWith(
-          dailyEarnings: nextEarning,
-          currentStreak: state.currentStreak + 1,
-          soulPoints: state.soulPoints + reward,
-          lastCheckInAt: DateTime.now(),
-        ),
-      );
-      await _persistSnapshot();
+      await _checkInCloud(emit);
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
+      if (state.isAuthenticated) {
+        emit(state.copyWith(errorMessage: 'checkin_cloud_failed'));
+        _completeVoid(event.completer);
+        return;
+      }
       _completeError(event.completer, error, stackTrace);
     }
   }
 
+  /// Check-in local cho guest: cập nhật điểm/streak và persist xuống session snapshot.
+  Future<void> _checkInGuestLocal(Emitter<MainSessionState> emit) async {
+    final SessionCheckInUpdate? checkInUpdate = _rewardService.computeCheckIn(
+      hasCheckedInToday: state.hasCheckedInToday,
+      dailyEarnings: state.dailyEarnings,
+      dailyLimit: state.dailyLimit,
+      currentStreak: state.currentStreak,
+      soulPoints: state.soulPoints,
+    );
+    if (checkInUpdate == null) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        dailyEarnings: checkInUpdate.dailyEarnings,
+        currentStreak: checkInUpdate.currentStreak,
+        soulPoints: checkInUpdate.soulPoints,
+        lastCheckInAt: checkInUpdate.lastCheckInAt,
+      ),
+    );
+    await _persistSnapshot();
+  }
+
+  /// Check-in cloud cho account đã đăng nhập và đồng bộ lại reward state local.
+  Future<void> _checkInCloud(Emitter<MainSessionState> emit) async {
+    final String requestId = 'checkin:${DateTime.now().microsecondsSinceEpoch}';
+    final CloudDailyCheckInResult result = await _cloudAccountRepository
+        .claimDailyCheckIn(requestId: requestId);
+    emit(
+      state.copyWith(
+        dailyEarnings: result.dailyEarnings,
+        currentStreak: result.currentStreak,
+        soulPoints: result.soulPoints,
+        lastCheckInAt: result.lastCheckInAt,
+      ),
+    );
+    await _persistSnapshot();
+  }
+
+  /// Chuẩn hoá reward local cho guest theo ngày:
+  /// - Qua ngày mới: reset dailyEarnings về 0
+  /// - Đứt streak (quá 1 ngày): reset currentStreak về 0
+  Future<void> _normalizeGuestRewardStateIfNeeded(
+    Emitter<MainSessionState> emit,
+  ) async {
+    if (state.isAuthenticated) {
+      return;
+    }
+    final DateTime? lastCheckInAt = state.lastCheckInAt;
+    if (lastCheckInAt == null) {
+      if (state.dailyEarnings == 0 && state.currentStreak == 0) {
+        return;
+      }
+      emit(state.copyWith(dailyEarnings: 0, currentStreak: 0));
+      await _persistSnapshot();
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final DateTime lastDay = DateTime(
+      lastCheckInAt.year,
+      lastCheckInAt.month,
+      lastCheckInAt.day,
+    );
+    final int dayDiff = today.difference(lastDay).inDays;
+    if (dayDiff == 0) {
+      return;
+    }
+
+    final int nextDailyEarnings = 0;
+    final int nextCurrentStreak = dayDiff == 1 ? state.currentStreak : 0;
+    final bool hasChanged =
+        state.dailyEarnings != nextDailyEarnings ||
+        state.currentStreak != nextCurrentStreak;
+    if (!hasChanged) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        dailyEarnings: nextDailyEarnings,
+        currentStreak: nextCurrentStreak,
+      ),
+    );
+    await _persistSnapshot();
+  }
+
   void trackInteraction(String page) {
+    /// Ghi nhận tương tác theo page để phục vụ gợi ý nhập profile.
     add(MainSessionInteractionTracked(page));
   }
 
+  /// Xử lý event theo dõi tương tác trên page hiện tại.
   void _onInteractionTracked(
     MainSessionInteractionTracked event,
     Emitter<MainSessionState> emit,
   ) {
-    if (state.currentPageInteraction != event.page) {
-      emit(
-        state.copyWith(currentPageInteraction: event.page, interactionCount: 1),
-      );
-      return;
-    }
-    emit(state.copyWith(interactionCount: state.interactionCount + 1));
+    // Tăng bộ đếm tương tác của trang hiện tại (hoặc reset khi sang trang khác).
+    final SessionInteractionUpdate update = _promptService.trackInteraction(
+      currentPage: state.currentPageInteraction,
+      interactionCount: state.interactionCount,
+      nextPage: event.page,
+    );
+    emit(
+      state.copyWith(
+        currentPageInteraction: update.page,
+        interactionCount: update.count,
+      ),
+    );
   }
 
   void resetPageInteraction(String page) {
+    /// Reset bộ đếm tương tác cho một trang cụ thể.
     add(MainSessionPageInteractionReset(page));
   }
 
+  /// Xử lý event reset bộ đếm tương tác cho một page.
   void _onPageInteractionReset(
     MainSessionPageInteractionReset event,
     Emitter<MainSessionState> emit,
   ) {
+    // Đưa interaction count của page về 0.
+    final SessionInteractionUpdate update = _promptService.resetInteraction(
+      event.page,
+    );
     emit(
-      state.copyWith(currentPageInteraction: event.page, interactionCount: 0),
+      state.copyWith(
+        currentPageInteraction: update.page,
+        interactionCount: update.count,
+      ),
     );
   }
 
   bool shouldShowProfilePrompt(String page) {
-    return state.currentPageInteraction == page &&
-        state.interactionCount >= _interactionThreshold &&
-        !state.hasAnyProfile;
+    /// Quyết định có hiển thị prompt nhập profile trên trang hiện tại hay không.
+    return _promptService.shouldShowProfilePrompt(
+      page: page,
+      currentPageInteraction: state.currentPageInteraction,
+      interactionCount: state.interactionCount,
+      hasAnyProfile: state.hasAnyProfile,
+    );
   }
 
+  /// API public refresh nhóm time-based number cho profile hiện tại/guest.
   Future<void> refreshTimeLifeForCurrentProfile({
     DateTime? now,
     bool force = false,
@@ -579,11 +823,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// Xử lý event refresh time-based metrics (daily/monthly/yearly).
   Future<void> _onTimeLifeRefreshRequested(
     MainSessionTimeLifeRefreshRequested event,
     Emitter<MainSessionState> emit,
   ) async {
+    // Event handler refresh time-based theo mốc refreshAt hoặc force refresh.
     try {
+      await _normalizeGuestRewardStateIfNeeded(emit);
       await _refreshTimeLifeForCurrentProfile(
         emit,
         now: event.now,
@@ -595,202 +842,60 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  /// Tính và cập nhật snapshot time-based cho current profile hoặc guest.
   Future<void> _refreshTimeLifeForCurrentProfile(
     Emitter<MainSessionState> emit, {
     DateTime? now,
     bool force = false,
   }) async {
-    final DateTime currentTime = now ?? DateTime.now();
-    final UserProfile? profile = state.currentProfile;
-    final String profileId = _activeTimeLifeProfileId(profile);
-    final ProfileTimeLifeSnapshot existing =
-        state.timeLifeByProfileId[profileId] ??
-        ProfileTimeLifeSnapshot.initial();
-
-    final bool shouldRefreshUniversalDay =
-        force ||
-        existing.needsRefresh(
-          ProfileTimeLifeSnapshot.universalDayMetric,
-          currentTime,
+    // Tính toán time-based metrics, cập nhật map snapshot và persist nếu có thay đổi.
+    final TimeLifeRefreshResult? refreshResult = _metricsService
+        .refreshTimeLifeForCurrentProfile(
+          profile: state.currentProfile,
+          timeLifeByProfileId: state.timeLifeByProfileId,
+          guestProfileId: guestProfileId,
+          now: now,
+          force: force,
         );
-    final bool shouldRefreshLuckyNumber =
-        force ||
-        existing.needsRefresh(
-          ProfileTimeLifeSnapshot.luckyNumberMetric,
-          currentTime,
-        );
-    final bool shouldRefreshDailyMessage =
-        force ||
-        existing.needsRefresh(
-          ProfileTimeLifeSnapshot.dailyMessageNumberMetric,
-          currentTime,
-        );
-    final bool shouldRefreshDaily =
-        shouldRefreshUniversalDay ||
-        shouldRefreshLuckyNumber ||
-        shouldRefreshDailyMessage;
-
-    final bool shouldRefreshPersonalYear =
-        profile != null &&
-        (force ||
-            existing.needsRefresh(
-              ProfileTimeLifeSnapshot.personalYearMetric,
-              currentTime,
-            ));
-    final bool shouldRefreshPersonalMonth =
-        profile != null &&
-        (force ||
-            existing.needsRefresh(
-              ProfileTimeLifeSnapshot.personalMonthMetric,
-              currentTime,
-            ));
-    final bool shouldRefreshPersonalDay =
-        profile != null &&
-        (force ||
-            existing.needsRefresh(
-              ProfileTimeLifeSnapshot.personalDayMetric,
-              currentTime,
-            ));
-
-    if (!shouldRefreshDaily &&
-        !shouldRefreshPersonalYear &&
-        !shouldRefreshPersonalMonth &&
-        !shouldRefreshPersonalDay) {
+    if (refreshResult == null) {
       return;
-    }
-
-    ProfileTimeLifeSnapshot snapshot = existing;
-
-    if (shouldRefreshDaily) {
-      final int universalDay = NumerologyHelper.calculateUniversalDayNumber(
-        currentTime,
-      );
-      final int luckyNumber = NumerologyHelper.luckyNumber(currentTime);
-      final DateTime dailyRefreshAt = _nextDailyRefreshAt(currentTime);
-
-      if (shouldRefreshUniversalDay) {
-        snapshot = snapshot.upsertMetric(
-          key: ProfileTimeLifeSnapshot.universalDayMetric,
-          snapshot: TimeLifeMetricSnapshot(
-            value: universalDay,
-            computedAt: currentTime,
-            refreshAt: dailyRefreshAt,
-          ),
-        );
-      }
-      if (shouldRefreshLuckyNumber) {
-        snapshot = snapshot.upsertMetric(
-          key: ProfileTimeLifeSnapshot.luckyNumberMetric,
-          snapshot: TimeLifeMetricSnapshot(
-            value: luckyNumber,
-            computedAt: currentTime,
-            refreshAt: dailyRefreshAt,
-          ),
-        );
-      }
-      if (shouldRefreshDailyMessage) {
-        snapshot = snapshot.upsertMetric(
-          key: ProfileTimeLifeSnapshot.dailyMessageNumberMetric,
-          snapshot: TimeLifeMetricSnapshot(
-            value: universalDay,
-            computedAt: currentTime,
-            refreshAt: dailyRefreshAt,
-          ),
-        );
-      }
-    }
-
-    if (profile != null) {
-      if (shouldRefreshPersonalYear) {
-        snapshot = snapshot.upsertMetric(
-          key: ProfileTimeLifeSnapshot.personalYearMetric,
-          snapshot: TimeLifeMetricSnapshot(
-            value: NumerologyHelper.calculatePersonalYearNumber(
-              birthDate: profile.birthDate,
-              date: currentTime,
-            ),
-            computedAt: currentTime,
-            refreshAt: _nextYearlyRefreshAt(currentTime),
-          ),
-        );
-      }
-      if (shouldRefreshPersonalMonth) {
-        snapshot = snapshot.upsertMetric(
-          key: ProfileTimeLifeSnapshot.personalMonthMetric,
-          snapshot: TimeLifeMetricSnapshot(
-            value: NumerologyHelper.calculatePersonalMonthNumber(
-              birthDate: profile.birthDate,
-              date: currentTime,
-            ),
-            computedAt: currentTime,
-            refreshAt: _nextMonthlyRefreshAt(currentTime),
-          ),
-        );
-      }
-      if (shouldRefreshPersonalDay) {
-        snapshot = snapshot.upsertMetric(
-          key: ProfileTimeLifeSnapshot.personalDayMetric,
-          snapshot: TimeLifeMetricSnapshot(
-            value: NumerologyHelper.calculatePersonalDayNumber(
-              birthDate: profile.birthDate,
-              date: currentTime,
-            ),
-            computedAt: currentTime,
-            refreshAt: _nextDailyRefreshAt(currentTime),
-          ),
-        );
-      }
     }
 
     final Map<String, ProfileTimeLifeSnapshot> nextTimeLifeByProfileId =
         Map<String, ProfileTimeLifeSnapshot>.from(state.timeLifeByProfileId)
-          ..[profileId] = snapshot;
+          ..[refreshResult.profileId] = refreshResult.snapshot;
     emit(state.copyWith(timeLifeByProfileId: nextTimeLifeByProfileId));
     await _persistSnapshot();
   }
 
-  // đảm bảo profile hiện tại đã có lifebased, nếu chưa thì tính toán lại
+  /// Đảm bảo current profile có đầy đủ snapshot life-based.
   Future<void> _ensureLifeBasedForCurrentProfile(
     Emitter<MainSessionState> emit, {
     DateTime? now,
     bool force = false,
   }) async {
-    final UserProfile? profile = state.currentProfile;
-    if (profile == null) {
+    // Đảm bảo profile hiện tại có đủ metrics life-based; thiếu thì tính và lưu lại.
+    final LifeBasedRefreshResult? refreshResult = _metricsService
+        .ensureLifeBasedForCurrentProfile(
+          profile: state.currentProfile,
+          lifeBasedByProfileId: state.lifeBasedByProfileId,
+          now: now,
+          force: force,
+        );
+    if (refreshResult == null) {
       return;
     }
-
-    final ProfileLifeBasedSnapshot? existing =
-        state.lifeBasedByProfileId[profile.id];
-    if (!force && existing != null && existing.metrics.isNotEmpty) {
-      return;
-    }
-
-    final DateTime currentTime = now ?? DateTime.now();
-    final ProfileLifeBasedSnapshot snapshot = ProfileLifeBasedSnapshot(
-      computedAt: currentTime,
-      metrics: <String, int>{
-        ProfileLifeBasedSnapshot.lifePathMetric:
-            NumerologyHelper.getLifePathNumber(profile.birthDate),
-        ProfileLifeBasedSnapshot.expressionMetric:
-            NumerologyHelper.getExpressionNumber(profile.name),
-        ProfileLifeBasedSnapshot.soulUrgeMetric:
-            NumerologyHelper.getSoulUrgeNumber(profile.name),
-        ProfileLifeBasedSnapshot.personalityMetric:
-            NumerologyHelper.getPersonalityNumber(profile.name),
-        ProfileLifeBasedSnapshot.missionMetric:
-            NumerologyHelper.getMissionNumber(profile.birthDate, profile.name),
-      },
-    );
 
     final Map<String, ProfileLifeBasedSnapshot> nextLifeBasedByProfileId =
         Map<String, ProfileLifeBasedSnapshot>.from(state.lifeBasedByProfileId)
-          ..[profile.id] = snapshot;
+          ..[refreshResult.profileId] = refreshResult.snapshot;
     emit(state.copyWith(lifeBasedByProfileId: nextLifeBasedByProfileId));
     await _persistSnapshot();
   }
 
-  Future<void> _persistSnapshot() async {
+  /// Lưu snapshot session hiện tại xuống storage local.
+  Future<void> _persistSnapshot({bool syncCloud = false}) async {
+    // Đồng bộ toàn bộ MainSessionState hiện tại xuống storage local.
     final AppSessionSnapshot snapshot = AppSessionSnapshot(
       isAuthenticated: state.isAuthenticated,
       userEmail: state.userEmail,
@@ -807,15 +912,33 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       selectedCompareProfileId: state.selectedCompareProfileId,
     );
     await _sessionRepository.saveSnapshot(snapshot);
+    if (!syncCloud ||
+        !state.isAuthenticated ||
+        !_cloudAccountRepository.isConfigured) {
+      return;
+    }
+    try {
+      await _cloudAccountRepository.syncSessionSnapshot(snapshot: snapshot);
+    } catch (error, stackTrace) {
+      // Không fail UI flow khi cloud sync lỗi, vì local snapshot đã lưu thành công.
+      developer.log(
+        'Failed to sync session snapshot to cloud.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
+  /// Áp snapshot vào state runtime và tùy chọn recompute metrics sau khi apply.
   Future<void> _applySnapshotToState(
     AppSessionSnapshot snapshot,
     Emitter<MainSessionState> emit, {
     required bool recomputeMetrics,
     bool forceRecomputeMetrics = false,
   }) async {
-    final UserProfile? currentProfile = _resolveCurrentProfile(
+    // Apply snapshot vào state runtime, rồi tùy chọn recompute metrics để đồng bộ dữ liệu.
+    final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
       snapshot.profiles,
       snapshot.currentProfileId,
     );
@@ -846,77 +969,29 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await _refreshTimeLifeForCurrentProfile(emit, force: forceRecomputeMetrics);
   }
 
-  static int _rewardByStreak(int streak) {
-    if (streak >= 30) {
-      return 30;
-    }
-    if (streak >= 14) {
-      return 20;
-    }
-    if (streak >= 7) {
-      return 15;
-    }
-    return 10;
-  }
-
-  static UserProfile? _resolveCurrentProfile(
-    List<UserProfile> profiles,
-    String? profileId,
-  ) {
-    if (profiles.isEmpty) {
-      return null;
-    }
-    if (profileId == null) {
-      return profiles.first;
-    }
-    return _findProfileById(profiles, profileId) ?? profiles.first;
-  }
-
-  static UserProfile? _findProfileById(
-    List<UserProfile> profiles,
-    String profileId,
-  ) {
-    for (final UserProfile profile in profiles) {
-      if (profile.id == profileId) {
-        return profile;
-      }
-    }
-    return null;
-  }
-
-  static String _activeTimeLifeProfileId(UserProfile? profile) {
-    return profile?.id ?? guestProfileId;
-  }
-
-  static DateTime _nextDailyRefreshAt(DateTime now) {
-    return DateTime(now.year, now.month, now.day + 1);
-  }
-
-  static DateTime _nextMonthlyRefreshAt(DateTime now) {
-    return DateTime(now.year, now.month + 1, 1);
-  }
-
-  static DateTime _nextYearlyRefreshAt(DateTime now) {
-    return DateTime(now.year + 1, 1, 1);
-  }
-
+  /// Complete `Completer<void>` an toàn, tránh complete nhiều lần.
   static void _completeVoid(Completer<void> completer) {
+    // Hoàn tất completer void an toàn (tránh complete nhiều lần).
     if (!completer.isCompleted) {
       completer.complete();
     }
   }
 
+  /// Complete `Completer<bool>` an toàn.
   static void _completeBool(Completer<bool> completer, bool value) {
+    // Hoàn tất completer bool an toàn.
     if (!completer.isCompleted) {
       completer.complete(value);
     }
   }
 
+  /// Complete lỗi cho completer an toàn.
   static void _completeError<T>(
     Completer<T> completer,
     Object error,
     StackTrace stackTrace,
   ) {
+    // Trả lỗi qua completer an toàn nếu chưa complete.
     if (!completer.isCompleted) {
       completer.completeError(error, stackTrace);
     }

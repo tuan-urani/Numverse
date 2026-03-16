@@ -7,7 +7,7 @@ import 'package:test/src/ui/compatibility/components/compatibility_add_profile_d
 import 'package:test/src/ui/compatibility/components/compatibility_content.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_insufficient_points_dialog.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
-import 'package:test/src/ui/compatibility/interactor/compatibility_bloc.dart';
+import 'package:test/src/ui/compatibility/interactor/compatibility_constants.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_state.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
@@ -44,7 +44,7 @@ class CompatibilityPage extends StatelessWidget {
                   state: compatibilityState,
                   currentProfile: sessionState.currentProfile,
                   soulPoints: sessionState.soulPoints,
-                  comparisonCost: CompatibilityBloc.comparisonCost,
+                  comparisonCost: kCompatibilityComparisonCost,
                   onAddProfileTap: () =>
                       _onAddProfileTap(context, sessionCubit),
                   onSelectProfile: (String profileId) {
@@ -112,17 +112,17 @@ class CompatibilityPage extends StatelessWidget {
       }
     }
 
-    if (latestSessionState.soulPoints < CompatibilityBloc.comparisonCost) {
+    if (latestSessionState.soulPoints < kCompatibilityComparisonCost) {
       await CompatibilityInsufficientPointsDialog.show(
         context,
-        comparisonCost: CompatibilityBloc.comparisonCost,
+        comparisonCost: kCompatibilityComparisonCost,
         onTopup: () {},
       );
       return;
     }
 
     final bool canDeduct = await sessionCubit.deductSoulPoints(
-      CompatibilityBloc.comparisonCost,
+      kCompatibilityComparisonCost,
     );
     if (!context.mounted) {
       return;
@@ -130,7 +130,7 @@ class CompatibilityPage extends StatelessWidget {
     if (!canDeduct) {
       await CompatibilityInsufficientPointsDialog.show(
         context,
-        comparisonCost: CompatibilityBloc.comparisonCost,
+        comparisonCost: kCompatibilityComparisonCost,
         onTopup: () {},
       );
       return;

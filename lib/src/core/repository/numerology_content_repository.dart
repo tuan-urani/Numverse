@@ -148,6 +148,8 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
   ];
   static const NumerologyTodayPersonalNumberContent
   _fallbackTodayPersonalNumberContent = NumerologyTodayPersonalNumberContent(
+    dayCardTitle: 'Ngày cá nhân {number}',
+    dayCardSubtitle: 'Ngày của sự biểu đạt và sáng tạo',
     quote: 'Hôm nay thuận cho sự biểu đạt, sáng tạo và kết nối chân thành.',
     dailyRhythm: 'Mở rộng - Kết nối',
     detail: <String>[
@@ -896,6 +898,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required String number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final String normalized = number.trim();
     if (normalized.isEmpty) {
       return null;
@@ -907,6 +910,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
 
   @override
   List<String> getAngelNumberPopularNumbers({required String languageCode}) {
+    _refreshDynamicVariantsIfNeeded();
     final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
     final List<String> list =
         _angelNumberPopularByLanguage[normalizedLanguageCode] ??
@@ -984,6 +988,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<int, CoreNumberContent> map = _resolveLifePathNumberMap(
       languageCode,
     );
@@ -1003,6 +1008,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<int, CoreNumberContent> map = _resolveExpressionNumberMap(
       languageCode,
     );
@@ -1022,6 +1028,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<int, CoreNumberContent> map = _resolveSoulUrgeNumberMap(
       languageCode,
     );
@@ -1041,6 +1048,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<int, CoreNumberContent> map = _resolveMissionNumberMap(
       languageCode,
     );
@@ -1057,6 +1065,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
 
   @override
   BirthChartDataSet getBirthdayMatrixContent({required String languageCode}) {
+    _refreshDynamicVariantsIfNeeded();
     final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
     return _birthdayMatrixByLanguage[normalizedLanguageCode] ??
         _birthdayMatrixByLanguage[_fallbackLanguageCode] ??
@@ -1065,6 +1074,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
 
   @override
   BirthChartDataSet getNameMatrixContent({required String languageCode}) {
+    _refreshDynamicVariantsIfNeeded();
     final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
     return _nameMatrixByLanguage[normalizedLanguageCode] ??
         _nameMatrixByLanguage[_fallbackLanguageCode] ??
@@ -1076,6 +1086,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<int, LifeCycleContent> map = _resolveLifePinnacleMap(
       languageCode,
     );
@@ -1095,6 +1106,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int number,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<int, LifeCycleContent> map = _resolveLifeChallengeMap(
       languageCode,
     );
@@ -1114,6 +1126,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required int overallScore,
     required String languageCode,
   }) {
+    _refreshDynamicVariantsIfNeeded();
     final Map<String, NumerologyCompatibilityContent> map =
         _resolveCompatibilityMap(languageCode);
     final String band = _resolveCompatibilityBand(overallScore);
@@ -2117,4 +2130,5 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
 
     return const <String, dynamic>{};
   }
+
 }

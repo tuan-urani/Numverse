@@ -83,6 +83,11 @@ final Map<String, String> todayVi = <String, String>{
       'Thêm thông tin người khác để xem luận giải',
   TodayLocaleKey.todayProfileSwitcherDeleteConfirm:
       'Bạn có chắc muốn xóa profile này?',
+  TodayLocaleKey.todayViewingLabel: 'Đang xem',
+  TodayLocaleKey.todayViewingGuest: 'Khách',
+  TodayLocaleKey.todayQuickSwitchTitle: 'Đổi profile',
+  TodayLocaleKey.todayQuickSwitchHint:
+      'Chuyển nhanh profile bạn đang xem ở màn Hôm nay',
   TodayLocaleKey.todayPersonalHeroTitle: 'Con số dẫn dắt hôm nay',
   TodayLocaleKey.todayPersonalHeroBody:
       'Hôm nay là ngày để chậm lại, tập trung và nói ít nhưng rõ. Năng lượng bên trong bạn đang ở trạng thái cân bằng.',
@@ -105,7 +110,7 @@ final Map<String, String> todayVi = <String, String>{
   TodayLocaleKey.todayPersonalLuckyHint:
       'Con số này mang đến may mắn gì cho bạn?',
   TodayLocaleKey.todayPersonalLuckyCta: 'Khám phá ngay',
-  TodayLocaleKey.todayPersonalAngelIntro: 'Bạn vừa mở NumVerse lúc',
+  TodayLocaleKey.todayPersonalAngelIntro: 'Bạn mở NumVerse lúc',
   TodayLocaleKey.todayPersonalAngelHintLineOne: 'Liệu đây có phải là',
   TodayLocaleKey.todayPersonalAngelHintLineTwo: 'tín hiệu từ vũ trụ?',
   TodayLocaleKey.todayPersonalAngelCta: 'Giải mã ngay',

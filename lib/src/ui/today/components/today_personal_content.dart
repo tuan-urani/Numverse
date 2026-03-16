@@ -196,16 +196,22 @@ class TodayPersonalContent extends StatelessWidget {
   int _resolvePersonalMonthNumber(MainSessionState state) {
     final String profileId =
         state.currentProfile?.id ?? MainSessionBloc.guestProfileId;
-    final int? number = state.timeLifeByProfileId[profileId]?.valueOf(
-      ProfileTimeLifeSnapshot.personalMonthMetric,
-    );
-    if (number != null) {
-      return number;
-    }
-
+    final ProfileTimeLifeSnapshot? snapshot = state.timeLifeByProfileId[profileId];
     final profile = state.currentProfile;
     if (profile == null) {
+      final int? universalNumber = snapshot?.valueOf(
+        ProfileTimeLifeSnapshot.universalMonthMetric,
+      );
+      if (universalNumber != null) {
+        return universalNumber;
+      }
       return NumerologyHelper.calculateUniversalMonthNumber(DateTime.now());
+    }
+    final int? personalNumber = snapshot?.valueOf(
+      ProfileTimeLifeSnapshot.personalMonthMetric,
+    );
+    if (personalNumber != null) {
+      return personalNumber;
     }
     return NumerologyHelper.calculatePersonalMonthNumber(
       birthDate: profile.birthDate,
@@ -216,16 +222,22 @@ class TodayPersonalContent extends StatelessWidget {
   int _resolvePersonalYearNumber(MainSessionState state) {
     final String profileId =
         state.currentProfile?.id ?? MainSessionBloc.guestProfileId;
-    final int? number = state.timeLifeByProfileId[profileId]?.valueOf(
-      ProfileTimeLifeSnapshot.personalYearMetric,
-    );
-    if (number != null) {
-      return number;
-    }
-
+    final ProfileTimeLifeSnapshot? snapshot = state.timeLifeByProfileId[profileId];
     final profile = state.currentProfile;
     if (profile == null) {
+      final int? universalNumber = snapshot?.valueOf(
+        ProfileTimeLifeSnapshot.universalYearMetric,
+      );
+      if (universalNumber != null) {
+        return universalNumber;
+      }
       return NumerologyHelper.calculateUniversalYearNumber(DateTime.now());
+    }
+    final int? personalNumber = snapshot?.valueOf(
+      ProfileTimeLifeSnapshot.personalYearMetric,
+    );
+    if (personalNumber != null) {
+      return personalNumber;
     }
     return NumerologyHelper.calculatePersonalYearNumber(
       birthDate: profile.birthDate,
