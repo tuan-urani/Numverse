@@ -85,31 +85,52 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     // life-based/time-based đã được tính đúng trước khi vào app.
     try {
       emit(state.copyWith(viewState: AppViewStateStatus.loading));
-      final AppSessionSnapshot snapshot = await _sessionRepository
+      final AppSessionSnapshot localSnapshot = await _sessionRepository
           .loadSnapshot();
+
+      AppSessionSnapshot effectiveSnapshot = localSnapshot;
+      if (localSnapshot.isAuthenticated &&
+          _cloudAccountRepository.isConfigured) {
+        try {
+          effectiveSnapshot = await _cloudAccountRepository
+              .fetchCloudSessionSnapshot(
+                fallbackEmail: localSnapshot.userEmail ?? '',
+                fallbackDisplayName: localSnapshot.userName ?? '',
+              );
+        } catch (error, stackTrace) {
+          developer.log(
+            'Failed to fetch cloud session snapshot on initialize. Use local snapshot as fallback.',
+            name: 'MainSessionBloc',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      }
+
       final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
-        snapshot.profiles,
-        snapshot.currentProfileId,
+        effectiveSnapshot.profiles,
+        effectiveSnapshot.currentProfileId,
       );
       emit(
         state.copyWith(
           viewState: AppViewStateStatus.success,
-          isAuthenticated: snapshot.isAuthenticated,
-          userEmail: snapshot.userEmail,
-          userName: snapshot.userName,
-          profiles: snapshot.profiles,
-          lifeBasedByProfileId: snapshot.lifeBasedByProfileId,
-          timeLifeByProfileId: snapshot.timeLifeByProfileId,
+          isAuthenticated: effectiveSnapshot.isAuthenticated,
+          userEmail: effectiveSnapshot.userEmail,
+          userName: effectiveSnapshot.userName,
+          profiles: effectiveSnapshot.profiles,
+          lifeBasedByProfileId: effectiveSnapshot.lifeBasedByProfileId,
+          timeLifeByProfileId: effectiveSnapshot.timeLifeByProfileId,
           currentProfile: currentProfile,
-          soulPoints: snapshot.soulPoints,
-          currentStreak: snapshot.currentStreak,
-          dailyEarnings: snapshot.dailyEarnings,
-          lastCheckInAt: snapshot.lastCheckInAt,
-          compareProfiles: snapshot.compareProfiles,
-          selectedCompareProfileId: snapshot.selectedCompareProfileId,
+          soulPoints: effectiveSnapshot.soulPoints,
+          currentStreak: effectiveSnapshot.currentStreak,
+          dailyEarnings: effectiveSnapshot.dailyEarnings,
+          lastCheckInAt: effectiveSnapshot.lastCheckInAt,
+          compareProfiles: effectiveSnapshot.compareProfiles,
+          selectedCompareProfileId: effectiveSnapshot.selectedCompareProfileId,
           clearErrorMessage: true,
         ),
       );
+      await _persistSnapshot();
       await _normalizeGuestRewardStateIfNeeded(emit);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
@@ -593,9 +614,24 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
   }
 
   /// API public trừ soul points, trả về false nếu không đủ điểm.
-  Future<bool> deductSoulPoints(int amount) async {
+  Future<bool> deductSoulPoints(
+    int amount, {
+    String sourceType = 'manual_adjustment',
+    Map<String, dynamic> metadata = const <String, dynamic>{},
+    String? requestId,
+  }) async {
     final Completer<bool> completer = Completer<bool>();
-    add(MainSessionSoulPointsDeducted(amount: amount, completer: completer));
+    add(
+      MainSessionSoulPointsDeducted(
+        amount: amount,
+        sourceType: sourceType,
+        metadata: Map<String, dynamic>.from(metadata),
+        requestId: requestId?.trim().isNotEmpty == true
+            ? requestId!.trim()
+            : 'spend:${DateTime.now().microsecondsSinceEpoch}:$sourceType:$amount',
+        completer: completer,
+      ),
+    );
     return completer.future;
   }
 
@@ -604,8 +640,21 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     MainSessionSoulPointsDeducted event,
     Emitter<MainSessionState> emit,
   ) async {
-    // Trừ điểm an toàn, không cho âm điểm.
+    // Trừ điểm an toàn: account đăng nhập ưu tiên cloud-authoritative.
     try {
+      if (state.isAuthenticated && _cloudAccountRepository.isConfigured) {
+        final result = await _cloudAccountRepository.spendSoulPoints(
+          amount: event.amount,
+          sourceType: event.sourceType,
+          requestId: event.requestId,
+          metadata: event.metadata,
+        );
+        emit(state.copyWith(soulPoints: result.soulPoints));
+        await _persistSnapshot();
+        _completeBool(event.completer, result.applied || result.idempotent);
+        return;
+      }
+
       final int? nextSoulPoints = _rewardService.deductSoulPoints(
         currentSoulPoints: state.soulPoints,
         amount: event.amount,
@@ -618,7 +667,13 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       await _persistSnapshot();
       _completeBool(event.completer, true);
     } catch (error, stackTrace) {
-      _completeError(event.completer, error, stackTrace);
+      developer.log(
+        'Failed to deduct soul points.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _completeBool(event.completer, false);
     }
   }
 

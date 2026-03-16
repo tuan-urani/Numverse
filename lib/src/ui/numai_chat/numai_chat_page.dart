@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
@@ -12,7 +13,9 @@ import 'package:test/src/ui/numai_chat/interactor/numai_chat_bloc.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
+import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
 import 'package:test/src/utils/app_pages.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class NumAiChatPage extends StatefulWidget {
   const NumAiChatPage({super.key});
@@ -146,10 +149,21 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       return;
     }
 
+    if (sessionState.soulPoints < NumAiChatBloc.messageCost) {
+      await _showSoulPointsInsufficientModal(
+        requiredPoints: NumAiChatBloc.messageCost,
+      );
+      return;
+    }
+
     final bool sent = await bloc.sendMessage(
       rawMessage: text,
       hasProfile: sessionState.currentProfile != null,
-      deductSoulPoints: sessionCubit.deductSoulPoints,
+      deductSoulPoints: (int amount) => sessionCubit.deductSoulPoints(
+        amount,
+        sourceType: 'numai_message',
+        metadata: const <String, dynamic>{'screen': 'numai_chat'},
+      ),
     );
     if (!mounted || !sent) {
       return;
@@ -184,5 +198,28 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       return;
     }
     Get.offAllNamed(AppPages.numai);
+  }
+
+  Future<void> _showSoulPointsInsufficientModal({
+    required int requiredPoints,
+  }) async {
+    await SoulPointsInsufficientDialog.show(
+      context,
+      requiredPoints: requiredPoints,
+      onWatchAdTap: _onWatchAdTap,
+      onBuyPointsTap: _onBuyPointsTap,
+    );
+  }
+
+  Future<void> _onWatchAdTap() async {
+    Get.snackbar(
+      LocaleKey.commonComingSoon.tr,
+      LocaleKey.commonComingSoon.tr,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> _onBuyPointsTap() async {
+    await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
   }
 }

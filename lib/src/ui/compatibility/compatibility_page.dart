@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_add_profile_dialog.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_content.dart';
-import 'package:test/src/ui/compatibility/components/compatibility_insufficient_points_dialog.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_constants.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_state.dart';
@@ -13,6 +13,7 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
+import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/tab_navigation_helper.dart';
 
@@ -114,25 +115,29 @@ class CompatibilityPage extends StatelessWidget {
     }
 
     if (latestSessionState.soulPoints < kCompatibilityComparisonCost) {
-      await CompatibilityInsufficientPointsDialog.show(
+      await SoulPointsInsufficientDialog.show(
         context,
-        comparisonCost: kCompatibilityComparisonCost,
-        onTopup: () {},
+        requiredPoints: kCompatibilityComparisonCost,
+        onWatchAdTap: _onWatchAdTap,
+        onBuyPointsTap: _onBuyPointsTap,
       );
       return;
     }
 
     final bool canDeduct = await sessionCubit.deductSoulPoints(
       kCompatibilityComparisonCost,
+      sourceType: 'compatibility_compare',
+      metadata: const <String, dynamic>{'screen': 'compatibility'},
     );
     if (!context.mounted) {
       return;
     }
     if (!canDeduct) {
-      await CompatibilityInsufficientPointsDialog.show(
+      await SoulPointsInsufficientDialog.show(
         context,
-        comparisonCost: kCompatibilityComparisonCost,
-        onTopup: () {},
+        requiredPoints: kCompatibilityComparisonCost,
+        onWatchAdTap: _onWatchAdTap,
+        onBuyPointsTap: _onBuyPointsTap,
       );
       return;
     }
@@ -141,5 +146,17 @@ class CompatibilityPage extends StatelessWidget {
       AppPages.comparisonResult,
       arguments: selected.toJson(),
     );
+  }
+
+  Future<void> _onWatchAdTap() async {
+    Get.snackbar(
+      LocaleKey.commonComingSoon.tr,
+      LocaleKey.commonComingSoon.tr,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> _onBuyPointsTap() async {
+    await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
   }
 }

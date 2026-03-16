@@ -423,6 +423,13 @@ class LocaleKey {
       PagesLocaleKey.compatibilityInsufficientClose;
   static const String compatibilityInsufficientTopup =
       PagesLocaleKey.compatibilityInsufficientTopup;
+  static const String soulPointsInsufficientTitle =
+      PagesLocaleKey.soulPointsInsufficientTitle;
+  static const String soulPointsInsufficientBody =
+      PagesLocaleKey.soulPointsInsufficientBody;
+  static const String soulPointsWatchAdAction =
+      PagesLocaleKey.soulPointsWatchAdAction;
+  static const String soulPointsBuyAction = PagesLocaleKey.soulPointsBuyAction;
   static const String compatibilityUnlockTitle =
       PagesLocaleKey.compatibilityUnlockTitle;
   static const String compatibilityUnlockSubtitle =

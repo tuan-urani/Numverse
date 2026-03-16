@@ -159,14 +159,20 @@ final class MainSessionSoulPointsAdded extends MainSessionEvent {
 final class MainSessionSoulPointsDeducted extends MainSessionEvent {
   const MainSessionSoulPointsDeducted({
     required this.amount,
+    required this.sourceType,
+    required this.metadata,
+    required this.requestId,
     required this.completer,
   });
 
   final int amount;
+  final String sourceType;
+  final Map<String, dynamic> metadata;
+  final String requestId;
   final Completer<bool> completer;
 
   @override
-  List<Object?> get props => <Object?>[amount];
+  List<Object?> get props => <Object?>[amount, sourceType, requestId];
 }
 
 final class MainSessionCheckedIn extends MainSessionEvent {

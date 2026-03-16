@@ -57,6 +57,11 @@ final Map<String, String> pagesVi = <String, String>{
       'Bạn không đủ điểm hồn để thực hiện so sánh. Bạn cần @points điểm hồn.',
   PagesLocaleKey.compatibilityInsufficientClose: 'Đóng',
   PagesLocaleKey.compatibilityInsufficientTopup: 'Nạp Điểm Hồn',
+  PagesLocaleKey.soulPointsInsufficientTitle: 'Soul Points không đủ',
+  PagesLocaleKey.soulPointsInsufficientBody:
+      'Bạn cần @points Soul Points để tiếp tục.',
+  PagesLocaleKey.soulPointsWatchAdAction: 'Xem quảng cáo',
+  PagesLocaleKey.soulPointsBuyAction: 'Mua point',
   PagesLocaleKey.compatibilityUnlockTitle: 'Mở khóa thông tin',
   PagesLocaleKey.compatibilityUnlockSubtitle:
       'Nhập thông tin chính xác trùng với trên CCCD của bạn',

@@ -50,6 +50,11 @@ final Map<String, String> pagesJa = <String, String>{
       '比較に必要なポイントが不足しています。@points ポイント必要です。',
   PagesLocaleKey.compatibilityInsufficientClose: '閉じる',
   PagesLocaleKey.compatibilityInsufficientTopup: 'Soul Points を補充',
+  PagesLocaleKey.soulPointsInsufficientTitle: 'Soul Points が不足しています',
+  PagesLocaleKey.soulPointsInsufficientBody:
+      '続行するには @points Soul Points が必要です。',
+  PagesLocaleKey.soulPointsWatchAdAction: '広告を見る',
+  PagesLocaleKey.soulPointsBuyAction: 'ポイントを購入',
   PagesLocaleKey.compatibilityUnlockTitle: 'プロフィールを解放',
   PagesLocaleKey.compatibilityUnlockSubtitle: '身分証と一致する正確な情報を入力してください',
   PagesLocaleKey.compatibilityUnlockDateHint: '形式: 日/月/年',

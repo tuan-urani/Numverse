@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:test/src/core/model/app_session_snapshot.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
+import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/utils/app_shared.dart';
 import 'package:test/src/utils/app_supabase_config.dart';
@@ -322,6 +323,50 @@ class CloudAccountRepository implements ICloudAccountRepository {
       throw StateError('supabase_invalid_checkin_response');
     }
     return CloudDailyCheckInResult.fromJson(payload);
+  }
+
+  @override
+  Future<CloudSpendSoulPointsResult> spendSoulPoints({
+    required int amount,
+    required String sourceType,
+    String? requestId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    if (!isConfigured) {
+      throw StateError('supabase_not_configured');
+    }
+    final String accessToken = (_appShared.getSupabaseAccessToken() ?? '')
+        .trim();
+    if (accessToken.isEmpty) {
+      throw StateError('supabase_missing_access_token');
+    }
+    final String cleanRequestId = (requestId ?? '').trim();
+    final Map<String, dynamic> cleanMetadata = Map<String, dynamic>.from(
+      metadata ?? const <String, dynamic>{},
+    );
+
+    final Uri rpcUri = _supabaseConfig.rpcUri('spend_soul_points');
+    final Response<dynamic> response = await _dio.postUri(
+      rpcUri,
+      data: <String, dynamic>{
+        'p_amount': amount,
+        'p_source_type': sourceType,
+        if (cleanRequestId.isNotEmpty) 'p_request_id': cleanRequestId,
+        if (cleanMetadata.isNotEmpty) 'p_metadata': cleanMetadata,
+      },
+      options: Options(
+        headers: <String, String>{
+          'apikey': _supabaseConfig.resolvedAnonKey,
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+    final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+    if (payload.isEmpty) {
+      throw StateError('supabase_invalid_spend_response');
+    }
+    return CloudSpendSoulPointsResult.fromJson(payload);
   }
 
   @override

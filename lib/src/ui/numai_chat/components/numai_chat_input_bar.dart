@@ -28,8 +28,7 @@ class NumAiChatInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool canSend =
-        controller.text.trim().isNotEmpty && !isLoading && canAffordMessage;
+    final bool canSend = controller.text.trim().isNotEmpty && !isLoading;
     final bool shouldShowWarning =
         showInsufficientPointsWarning || !canAffordMessage;
 

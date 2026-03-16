@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:test/src/ui/admin/admin_page.dart';
-import 'package:test/src/ui/admin/binding/admin_binding.dart';
 import 'package:test/src/ui/angel_numbers/angel_numbers_page.dart';
 import 'package:test/src/ui/angel_numbers/binding/angel_numbers_binding.dart';
 import 'package:test/src/ui/chart_matrix/binding/chart_matrix_binding.dart';
@@ -66,12 +64,6 @@ class CommonRouter {
         return _buildRoute(
           settings: settings,
           pageBuilder: (_) => const SplashPage(),
-        );
-      case AppPages.admin:
-        return _buildRoute(
-          settings: settings,
-          binding: AdminBinding(),
-          pageBuilder: (_) => const AdminPage(),
         );
       case AppPages.login:
       case AppPages.register:

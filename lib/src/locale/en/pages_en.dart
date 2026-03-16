@@ -58,6 +58,11 @@ final Map<String, String> pagesEn = <String, String>{
       'You do not have enough soul points for this comparison. You need @points points.',
   PagesLocaleKey.compatibilityInsufficientClose: 'Close',
   PagesLocaleKey.compatibilityInsufficientTopup: 'Top up Soul Points',
+  PagesLocaleKey.soulPointsInsufficientTitle: 'Not enough Soul Points',
+  PagesLocaleKey.soulPointsInsufficientBody:
+      'You need @points Soul Points to continue.',
+  PagesLocaleKey.soulPointsWatchAdAction: 'Watch ad',
+  PagesLocaleKey.soulPointsBuyAction: 'Buy points',
   PagesLocaleKey.compatibilityUnlockTitle: 'Unlock your profile',
   PagesLocaleKey.compatibilityUnlockSubtitle:
       'Enter accurate information matching your official ID',

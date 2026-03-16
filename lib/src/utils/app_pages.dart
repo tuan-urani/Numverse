@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/enums/bottom_navigation_page.dart';
-import 'package:test/src/ui/admin/admin_page.dart';
-import 'package:test/src/ui/admin/binding/admin_binding.dart';
 import 'package:test/src/ui/angel_numbers/angel_numbers_page.dart';
 import 'package:test/src/ui/angel_numbers/binding/angel_numbers_binding.dart';
 import 'package:test/src/ui/chart_matrix/binding/chart_matrix_binding.dart';
@@ -67,7 +65,6 @@ class AppPages {
   AppPages._();
 
   static const String splash = '/splash';
-  static const String admin = '/admin';
   static const String main = '/';
   static const String login = '/login';
   static const String register = '/register';
@@ -108,11 +105,6 @@ class AppPages {
 
   static final List<GetPage<dynamic>> pages = <GetPage<dynamic>>[
     GetPage(name: splash, page: () => const SplashPage()),
-    GetPage(
-      name: admin,
-      page: () => const AdminPage(),
-      binding: AdminBinding(),
-    ),
     GetPage(
       name: main,
       page: () => const MainPage(),

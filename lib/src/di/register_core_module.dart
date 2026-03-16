@@ -1,8 +1,6 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:test/src/core/repository/admin_ledger_repository.dart';
-import 'package:test/src/core/repository/interface/i_admin_ledger_repository.dart';
 import 'package:test/src/core/repository/app_session_repository.dart';
 import 'package:test/src/core/repository/cloud_account_repository.dart';
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
@@ -27,13 +25,6 @@ Future<void> registerCoreModule() async {
   if (!Get.isRegistered<ICloudAccountRepository>()) {
     Get.lazyPut<ICloudAccountRepository>(
       () => CloudAccountRepository(appShared: Get.find<AppShared>()),
-      fenix: true,
-    );
-  }
-
-  if (!Get.isRegistered<IAdminLedgerRepository>()) {
-    Get.lazyPut<IAdminLedgerRepository>(
-      () => AdminLedgerRepository(appShared: Get.find<AppShared>()),
       fenix: true,
     );
   }

@@ -77,6 +77,12 @@ class PagesLocaleKey {
       'compatibility_insufficient_close';
   static const String compatibilityInsufficientTopup =
       'compatibility_insufficient_topup';
+  static const String soulPointsInsufficientTitle =
+      'soul_points_insufficient_title';
+  static const String soulPointsInsufficientBody =
+      'soul_points_insufficient_body';
+  static const String soulPointsWatchAdAction = 'soul_points_watch_ad_action';
+  static const String soulPointsBuyAction = 'soul_points_buy_action';
   static const String compatibilityUnlockTitle = 'compatibility_unlock_title';
   static const String compatibilityUnlockSubtitle =
       'compatibility_unlock_subtitle';

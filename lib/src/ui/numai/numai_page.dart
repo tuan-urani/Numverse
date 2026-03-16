@@ -9,9 +9,12 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_bloc.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
+import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/utils/app_colors.dart';
+import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class NumAiPage extends StatefulWidget {
   const NumAiPage({super.key});
@@ -25,6 +28,7 @@ class _NumAiPageState extends State<NumAiPage> {
   late final NumAiChatBloc _chatBloc;
   late final TextEditingController _controller;
   late final ScrollController _scrollController;
+  late List<_NumAiDomain> _visibleDomainSuggestions;
 
   String? _activeDomainId;
 
@@ -37,6 +41,7 @@ class _NumAiPageState extends State<NumAiPage> {
         : Get.put<NumAiChatBloc>(NumAiChatBloc());
     _controller = TextEditingController();
     _scrollController = ScrollController();
+    _visibleDomainSuggestions = _domains.take(3).toList();
 
     if (_sessionBloc.state.viewState == AppViewStateStatus.loading) {
       _sessionBloc.initialize();
@@ -70,6 +75,8 @@ class _NumAiPageState extends State<NumAiPage> {
               child: BlocBuilder<NumAiChatBloc, NumAiChatState>(
                 bloc: _chatBloc,
                 builder: (BuildContext context, NumAiChatState chatState) {
+                  final bool isChatBlank =
+                      chatState.messages.isEmpty && !chatState.isLoading;
                   final _NumAiDomain? activeDomain = _domainById(
                     _activeDomainId,
                   );
@@ -119,10 +126,18 @@ class _NumAiPageState extends State<NumAiPage> {
                                 emptyHint: emptyHint,
                                 scrollController: _scrollController,
                                 onActionTap: _onProfileActionTap,
+                                showFollowupSuggestions: !isChatBlank,
+                                followupDomains: _visibleDomainSuggestions,
+                                onFollowupTap: (_NumAiDomain domain) {
+                                  _sendMessage(
+                                    messageText: domain.featuredPromptKey.tr,
+                                    domain: domain,
+                                  );
+                                },
                               ),
                             ),
                             _NumAiComposer(
-                              domains: _domains,
+                              domains: _visibleDomainSuggestions,
                               activeDomainId: _activeDomainId,
                               canAffordMessage: canAffordMessage,
                               canSend: canSend,
@@ -133,6 +148,7 @@ class _NumAiPageState extends State<NumAiPage> {
                                   LocaleKey.numaiChatNoPointsHint.tr,
                               onChanged: (_) => setState(() {}),
                               onSendTap: () => _sendMessage(),
+                              showSuggestions: isChatBlank,
                               onDomainTap: (_NumAiDomain domain) {
                                 _sendMessage(
                                   messageText: domain.featuredPromptKey.tr,
@@ -165,6 +181,17 @@ class _NumAiPageState extends State<NumAiPage> {
       return;
     }
 
+    if (domain != null) {
+      _rotateSuggestionsAfterSelection(selectedDomain.id);
+    }
+
+    if (_sessionBloc.state.soulPoints < NumAiChatBloc.messageCost) {
+      await _showSoulPointsInsufficientModal(
+        requiredPoints: NumAiChatBloc.messageCost,
+      );
+      return;
+    }
+
     setState(() {
       _activeDomainId = selectedDomain.id;
     });
@@ -178,7 +205,11 @@ class _NumAiPageState extends State<NumAiPage> {
     final bool sent = await _chatBloc.sendMessage(
       rawMessage: resolvedMessage,
       hasProfile: hasProfile,
-      deductSoulPoints: _sessionBloc.deductSoulPoints,
+      deductSoulPoints: (int amount) => _sessionBloc.deductSoulPoints(
+        amount,
+        sourceType: 'numai_message',
+        metadata: const <String, dynamic>{'screen': 'numai'},
+      ),
     );
     if (!mounted || !sent) {
       return;
@@ -188,6 +219,41 @@ class _NumAiPageState extends State<NumAiPage> {
       _controller.clear();
     }
     setState(() {});
+  }
+
+  void _rotateSuggestionsAfterSelection(String selectedDomainId) {
+    final List<_NumAiDomain> candidates = <_NumAiDomain>[];
+
+    for (final _NumAiDomain domain in _domains) {
+      if (domain.id != selectedDomainId) {
+        candidates.add(domain);
+      }
+    }
+
+    final List<_NumAiDomain> next = <_NumAiDomain>[];
+    for (final _NumAiDomain domain in candidates) {
+      if (_visibleDomainSuggestions.any((item) => item.id == domain.id)) {
+        continue;
+      }
+      next.add(domain);
+      if (next.length == 3) {
+        break;
+      }
+    }
+
+    for (final _NumAiDomain domain in candidates) {
+      if (next.any((item) => item.id == domain.id)) {
+        continue;
+      }
+      next.add(domain);
+      if (next.length == 3) {
+        break;
+      }
+    }
+
+    setState(() {
+      _visibleDomainSuggestions = next.take(3).toList();
+    });
   }
 
   Future<void> _promptProfileInputDialog() async {
@@ -212,11 +278,35 @@ class _NumAiPageState extends State<NumAiPage> {
     _chatBloc.appendPendingQuestionAnswerAfterProfile();
   }
 
+  Future<void> _showSoulPointsInsufficientModal({
+    required int requiredPoints,
+  }) async {
+    await SoulPointsInsufficientDialog.show(
+      context,
+      requiredPoints: requiredPoints,
+      onWatchAdTap: _onWatchAdTap,
+      onBuyPointsTap: _onBuyPointsTap,
+    );
+  }
+
+  Future<void> _onWatchAdTap() async {
+    Get.snackbar(
+      LocaleKey.commonComingSoon.tr,
+      LocaleKey.commonComingSoon.tr,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> _onBuyPointsTap() async {
+    await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
+  }
+
   void _resetConversation() {
     _chatBloc.resetConversation();
     _controller.clear();
     setState(() {
       _activeDomainId = null;
+      _visibleDomainSuggestions = _domains.take(3).toList();
     });
   }
 
@@ -366,6 +456,9 @@ class _NumAiMessagesPanel extends StatelessWidget {
     required this.emptyHint,
     required this.scrollController,
     required this.onActionTap,
+    required this.showFollowupSuggestions,
+    required this.followupDomains,
+    required this.onFollowupTap,
   });
 
   final List<NumAiChatMessage> messages;
@@ -373,6 +466,9 @@ class _NumAiMessagesPanel extends StatelessWidget {
   final String emptyHint;
   final ScrollController scrollController;
   final Future<void> Function() onActionTap;
+  final bool showFollowupSuggestions;
+  final List<_NumAiDomain> followupDomains;
+  final ValueChanged<_NumAiDomain> onFollowupTap;
 
   @override
   Widget build(BuildContext context) {
@@ -400,12 +496,31 @@ class _NumAiMessagesPanel extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double bubbleMaxWidth = constraints.maxWidth * 0.85;
+        final bool hasBottomSuggestions =
+            showFollowupSuggestions && !isLoading && followupDomains.isNotEmpty;
+        final int itemCount =
+            messages.length +
+            (isLoading ? 1 : 0) +
+            (hasBottomSuggestions ? 1 : 0);
+
         return ListView.builder(
           controller: scrollController,
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-          itemCount: messages.length + (isLoading ? 1 : 0),
+          itemCount: itemCount,
           itemBuilder: (BuildContext context, int index) {
-            if (index >= messages.length) {
+            if (index < messages.length) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _NumAiMessageBubble(
+                  message: messages[index],
+                  maxWidth: bubbleMaxWidth,
+                  onActionTap: onActionTap,
+                ),
+              );
+            }
+
+            final int loadingIndex = messages.length;
+            if (isLoading && index == loadingIndex) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Align(
@@ -447,13 +562,19 @@ class _NumAiMessagesPanel extends StatelessWidget {
               );
             }
 
+            if (hasBottomSuggestions) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: _NumAiFollowupSuggestions(
+                  domains: followupDomains,
+                  onTap: onFollowupTap,
+                ),
+              );
+            }
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _NumAiMessageBubble(
-                message: messages[index],
-                maxWidth: bubbleMaxWidth,
-                onActionTap: onActionTap,
-              ),
+              child: const SizedBox.shrink(),
             );
           },
         );
@@ -641,6 +762,7 @@ class _NumAiComposer extends StatelessWidget {
     required this.noPointsMessage,
     required this.onChanged,
     required this.onSendTap,
+    required this.showSuggestions,
     required this.onDomainTap,
   });
 
@@ -654,6 +776,7 @@ class _NumAiComposer extends StatelessWidget {
   final String noPointsMessage;
   final ValueChanged<String> onChanged;
   final VoidCallback onSendTap;
+  final bool showSuggestions;
   final ValueChanged<_NumAiDomain> onDomainTap;
 
   @override
@@ -674,15 +797,17 @@ class _NumAiComposer extends StatelessWidget {
       ),
       child: Column(
         children: <Widget>[
-          for (int index = 0; index < domains.length; index++) ...<Widget>[
-            _DomainPromptButton(
-              domain: domains[index],
-              isActive: domains[index].id == activeDomainId,
-              onTap: () => onDomainTap(domains[index]),
-            ),
-            if (index != domains.length - 1) 6.height,
+          if (showSuggestions) ...<Widget>[
+            for (int index = 0; index < domains.length; index++) ...<Widget>[
+              _DomainPromptButton(
+                domain: domains[index],
+                isActive: domains[index].id == activeDomainId,
+                onTap: () => onDomainTap(domains[index]),
+              ),
+              if (index != domains.length - 1) 6.height,
+            ],
+            10.height,
           ],
-          10.height,
           if (!canAffordMessage) ...<Widget>[
             Text(
               noPointsMessage,
@@ -771,6 +896,29 @@ class _NumAiComposer extends StatelessWidget {
   }
 }
 
+class _NumAiFollowupSuggestions extends StatelessWidget {
+  const _NumAiFollowupSuggestions({required this.domains, required this.onTap});
+
+  final List<_NumAiDomain> domains;
+  final ValueChanged<_NumAiDomain> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        for (int index = 0; index < domains.length; index++) ...<Widget>[
+          _DomainPromptButton(
+            domain: domains[index],
+            isActive: false,
+            onTap: () => onTap(domains[index]),
+          ),
+          if (index != domains.length - 1) 6.height,
+        ],
+      ],
+    );
+  }
+}
+
 class _DomainPromptButton extends StatelessWidget {
   const _DomainPromptButton({
     required this.domain,
@@ -784,38 +932,60 @@ class _DomainPromptButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color glowColor = AppColors.richGold.withValues(
+      alpha: isActive ? 0.3 : 0.16,
+    );
+    final Color borderColor = AppColors.richGold.withValues(
+      alpha: isActive ? 0.5 : 0.24,
+    );
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.richGold.withValues(alpha: 0.15)
-              : AppColors.card.withValues(alpha: 0.62),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isActive
-                ? AppColors.richGold.withValues(alpha: 0.45)
-                : AppColors.border.withValues(alpha: 0.45),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              AppColors.midnightSoft.withValues(alpha: 0.96),
+              AppColors.deepViolet.withValues(alpha: isActive ? 0.92 : 0.84),
+            ],
           ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor, width: isActive ? 1.2 : 1),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: glowColor,
+              blurRadius: isActive ? 24 : 16,
+              spreadRadius: isActive ? 0.8 : 0.2,
+            ),
+            BoxShadow(
+              color: AppColors.black.withValues(alpha: 0.45),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Row(
           children: <Widget>[
             Icon(
               domain.icon,
               size: 16,
-              color: isActive ? AppColors.richGold : AppColors.textMuted,
+              color: AppColors.richGold.withValues(
+                alpha: isActive ? 0.95 : 0.8,
+              ),
             ),
             8.width,
             Expanded(
               child: Text(
                 domain.featuredPromptKey.tr,
                 style: AppStyles.bodySmall(
-                  color: isActive ? AppColors.richGold : AppColors.textPrimary,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
