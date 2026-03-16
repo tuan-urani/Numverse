@@ -202,9 +202,8 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileCoreLifePathLabel: 'Số chủ đạo',
   PagesLocaleKey.profileCoreMissionLabel: 'Sứ mệnh',
   PagesLocaleKey.profileCoreSoulLabel: 'Linh hồn',
-  PagesLocaleKey.profileGuestWarning:
-      'Dữ liệu của bạn đang lưu cục bộ và có thể bị mất. Hãy đăng ký hoặc đăng nhập để sao lưu.',
-  PagesLocaleKey.profileGuestAuthAction: 'Đăng ký / Đăng nhập',
+  PagesLocaleKey.profileGuestWarning: 'Dữ liệu của bạn chưa được sao lưu.',
+  PagesLocaleKey.profileGuestAuthAction: 'Sao lưu ngay',
   PagesLocaleKey.profileGuestAuthTitle: 'Đăng ký / Đăng nhập để sao lưu',
   PagesLocaleKey.profileGuestAuthSubtitle:
       'Đồng bộ hồ sơ của bạn lên cloud để không bị mất dữ liệu khi đổi thiết bị.',
@@ -215,9 +214,9 @@ final Map<String, String> pagesVi = <String, String>{
       'Bạn có thể tạo nhiều profile để xem cho bản thân và người thân.',
   PagesLocaleKey.profileManageProfilesDeleteConfirm:
       'Bạn có chắc muốn xoá profile này?',
-  PagesLocaleKey.profileAuthDialogTitle: 'Xác thực tài khoản',
+  PagesLocaleKey.profileAuthDialogTitle: 'Sao lưu dữ liệu của bạn',
   PagesLocaleKey.profileAuthDialogSubtitle:
-      'Đăng nhập hoặc đăng ký để bảo vệ dữ liệu của bạn',
+      'Tạo tài khoản hoặc đăng nhập để sao lưu và khôi phục dữ liệu',
   PagesLocaleKey.profileAuthTabLogin: 'Đăng nhập',
   PagesLocaleKey.profileAuthTabRegister: 'Đăng ký',
   PagesLocaleKey.profileAuthNameLabel: 'Họ và tên',
@@ -242,6 +241,8 @@ final Map<String, String> pagesVi = <String, String>{
       'Vui lòng nhập lại mật khẩu',
   PagesLocaleKey.profileAuthValidateConfirmMismatch: 'Mật khẩu không khớp',
   PagesLocaleKey.profileAuthRegisterAction: 'Đăng ký ngay',
+  PagesLocaleKey.profileAuthHaveAccountPrompt: 'Bạn đã có tài khoản trước đó?',
+  PagesLocaleKey.profileAuthSwitchToLogin: 'Đăng nhập',
   PagesLocaleKey.profileAuthProcessing: 'Đang xử lý...',
   PagesLocaleKey.profileMenuSettingsSubtitle: 'Tùy chỉnh ứng dụng',
   PagesLocaleKey.profileMenuPrivacySubtitle: 'Bảo mật và quyền riêng tư',

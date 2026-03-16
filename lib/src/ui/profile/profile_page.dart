@@ -18,6 +18,7 @@ import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -49,8 +50,8 @@ class _ProfilePageState extends State<ProfilePage> {
           onRetry: _sessionBloc.initialize,
           success: SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -64,16 +65,30 @@ class _ProfilePageState extends State<ProfilePage> {
                     onTapManageProfiles: () => _showProfileManageSheet(context),
                   ),
                   20.height,
-                  ProfileReadingSection(
-                    sections: _buildReadingSections(),
-                    hasProfile: state.hasAnyProfile,
-                    onTapSection: (ProfileReadingSectionItem item) {
-                      Get.toNamed(item.route);
-                    },
-                    onTapLocked: () => _showCreateProfileDialog(context),
-                    onTapNumAi: () => Get.toNamed(AppPages.numai),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          ProfileReadingSection(
+                            sections: _buildReadingSections(),
+                            hasProfile: state.hasAnyProfile,
+                            onTapSection: (ProfileReadingSectionItem item) {
+                              TabNavigationHelper.pushCommonRoute(item.route);
+                            },
+                            onTapLocked: () =>
+                                _showCreateProfileDialog(context),
+                            onTapNumAi: () =>
+                                TabNavigationHelper.navigateFromMain(
+                                  AppPages.numai,
+                                ),
+                          ),
+                          84.height,
+                        ],
+                      ),
+                    ),
                   ),
-                  84.height,
                 ],
               ),
             ),
@@ -112,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
       showLogout: state.isAuthenticated,
       onTapItem: (ProfileMenuItem item) {
         Navigator.of(context).pop();
-        Get.toNamed(item.route);
+        TabNavigationHelper.pushCommonRoute(item.route);
       },
       onTapLogout: () async {
         Navigator.of(context).pop();

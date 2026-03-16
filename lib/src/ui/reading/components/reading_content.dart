@@ -10,6 +10,7 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class ReadingContent extends StatelessWidget {
   const ReadingContent({
@@ -36,7 +37,7 @@ class ReadingContent extends StatelessWidget {
           AppColors.richGold.withValues(alpha: 0.2),
           AppColors.richGold.withValues(alpha: 0.05),
         ],
-        onTap: () => Get.toNamed(AppPages.coreNumbers),
+        onTap: () => TabNavigationHelper.pushCommonRoute(AppPages.coreNumbers),
       ),
       _ReadingSection(
         icon: Icons.grid_view_rounded,
@@ -48,7 +49,7 @@ class ReadingContent extends StatelessWidget {
           AppColors.deepViolet.withValues(alpha: 0.2),
           AppColors.deepViolet.withValues(alpha: 0.05),
         ],
-        onTap: () => Get.toNamed(AppPages.chartMatrix),
+        onTap: () => TabNavigationHelper.pushCommonRoute(AppPages.chartMatrix),
       ),
       _ReadingSection(
         icon: Icons.trending_up_rounded,
@@ -60,7 +61,7 @@ class ReadingContent extends StatelessWidget {
           AppColors.violetAccent.withValues(alpha: 0.2),
           AppColors.violetAccent.withValues(alpha: 0.05),
         ],
-        onTap: () => Get.toNamed(AppPages.lifePath),
+        onTap: () => TabNavigationHelper.pushCommonRoute(AppPages.lifePath),
       ),
       _ReadingSection(
         icon: Icons.account_circle_outlined,
@@ -72,7 +73,8 @@ class ReadingContent extends StatelessWidget {
           AppColors.richGold.withValues(alpha: 0.2),
           AppColors.violetAccent.withValues(alpha: 0.1),
         ],
-        onTap: () => Get.toNamed(AppPages.personalPortrait),
+        onTap: () =>
+            TabNavigationHelper.pushCommonRoute(AppPages.personalPortrait),
       ),
     ];
 

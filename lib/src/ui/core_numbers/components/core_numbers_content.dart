@@ -6,7 +6,7 @@ import 'package:test/src/ui/core_numbers/interactor/core_numbers_state.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
-import 'package:get/get.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class CoreNumbersContent extends StatelessWidget {
   const CoreNumbersContent({required this.state, super.key});
@@ -128,7 +128,8 @@ class _EmptyContent extends StatelessWidget {
             ),
             14.height,
             InkWell(
-              onTap: () => Get.toNamed(AppPages.onboarding),
+              onTap: () =>
+                  TabNavigationHelper.pushCommonRoute(AppPages.onboarding),
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 padding: const EdgeInsets.symmetric(

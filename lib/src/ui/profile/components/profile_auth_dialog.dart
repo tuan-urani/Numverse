@@ -9,6 +9,7 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/utils/app_colors.dart';
+import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 enum ProfileAuthDialogTab { login, register }
@@ -16,7 +17,7 @@ enum ProfileAuthDialogTab { login, register }
 class ProfileAuthDialog extends StatefulWidget {
   const ProfileAuthDialog({
     super.key,
-    this.defaultTab = ProfileAuthDialogTab.login,
+    this.defaultTab = ProfileAuthDialogTab.register,
     this.onSuccess,
   });
 
@@ -24,16 +25,13 @@ class ProfileAuthDialog extends StatefulWidget {
   final VoidCallback? onSuccess;
 
   static Future<void> show(
-    BuildContext context, {
-    ProfileAuthDialogTab defaultTab = ProfileAuthDialogTab.login,
+    BuildContext _, {
+    ProfileAuthDialogTab defaultTab = ProfileAuthDialogTab.register,
     VoidCallback? onSuccess,
   }) {
-    return showDialog<void>(
-      context: context,
+    return Get.dialog<void>(
+      ProfileAuthDialog(defaultTab: defaultTab, onSuccess: onSuccess),
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return ProfileAuthDialog(defaultTab: defaultTab, onSuccess: onSuccess);
-      },
     );
   }
 
@@ -50,7 +48,6 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
   final TextEditingController _loginEmailController = TextEditingController();
   final TextEditingController _loginPasswordController =
       TextEditingController();
-  final TextEditingController _registerNameController = TextEditingController();
   final TextEditingController _registerEmailController =
       TextEditingController();
   final TextEditingController _registerPasswordController =
@@ -64,7 +61,6 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
   bool _isLoginLoading = false;
   bool _isRegisterLoading = false;
   bool _isSuccess = false;
-  bool _isNameFromProfile = false;
   String _successMessage = '';
   String? _formError;
   Map<String, String> _loginErrors = <String, String>{};
@@ -77,29 +73,16 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
     super.initState();
     _activeTab = widget.defaultTab;
     _sessionBloc = Get.find<MainSessionBloc>();
-    _prefillRegisterNameFromProfile();
   }
 
   @override
   void dispose() {
     _loginEmailController.dispose();
     _loginPasswordController.dispose();
-    _registerNameController.dispose();
     _registerEmailController.dispose();
     _registerPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  void _prefillRegisterNameFromProfile() {
-    final String profileName = (_sessionBloc.state.currentProfile?.name ?? '')
-        .trim();
-    if (profileName.isEmpty) {
-      _isNameFromProfile = false;
-      return;
-    }
-    _registerNameController.text = profileName;
-    _isNameFromProfile = true;
   }
 
   void _setActiveTab(ProfileAuthDialogTab tab) {
@@ -166,7 +149,7 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
     try {
       final String email = _registerEmailController.text.trim().toLowerCase();
       final String password = _registerPasswordController.text.trim();
-      final String name = _registerNameController.text.trim();
+      final String name = _resolveRegisterName(email);
       await _sessionBloc.register(email: email, password: password, name: name);
       await _showSuccessAndClose(LocaleKey.profileAuthRegisterSuccess.tr);
     } catch (error) {
@@ -197,8 +180,11 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pop();
     widget.onSuccess?.call();
+    Get.offAllNamed(
+      AppPages.splash,
+      arguments: <String, dynamic>{'skipOnboarding': true},
+    );
   }
 
   bool _validateLogin() {
@@ -224,14 +210,9 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
 
   bool _validateRegister() {
     final Map<String, String> errors = <String, String>{};
-    final String name = _registerNameController.text.trim();
     final String email = _registerEmailController.text.trim();
     final String password = _registerPasswordController.text.trim();
     final String confirmPassword = _confirmPasswordController.text.trim();
-
-    if (name.isEmpty) {
-      errors['name'] = LocaleKey.profileAuthValidateNameRequired.tr;
-    }
 
     if (email.isEmpty) {
       errors['email'] = LocaleKey.profileAuthValidateEmailRequired.tr;
@@ -272,6 +253,19 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
       return email;
     }
     return segments.first.trim();
+  }
+
+  String _resolveRegisterName(String email) {
+    final String profileName = (_sessionBloc.state.currentProfile?.name ?? '')
+        .trim();
+    if (profileName.isNotEmpty) {
+      return profileName;
+    }
+    final String emailName = _nameFromEmail(email);
+    if (emailName.isNotEmpty) {
+      return emailName;
+    }
+    return 'Numverse User';
   }
 
   String _resolveErrorMessage(Object error) {
@@ -574,31 +568,6 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _AuthInputField(
-          label: LocaleKey.profileAuthNameLabel.tr,
-          hint: LocaleKey.profileAuthNameHint.tr,
-          icon: Icons.person_outline_rounded,
-          enabled: !_isRegisterLoading && !_isNameFromProfile,
-          controller: _registerNameController,
-          errorText: _registerErrors['name'],
-          onChanged: (_) {
-            if (_registerErrors.containsKey('name') || _formError != null) {
-              setState(() {
-                _registerErrors = Map<String, String>.from(_registerErrors)
-                  ..remove('name');
-                _formError = null;
-              });
-            }
-          },
-        ),
-        if (_isNameFromProfile) ...<Widget>[
-          6.height,
-          Text(
-            LocaleKey.profileAuthNameFromProfile.tr,
-            style: AppStyles.caption(color: AppColors.textMuted),
-          ),
-        ],
-        12.height,
-        _AuthInputField(
           label: LocaleKey.loginEmailLabel.tr,
           hint: LocaleKey.profileAuthEmailHint.tr,
           icon: Icons.mail_outline_rounded,
@@ -697,11 +666,35 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
           label: LocaleKey.profileAuthRegisterAction.tr,
           processingLabel: LocaleKey.profileAuthProcessing.tr,
           icon: Icons.auto_awesome_rounded,
-          gradientColors: <Color>[
-            AppColors.energyAmber.withValues(alpha: 0.94),
-            AppColors.energyOrange.withValues(alpha: 0.92),
-          ],
+          gradientColors: <Color>[AppColors.richGold, AppColors.goldBright],
           onTap: _submitRegister,
+        ),
+        12.height,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              LocaleKey.profileAuthHaveAccountPrompt.tr,
+              style: AppStyles.bodySmall(color: AppColors.textMuted),
+            ),
+            TextButton(
+              onPressed: _isRegisterLoading
+                  ? null
+                  : () => _setActiveTab(ProfileAuthDialogTab.login),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                LocaleKey.profileAuthSwitchToLogin.tr,
+                style: AppStyles.bodySmall(
+                  color: AppColors.richGold,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

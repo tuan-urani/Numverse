@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import 'package:test/src/core/model/numerology_reading_models.dart';
 import 'package:test/src/extensions/int_extensions.dart';
@@ -8,6 +7,7 @@ import 'package:test/src/ui/chart_matrix/interactor/chart_matrix_state.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class ChartMatrixContent extends StatelessWidget {
   const ChartMatrixContent({
@@ -151,7 +151,8 @@ class _NoProfileCard extends StatelessWidget {
               ),
               14.height,
               InkWell(
-                onTap: () => Get.toNamed(AppPages.onboarding),
+                onTap: () =>
+                    TabNavigationHelper.pushCommonRoute(AppPages.onboarding),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(

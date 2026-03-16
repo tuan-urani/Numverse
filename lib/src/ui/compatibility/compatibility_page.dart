@@ -14,6 +14,7 @@ import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/utils/app_pages.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class CompatibilityPage extends StatelessWidget {
   const CompatibilityPage({super.key});
@@ -136,6 +137,9 @@ class CompatibilityPage extends StatelessWidget {
       return;
     }
 
-    await Get.toNamed(AppPages.comparisonResult, arguments: selected.toJson());
+    await TabNavigationHelper.pushCommonRoute(
+      AppPages.comparisonResult,
+      arguments: selected.toJson(),
+    );
   }
 }

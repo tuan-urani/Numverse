@@ -269,6 +269,9 @@ class PagesLocaleKey {
       'profile_auth_validate_confirm_mismatch';
   static const String profileAuthRegisterAction =
       'profile_auth_register_action';
+  static const String profileAuthHaveAccountPrompt =
+      'profile_auth_have_account_prompt';
+  static const String profileAuthSwitchToLogin = 'profile_auth_switch_to_login';
   static const String profileAuthProcessing = 'profile_auth_processing';
   static const String profileMenuSettingsSubtitle =
       'profile_menu_settings_subtitle';

@@ -664,6 +664,10 @@ class LocaleKey {
       PagesLocaleKey.profileAuthValidateConfirmMismatch;
   static const String profileAuthRegisterAction =
       PagesLocaleKey.profileAuthRegisterAction;
+  static const String profileAuthHaveAccountPrompt =
+      PagesLocaleKey.profileAuthHaveAccountPrompt;
+  static const String profileAuthSwitchToLogin =
+      PagesLocaleKey.profileAuthSwitchToLogin;
   static const String profileAuthProcessing =
       PagesLocaleKey.profileAuthProcessing;
   static const String profileMenuSettingsSubtitle =

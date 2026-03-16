@@ -204,9 +204,8 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileCoreLifePathLabel: 'Life path',
   PagesLocaleKey.profileCoreMissionLabel: 'Mission',
   PagesLocaleKey.profileCoreSoulLabel: 'Soul urge',
-  PagesLocaleKey.profileGuestWarning:
-      'Your data is currently local-only and may be lost. Sign up or sign in to back it up.',
-  PagesLocaleKey.profileGuestAuthAction: 'Sign up / Sign in',
+  PagesLocaleKey.profileGuestWarning: 'Your data has not been backed up yet.',
+  PagesLocaleKey.profileGuestAuthAction: 'Back up now',
   PagesLocaleKey.profileGuestAuthTitle: 'Sign up / Sign in to back up',
   PagesLocaleKey.profileGuestAuthSubtitle:
       'Sync your profile to cloud so your data stays safe across devices.',
@@ -217,9 +216,9 @@ final Map<String, String> pagesEn = <String, String>{
       'You can keep multiple profiles for yourself and people you care about.',
   PagesLocaleKey.profileManageProfilesDeleteConfirm:
       'Are you sure you want to delete this profile?',
-  PagesLocaleKey.profileAuthDialogTitle: 'Account authentication',
+  PagesLocaleKey.profileAuthDialogTitle: 'Back up your data',
   PagesLocaleKey.profileAuthDialogSubtitle:
-      'Sign in or sign up to protect your data',
+      'Create an account or sign in to back up and restore your data',
   PagesLocaleKey.profileAuthTabLogin: 'Sign in',
   PagesLocaleKey.profileAuthTabRegister: 'Sign up',
   PagesLocaleKey.profileAuthNameLabel: 'Full name',
@@ -245,6 +244,8 @@ final Map<String, String> pagesEn = <String, String>{
       'Please confirm your password',
   PagesLocaleKey.profileAuthValidateConfirmMismatch: 'Passwords do not match',
   PagesLocaleKey.profileAuthRegisterAction: 'Sign up now',
+  PagesLocaleKey.profileAuthHaveAccountPrompt: 'Already have an account?',
+  PagesLocaleKey.profileAuthSwitchToLogin: 'Sign in',
   PagesLocaleKey.profileAuthProcessing: 'Processing...',
   PagesLocaleKey.profileMenuSettingsSubtitle: 'Customize the app',
   PagesLocaleKey.profileMenuPrivacySubtitle: 'Security and privacy controls',

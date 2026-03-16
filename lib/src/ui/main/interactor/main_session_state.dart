@@ -38,7 +38,7 @@ class MainSessionState extends Equatable {
       lifeBasedByProfileId: <String, ProfileLifeBasedSnapshot>{},
       timeLifeByProfileId: <String, ProfileTimeLifeSnapshot>{},
       currentProfile: null,
-      soulPoints: 0,
+      soulPoints: 100,
       currentStreak: 0,
       dailyEarnings: 0,
       dailyLimit: 100,

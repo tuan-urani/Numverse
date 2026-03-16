@@ -26,15 +26,25 @@ class TodayPage extends StatelessWidget {
           status: sessionState.viewState,
           onRetry: sessionBloc.initialize,
           success: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   const TodayHeader(),
                   14.height,
-                  const TodayPersonalContent(),
-                  84.height,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const <Widget>[
+                          TodayPersonalContent(),
+                          SizedBox(height: 84),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

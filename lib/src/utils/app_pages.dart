@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/enums/bottom_navigation_page.dart';
 import 'package:test/src/ui/admin/admin_page.dart';
 import 'package:test/src/ui/admin/binding/admin_binding.dart';
 import 'package:test/src/ui/angel_numbers/angel_numbers_page.dart';
@@ -23,7 +24,8 @@ import 'package:test/src/ui/login/login_page.dart';
 import 'package:test/src/ui/lucky_number/binding/lucky_number_binding.dart';
 import 'package:test/src/ui/lucky_number/lucky_number_page.dart';
 import 'package:test/src/ui/main/binding/main_binding.dart';
-import 'package:test/src/ui/main/interactor/main_navigation_bloc.dart';
+import 'package:test/src/ui/main/bloc/main_bloc.dart';
+import 'package:test/src/ui/main/bloc/main_event.dart';
 import 'package:test/src/ui/main/main_page.dart';
 import 'package:test/src/ui/month_detail/binding/month_detail_binding.dart';
 import 'package:test/src/ui/month_detail/month_detail_page.dart';
@@ -286,10 +288,12 @@ class _MainTabEntryState extends State<_MainTabEntry> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!Get.isRegistered<MainNavigationBloc>()) {
+      if (!Get.isRegistered<MainBloc>()) {
         return;
       }
-      Get.find<MainNavigationBloc>().selectTab(widget.tabIndex);
+      Get.find<MainBloc>().add(
+        OnChangeTabEvent(resolveBottomNavigationPage(widget.tabIndex)),
+      );
     });
   }
 

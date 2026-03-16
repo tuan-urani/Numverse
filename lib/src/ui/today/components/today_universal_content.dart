@@ -15,6 +15,7 @@ import 'package:test/src/ui/widgets/app_primary_button.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class TodayUniversalContent extends StatelessWidget {
   const TodayUniversalContent({super.key});
@@ -158,7 +159,7 @@ class TodayUniversalContent extends StatelessWidget {
   void _trackAndNavigate(String route) {
     final MainSessionBloc cubit = Get.find<MainSessionBloc>();
     cubit.trackInteraction('today');
-    Get.toNamed(route);
+    TabNavigationHelper.pushCommonRoute(route);
   }
 }
 

@@ -78,50 +78,33 @@ class ProfileIdentityCard extends StatelessWidget {
               ),
               12.height,
               if (showGuestBackupWarning) ...<Widget>[
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.error.withValues(alpha: 0.35),
+                Row(
+                  children: <Widget>[
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      size: 16,
+                      color: AppColors.energyAmber,
                     ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                    child: Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          size: 18,
-                          color: AppColors.error,
+                    6.width,
+                    Expanded(
+                      child: Text(
+                        LocaleKey.profileGuestWarning.tr,
+                        style: AppStyles.caption(
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w500,
                         ),
-                        8.width,
-                        Expanded(
-                          child: Text(
-                            LocaleKey.profileGuestWarning.tr,
-                            style: AppStyles.caption(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        8.width,
-                        TextButton(
-                          onPressed: onTapAuthCta,
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.richGold,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            side: BorderSide(
-                              color: AppColors.richGold.withValues(alpha: 0.6),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                      ),
+                    ),
+                    6.width,
+                    Material(
+                      color: AppColors.transparent,
+                      child: InkWell(
+                        onTap: onTapAuthCta,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
                           ),
                           child: Text(
                             LocaleKey.profileGuestAuthAction.tr,
@@ -131,11 +114,11 @@ class ProfileIdentityCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                12.height,
+                10.height,
               ],
               Container(
                 decoration: BoxDecoration(

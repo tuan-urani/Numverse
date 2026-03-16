@@ -27,8 +27,10 @@ class ComparisonResultPage extends StatelessWidget {
               contentRepository: Get.find<INumerologyContentRepository>(),
             ),
           );
+    final Object? routeArguments =
+        Get.arguments ?? ModalRoute.of(context)?.settings.arguments;
     final ComparisonProfile? targetProfile = _targetProfileFromArgs(
-      Get.arguments,
+      routeArguments,
     );
 
     if (sessionCubit.state.viewState == AppViewStateStatus.loading) {

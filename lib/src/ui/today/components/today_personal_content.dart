@@ -16,6 +16,7 @@ import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class TodayPersonalContent extends StatelessWidget {
   const TodayPersonalContent({super.key});
@@ -138,7 +139,7 @@ class TodayPersonalContent extends StatelessWidget {
 
   void _trackAndNavigate(MainSessionBloc sessionBloc, String route) {
     sessionBloc.trackInteraction('today');
-    Get.toNamed(route);
+    TabNavigationHelper.navigateFromMain(route);
   }
 
   Future<void> _handleGuestUnlockAndNavigate(
@@ -164,7 +165,7 @@ class TodayPersonalContent extends StatelessWidget {
     }
 
     sessionBloc.trackInteraction('today');
-    await Get.toNamed(route);
+    await TabNavigationHelper.navigateFromMain(route);
   }
 
   String _formatTime(DateTime now) {
@@ -196,7 +197,8 @@ class TodayPersonalContent extends StatelessWidget {
   int _resolvePersonalMonthNumber(MainSessionState state) {
     final String profileId =
         state.currentProfile?.id ?? MainSessionBloc.guestProfileId;
-    final ProfileTimeLifeSnapshot? snapshot = state.timeLifeByProfileId[profileId];
+    final ProfileTimeLifeSnapshot? snapshot =
+        state.timeLifeByProfileId[profileId];
     final profile = state.currentProfile;
     if (profile == null) {
       final int? universalNumber = snapshot?.valueOf(
@@ -222,7 +224,8 @@ class TodayPersonalContent extends StatelessWidget {
   int _resolvePersonalYearNumber(MainSessionState state) {
     final String profileId =
         state.currentProfile?.id ?? MainSessionBloc.guestProfileId;
-    final ProfileTimeLifeSnapshot? snapshot = state.timeLifeByProfileId[profileId];
+    final ProfileTimeLifeSnapshot? snapshot =
+        state.timeLifeByProfileId[profileId];
     final profile = state.currentProfile;
     if (profile == null) {
       final int? universalNumber = snapshot?.valueOf(

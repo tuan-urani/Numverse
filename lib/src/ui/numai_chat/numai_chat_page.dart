@@ -32,7 +32,8 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       if (!mounted) {
         return;
       }
-      final Object? args = Get.arguments;
+      final Object? args =
+          Get.arguments ?? ModalRoute.of(context)?.settings.arguments;
       if (args is! Map<String, dynamic>) {
         return;
       }

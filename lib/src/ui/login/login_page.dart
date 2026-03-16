@@ -5,6 +5,7 @@ import 'package:test/src/ui/login/components/login_form.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/utils/app_pages.dart';
+import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -22,7 +23,7 @@ class LoginPage extends StatelessWidget {
                 Get.offAllNamed(AppPages.main);
                 return;
               }
-              Get.toNamed(AppPages.onboarding);
+              TabNavigationHelper.pushCommonRoute(AppPages.onboarding);
             },
           ),
         ),
