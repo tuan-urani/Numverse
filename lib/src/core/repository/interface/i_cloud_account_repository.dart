@@ -1,4 +1,5 @@
 import 'package:test/src/core/model/app_session_snapshot.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
 import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
@@ -42,6 +43,14 @@ abstract class ICloudAccountRepository {
   });
 
   Future<void> syncSessionSnapshot({required AppSessionSnapshot snapshot});
+
+  Future<CompatibilityHistoryItem> saveCompatibilityHistory({
+    required CompatibilityHistoryItem item,
+  });
+
+  Future<List<CompatibilityHistoryItem>> fetchCompatibilityHistory({
+    int limit = 30,
+  });
 
   Future<CloudDailyCheckInResult> claimDailyCheckIn({String? requestId});
 

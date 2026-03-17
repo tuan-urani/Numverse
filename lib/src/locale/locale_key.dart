@@ -385,6 +385,12 @@ class LocaleKey {
       PagesLocaleKey.compatibilityNeedMorePoints;
   static const String compatibilityNeedMorePointsCta =
       PagesLocaleKey.compatibilityNeedMorePointsCta;
+  static const String compatibilityHistoryTitle =
+      PagesLocaleKey.compatibilityHistoryTitle;
+  static const String compatibilityHistorySubtitle =
+      PagesLocaleKey.compatibilityHistorySubtitle;
+  static const String compatibilityHistoryEmpty =
+      PagesLocaleKey.compatibilityHistoryEmpty;
   static const String compatibilityAddDialogTitle =
       PagesLocaleKey.compatibilityAddDialogTitle;
   static const String compatibilityAddDialogNameLabel =

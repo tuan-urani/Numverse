@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import 'package:test/src/core/model/app_session_snapshot.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
 import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
@@ -367,6 +368,58 @@ class CloudAccountRepository implements ICloudAccountRepository {
   }
 
   @override
+  Future<CompatibilityHistoryItem> saveCompatibilityHistory({
+    required CompatibilityHistoryItem item,
+  }) async {
+    if (!isConfigured) {
+      throw StateError('supabase_not_configured');
+    }
+    final String accessToken = _requireAccessToken();
+    final Uri rpcUri = _supabaseConfig.rpcUri('save_compatibility_history');
+    final Response<dynamic> response = await _ensureAuthenticatedRequest((
+      String token,
+    ) {
+      return _dio.postUri(
+        rpcUri,
+        data: <String, dynamic>{
+          'p_payload': item.toJson(),
+          if (item.requestId.trim().isNotEmpty) 'p_request_id': item.requestId,
+        },
+        options: Options(headers: _authHeaders(accessToken: token)),
+      );
+    }, initialAccessToken: accessToken);
+    final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+    if (payload.isEmpty) {
+      throw StateError('supabase_invalid_compatibility_history_response');
+    }
+    return CompatibilityHistoryItem.fromJson(payload);
+  }
+
+  @override
+  Future<List<CompatibilityHistoryItem>> fetchCompatibilityHistory({
+    int limit = 30,
+  }) async {
+    if (!isConfigured) {
+      throw StateError('supabase_not_configured');
+    }
+    final String accessToken = _requireAccessToken();
+    final Uri rpcUri = _supabaseConfig.rpcUri('get_compatibility_history');
+    final int sanitizedLimit = limit.clamp(1, 100);
+    final Response<dynamic> response = await _ensureAuthenticatedRequest((
+      String token,
+    ) {
+      return _dio.postUri(
+        rpcUri,
+        data: <String, dynamic>{'p_limit': sanitizedLimit},
+        options: Options(headers: _authHeaders(accessToken: token)),
+      );
+    }, initialAccessToken: accessToken);
+
+    final List<Map<String, dynamic>> list = _ensureJsonList(response.data);
+    return list.map(CompatibilityHistoryItem.fromJson).toList();
+  }
+
+  @override
   Future<CloudDailyCheckInResult> claimDailyCheckIn({String? requestId}) async {
     if (!isConfigured) {
       throw StateError('supabase_not_configured');
@@ -572,12 +625,39 @@ class CloudAccountRepository implements ICloudAccountRepository {
     if (value is Map<String, dynamic>) {
       return value;
     }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
     if (value is String && value.trim().isNotEmpty) {
       final Object? decoded = jsonDecode(value);
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
     }
     return <String, dynamic>{};
+  }
+
+  List<Map<String, dynamic>> _ensureJsonList(Object? value) {
+    if (value is List) {
+      return value.whereType<Map>().map(Map<String, dynamic>.from).toList();
+    }
+    if (value is Map<String, dynamic>) {
+      final Object? rawItems = value['items'];
+      if (rawItems is List) {
+        return rawItems
+            .whereType<Map>()
+            .map(Map<String, dynamic>.from)
+            .toList();
+      }
+      return <Map<String, dynamic>>[];
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      final Object? decoded = jsonDecode(value);
+      return _ensureJsonList(decoded);
+    }
+    return <Map<String, dynamic>>[];
   }
 }

@@ -1,4 +1,5 @@
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/profile_time_life_snapshot.dart';
 import 'package:test/src/core/model/session_auth_mode.dart';
@@ -25,6 +26,7 @@ class AppSessionSnapshot {
     required this.lastAdRewardAt,
     required this.compareProfiles,
     required this.selectedCompareProfileId,
+    required this.compatibilityHistory,
   });
 
   factory AppSessionSnapshot.initial() {
@@ -48,6 +50,7 @@ class AppSessionSnapshot {
       lastAdRewardAt: null,
       compareProfiles: <ComparisonProfile>[],
       selectedCompareProfileId: null,
+      compatibilityHistory: <CompatibilityHistoryItem>[],
     );
   }
 
@@ -70,6 +73,7 @@ class AppSessionSnapshot {
   final DateTime? lastAdRewardAt;
   final List<ComparisonProfile> compareProfiles;
   final String? selectedCompareProfileId;
+  final List<CompatibilityHistoryItem> compatibilityHistory;
 
   bool get hasCloudSession =>
       isAuthenticated && (cloudUserId ?? '').trim().isNotEmpty;
@@ -101,6 +105,7 @@ class AppSessionSnapshot {
     List<ComparisonProfile>? compareProfiles,
     String? selectedCompareProfileId,
     bool clearSelectedCompareProfileId = false,
+    List<CompatibilityHistoryItem>? compatibilityHistory,
   }) {
     return AppSessionSnapshot(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -131,6 +136,7 @@ class AppSessionSnapshot {
       selectedCompareProfileId: clearSelectedCompareProfileId
           ? null
           : selectedCompareProfileId ?? this.selectedCompareProfileId,
+      compatibilityHistory: compatibilityHistory ?? this.compatibilityHistory,
     );
   }
 
@@ -169,6 +175,9 @@ class AppSessionSnapshot {
           .map((ComparisonProfile profile) => profile.toJson())
           .toList(),
       'selectedCompareProfileId': selectedCompareProfileId,
+      'compatibilityHistory': compatibilityHistory
+          .map((CompatibilityHistoryItem item) => item.toJson())
+          .toList(),
     };
   }
 
@@ -254,6 +263,11 @@ class AppSessionSnapshot {
         compareProfileIds.contains(selectedCompareProfileId)
         ? selectedCompareProfileId
         : null;
+    final List<CompatibilityHistoryItem> compatibilityHistory =
+        ((json['compatibilityHistory'] as List<dynamic>?) ?? <dynamic>[])
+            .whereType<Map<String, dynamic>>()
+            .map(CompatibilityHistoryItem.fromJson)
+            .toList();
 
     return AppSessionSnapshot(
       isAuthenticated: isAuthenticated,
@@ -282,6 +296,7 @@ class AppSessionSnapshot {
       ),
       compareProfiles: compareProfiles,
       selectedCompareProfileId: resolvedSelectedCompareProfileId,
+      compatibilityHistory: compatibilityHistory,
     );
   }
 

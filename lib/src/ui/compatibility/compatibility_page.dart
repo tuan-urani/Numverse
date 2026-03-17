@@ -3,6 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
+import 'package:test/src/core/model/user_profile.dart';
+import 'package:test/src/helper/compatibility_scoring.dart';
+import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_add_profile_dialog.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_content.dart';
@@ -66,6 +70,13 @@ class CompatibilityPage extends StatelessWidget {
                     sessionCubit: sessionCubit,
                     sessionState: sessionState,
                   ),
+                  historyItems: sessionState.compatibilityHistory,
+                  onHistoryTap: (CompatibilityHistoryItem item) async {
+                    await TabNavigationHelper.pushCommonRoute(
+                      AppPages.comparisonResult,
+                      arguments: item.toJson(),
+                    );
+                  },
                 ),
               ),
             );
@@ -132,10 +143,15 @@ class CompatibilityPage extends StatelessWidget {
       return;
     }
 
+    final DateTime comparedAt = DateTime.now();
+    final String requestId =
+        'compat:${comparedAt.microsecondsSinceEpoch}:${selected.id}';
+
     final bool canDeduct = await sessionCubit.deductSoulPoints(
       kCompatibilityComparisonCost,
       sourceType: 'compatibility_compare',
       metadata: const <String, dynamic>{'screen': 'compatibility'},
+      requestId: requestId,
     );
     if (!context.mounted) {
       return;
@@ -150,9 +166,25 @@ class CompatibilityPage extends StatelessWidget {
       return;
     }
 
+    final UserProfile selfProfile = latestSessionState.currentProfile!;
+    final CompatibilityHistoryItem historyItem = _buildHistoryItem(
+      selfProfile: selfProfile,
+      targetProfile: selected,
+      comparedAt: comparedAt,
+      requestId: requestId,
+    );
+    try {
+      await sessionCubit.saveCompatibilityHistory(historyItem);
+    } catch (_) {
+      // Keep navigation flow smooth even if history persistence fails.
+    }
+    if (!context.mounted) {
+      return;
+    }
+
     await TabNavigationHelper.pushCommonRoute(
       AppPages.comparisonResult,
-      arguments: selected.toJson(),
+      arguments: historyItem.toJson(),
     );
   }
 
@@ -182,5 +214,69 @@ class CompatibilityPage extends StatelessWidget {
 
   Future<void> _onBuyPointsTap() async {
     await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
+  }
+
+  CompatibilityHistoryItem _buildHistoryItem({
+    required UserProfile selfProfile,
+    required ComparisonProfile targetProfile,
+    required DateTime comparedAt,
+    required String requestId,
+  }) {
+    final int selfLifePath = NumerologyHelper.getLifePathNumber(
+      selfProfile.birthDate,
+    );
+    final int selfSoul = NumerologyHelper.getSoulUrgeNumber(selfProfile.name);
+    final int selfPersonality = NumerologyHelper.getPersonalityNumber(
+      selfProfile.name,
+    );
+    final int selfExpression = NumerologyHelper.getExpressionNumber(
+      selfProfile.name,
+    );
+    final int targetSoul = NumerologyHelper.getSoulUrgeNumber(
+      targetProfile.name,
+    );
+    final int targetPersonality = NumerologyHelper.getPersonalityNumber(
+      targetProfile.name,
+    );
+    final int targetExpression = NumerologyHelper.getExpressionNumber(
+      targetProfile.name,
+    );
+
+    final CompatibilityScoreBreakdown scores = CompatibilityScoring.calculate(
+      selfLifePath: selfLifePath,
+      selfExpression: selfExpression,
+      selfPersonality: selfPersonality,
+      selfSoul: selfSoul,
+      targetLifePath: targetProfile.lifePathNumber,
+      targetExpression: targetExpression,
+      targetPersonality: targetPersonality,
+      targetSoul: targetSoul,
+    );
+
+    return CompatibilityHistoryItem(
+      id: requestId,
+      requestId: requestId,
+      primaryProfileId: selfProfile.id,
+      primaryName: selfProfile.name,
+      primaryBirthDate: selfProfile.birthDate,
+      primaryLifePath: selfLifePath,
+      primarySoul: selfSoul,
+      primaryPersonality: selfPersonality,
+      primaryExpression: selfExpression,
+      targetProfileId: targetProfile.id,
+      targetName: targetProfile.name,
+      targetRelation: targetProfile.relation,
+      targetBirthDate: targetProfile.birthDate,
+      targetLifePath: targetProfile.lifePathNumber,
+      targetSoul: targetSoul,
+      targetPersonality: targetPersonality,
+      targetExpression: targetExpression,
+      overallScore: scores.overall,
+      coreScore: scores.core,
+      communicationScore: scores.communication,
+      soulScore: scores.soul,
+      personalityScore: scores.personality,
+      createdAt: comparedAt,
+    );
   }
 }

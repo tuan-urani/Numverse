@@ -548,7 +548,7 @@ Features:
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/compatibility
 
 ### 1. Description
-Goal: Match Figma `/compatibility` with profile-selection workflow, soul-point gating, and add-profile modal flow.
+Goal: Match Figma `/compatibility` with profile-selection workflow, soul-point gating, add-profile modal flow, and history replay.
 Features:
 - Header + subtitle in tab context (no back button).
 - Current profile card with life path summary.
@@ -556,10 +556,11 @@ Features:
 - Add compare-profile modal (name/relation/birth date).
 - Soul-point summary card + compare CTA with cost badge.
 - Inline shortage CTA: `Bạn cần thêm ...` + `Nhận thêm ngay`.
+- Compatibility history list under compare CTA.
 - Guard flow:
 - no own profile -> unlock profile dialog,
 - insufficient soul points -> insufficient modal,
-- success -> deduct points and navigate to comparison result.
+- success -> deduct points, persist history item, and navigate to comparison result.
 
 ### 2. UI Structure
 - `compatibility_page.dart`
@@ -579,16 +580,17 @@ Features:
 4) On compare tap:
 - If no own profile -> profile unlock dialog appears.
 - If soul points < 20 -> insufficient modal appears.
-- Else deduct 20 soul points and navigate to `/comparison-result` with selected profile payload.
+- Else deduct 20 soul points, create/save a compatibility history item, and navigate to `/comparison-result` with history payload.
 5) When soul points are insufficient, tapping `Nhận thêm ngay` opens `ProfileSoulPointsActionsDialog` (watch ad / buy points).
+6) User can tap any history item to reopen comparison result in view-only mode (no additional point deduction).
 
 ### 4. Key Dependencies
-- `MainSessionCubit` for current profile + soul points.
+- `MainSessionCubit` for current profile + soul points + history persistence.
 - `NumerologyHelper` for life path calculation.
 - `CompatibilityBloc` for compare-profile state.
 
 ### 5. Notes & Known Issues (Optional)
-- Compare profiles are currently in-memory per app session; persistence can be added later if needed.
+- Compatibility history is persisted in local snapshot and synced to Supabase via RPC when cloud session is available.
 
 ## [Comparison Result Feature]
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/comparison_result
@@ -613,11 +615,12 @@ Features:
   - `interactor/comparison_result_state.dart`
 
 ### 3. User Flow & Logic
-1) Page receives selected compare profile from navigation arguments.
-2) `ComparisonResultBloc.load()` combines:
-- current session profile,
-- selected compare profile,
-then computes pair scores.
+1) Page receives either:
+- selected compare profile payload (fresh compare flow), or
+- saved compatibility history payload (view-only flow).
+2) `ComparisonResultBloc`:
+- `load()` combines current session profile + selected compare profile and computes pair scores.
+- `loadFromHistory()` restores pair scores directly from persisted history item.
 3) UI renders:
 - overall score/status,
 - detailed aspect cards,

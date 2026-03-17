@@ -37,6 +37,11 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.compatibilityNeedMorePoints:
       'Cần thêm @points Soul Points để so sánh.',
   PagesLocaleKey.compatibilityNeedMorePointsCta: 'Nhận thêm',
+  PagesLocaleKey.compatibilityHistoryTitle: 'Lịch sử tương hợp',
+  PagesLocaleKey.compatibilityHistorySubtitle:
+      'Nhấn vào từng mục để xem lại mà không tốn thêm điểm.',
+  PagesLocaleKey.compatibilityHistoryEmpty:
+      'Chưa có lịch sử tương hợp. Hãy bắt đầu lần so sánh đầu tiên.',
   PagesLocaleKey.compatibilityAddDialogTitle: 'Thêm hồ sơ mới',
   PagesLocaleKey.compatibilityAddDialogNameLabel: 'Tên người',
   PagesLocaleKey.compatibilityAddDialogNameHint: 'Nhập tên',
@@ -168,8 +173,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.numaiChatSelectDomainHint:
       'Chọn một chủ đề ở phía trên ô nhập để bắt đầu',
   PagesLocaleKey.numaiChatActiveDomainHint: 'Đang ở chủ đề @domain',
-  PagesLocaleKey.numaiChatInputPlaceholder:
-      'Nhập câu hỏi...',
+  PagesLocaleKey.numaiChatInputPlaceholder: 'Nhập câu hỏi...',
   PagesLocaleKey.numaiChatCostFootnote: '-3 SP mỗi câu hỏi',
   PagesLocaleKey.numaiDomainPersonalityLabel: 'Tính cách',
   PagesLocaleKey.numaiDomainCareerLabel: 'Sự nghiệp',

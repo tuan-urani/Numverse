@@ -39,6 +39,10 @@ class PagesLocaleKey {
       'compatibility_need_more_points';
   static const String compatibilityNeedMorePointsCta =
       'compatibility_need_more_points_cta';
+  static const String compatibilityHistoryTitle = 'compatibility_history_title';
+  static const String compatibilityHistorySubtitle =
+      'compatibility_history_subtitle';
+  static const String compatibilityHistoryEmpty = 'compatibility_history_empty';
   static const String compatibilityAddDialogTitle =
       'compatibility_add_dialog_title';
   static const String compatibilityAddDialogNameLabel =

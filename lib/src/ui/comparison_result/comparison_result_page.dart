@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
 import 'package:test/src/ui/comparison_result/components/comparison_result_content.dart';
 import 'package:test/src/ui/comparison_result/components/comparison_result_header.dart';
@@ -29,9 +30,12 @@ class ComparisonResultPage extends StatelessWidget {
           );
     final Object? routeArguments =
         Get.arguments ?? ModalRoute.of(context)?.settings.arguments;
-    final ComparisonProfile? targetProfile = _targetProfileFromArgs(
+    final CompatibilityHistoryItem? historyItem = _historyItemFromArgs(
       routeArguments,
     );
+    final ComparisonProfile? targetProfile = historyItem == null
+        ? _targetProfileFromArgs(routeArguments)
+        : null;
 
     if (sessionCubit.state.viewState == AppViewStateStatus.loading) {
       sessionCubit.initialize();
@@ -44,7 +48,8 @@ class ComparisonResultPage extends StatelessWidget {
           bloc: sessionCubit,
           builder: (BuildContext context, MainSessionState sessionState) {
             final selfProfile = sessionState.currentProfile;
-            if (selfProfile == null || targetProfile == null) {
+            if (historyItem == null &&
+                (selfProfile == null || targetProfile == null)) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
                   _onBack(context);
@@ -53,11 +58,19 @@ class ComparisonResultPage extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            bloc.load(
-              selfProfile: selfProfile,
-              targetProfile: targetProfile,
-              languageCode: Get.locale?.languageCode ?? 'vi',
-            );
+            final String languageCode = Get.locale?.languageCode ?? 'vi';
+            if (historyItem != null) {
+              bloc.loadFromHistory(
+                item: historyItem,
+                languageCode: languageCode,
+              );
+            } else {
+              bloc.load(
+                selfProfile: selfProfile!,
+                targetProfile: targetProfile!,
+                languageCode: languageCode,
+              );
+            }
 
             return AppStateView(
               status: sessionState.viewState,
@@ -92,6 +105,21 @@ class ComparisonResultPage extends StatelessWidget {
       return ComparisonProfile.fromJson(Map<String, dynamic>.from(args));
     }
     return null;
+  }
+
+  CompatibilityHistoryItem? _historyItemFromArgs(Object? args) {
+    final Map<String, dynamic>? raw = switch (args) {
+      Map<String, dynamic>() => args,
+      Map() => Map<String, dynamic>.from(args),
+      _ => null,
+    };
+    if (raw == null) {
+      return null;
+    }
+    if (!raw.containsKey('overallScore') || !raw.containsKey('requestId')) {
+      return null;
+    }
+    return CompatibilityHistoryItem.fromJson(raw);
   }
 
   void _onBack(BuildContext context) {

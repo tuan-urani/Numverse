@@ -37,6 +37,11 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.compatibilityNeedMorePoints:
       'You need @points more Soul Points to compare',
   PagesLocaleKey.compatibilityNeedMorePointsCta: 'Get more now',
+  PagesLocaleKey.compatibilityHistoryTitle: 'Comparison history',
+  PagesLocaleKey.compatibilityHistorySubtitle:
+      'Tap an item to view again without spending points.',
+  PagesLocaleKey.compatibilityHistoryEmpty:
+      'No compatibility history yet. Start your first comparison.',
   PagesLocaleKey.compatibilityAddDialogTitle: 'Add new profile',
   PagesLocaleKey.compatibilityAddDialogNameLabel: 'Name',
   PagesLocaleKey.compatibilityAddDialogNameHint: 'Enter name',

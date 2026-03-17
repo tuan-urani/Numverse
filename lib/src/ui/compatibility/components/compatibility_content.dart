@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/helper/numerology_helper.dart';
@@ -20,6 +21,8 @@ class CompatibilityContent extends StatelessWidget {
     required this.onSelectProfile,
     required this.onCompareTap,
     required this.onNeedMorePointsTap,
+    required this.historyItems,
+    required this.onHistoryTap,
     super.key,
   });
 
@@ -31,6 +34,8 @@ class CompatibilityContent extends StatelessWidget {
   final ValueChanged<String> onSelectProfile;
   final VoidCallback onCompareTap;
   final VoidCallback onNeedMorePointsTap;
+  final List<CompatibilityHistoryItem> historyItems;
+  final ValueChanged<CompatibilityHistoryItem> onHistoryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +48,9 @@ class CompatibilityContent extends StatelessWidget {
         : LocaleKey.compatibilityOwnProfilePlaceholderDate.tr;
     final bool canCompare =
         state.selectedProfile != null && soulPoints >= comparisonCost;
+    final List<CompatibilityHistoryItem> visibleHistory = historyItems
+        .take(10)
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
@@ -170,6 +178,32 @@ class CompatibilityContent extends StatelessWidget {
                   ),
                 ),
               ],
+              18.height,
+              Text(
+                LocaleKey.compatibilityHistoryTitle.tr,
+                style: AppStyles.caption(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w600,
+                ).copyWith(letterSpacing: 0.8),
+              ),
+              4.height,
+              Text(
+                LocaleKey.compatibilityHistorySubtitle.tr,
+                style: AppStyles.bodySmall(color: AppColors.textMuted),
+              ),
+              10.height,
+              if (visibleHistory.isEmpty) ...<Widget>[
+                const _HistoryEmptyCard(),
+              ] else
+                for (final CompatibilityHistoryItem item
+                    in visibleHistory) ...<Widget>[
+                  _HistoryItemCard(
+                    item: item,
+                    relationLabel: _relationLabel(item.targetRelation),
+                    onTap: onHistoryTap,
+                  ),
+                  10.height,
+                ],
               12.height,
             ],
           ),
@@ -798,5 +832,115 @@ class _CompareButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _HistoryEmptyCard extends StatelessWidget {
+  const _HistoryEmptyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+      ),
+      child: Text(
+        LocaleKey.compatibilityHistoryEmpty.tr,
+        style: AppStyles.bodySmall(color: AppColors.textMuted),
+      ),
+    );
+  }
+}
+
+class _HistoryItemCard extends StatelessWidget {
+  const _HistoryItemCard({
+    required this.item,
+    required this.relationLabel,
+    required this.onTap,
+  });
+
+  final CompatibilityHistoryItem item;
+  final String relationLabel;
+  final ValueChanged<CompatibilityHistoryItem> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final DateFormat dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+
+    return InkWell(
+      onTap: () => onTap(item),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.card.withValues(alpha: 0.56),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _scoreColor(item.overallScore).withValues(alpha: 0.2),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '${item.overallScore}',
+                style: AppStyles.bodySmall(
+                  color: _scoreColor(item.overallScore),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            12.width,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    '${item.primaryName} • ${item.targetName}',
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  2.height,
+                  Text(
+                    '$relationLabel • ${dateFormat.format(item.createdAt)}',
+                    style: AppStyles.caption(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            8.width,
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _scoreColor(int score) {
+    if (score >= 80) {
+      return AppColors.success;
+    }
+    if (score >= 70) {
+      return AppColors.richGold;
+    }
+    if (score >= 60) {
+      return AppColors.warning;
+    }
+    return AppColors.error;
   }
 }

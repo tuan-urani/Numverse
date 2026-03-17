@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/profile_time_life_snapshot.dart';
 import 'package:test/src/core/model/session_auth_mode.dart';
@@ -27,12 +28,15 @@ class MainSessionState extends Equatable {
     required this.dailyAdEarnings,
     required this.dailyAdLimit,
     required this.lastCheckInAt,
+    required this.lastCheckInRewardAwarded,
+    required this.lastCheckInEventId,
     required this.lastAdRewardAt,
     required this.currentPageInteraction,
     required this.interactionCount,
     required this.errorMessage,
     required this.compareProfiles,
     required this.selectedCompareProfileId,
+    required this.compatibilityHistory,
   });
 
   factory MainSessionState.initial() {
@@ -55,12 +59,15 @@ class MainSessionState extends Equatable {
       dailyAdEarnings: 0,
       dailyAdLimit: 50,
       lastCheckInAt: null,
+      lastCheckInRewardAwarded: 0,
+      lastCheckInEventId: 0,
       lastAdRewardAt: null,
       currentPageInteraction: '',
       interactionCount: 0,
       errorMessage: null,
       compareProfiles: <ComparisonProfile>[],
       selectedCompareProfileId: null,
+      compatibilityHistory: <CompatibilityHistoryItem>[],
     );
   }
 
@@ -82,12 +89,15 @@ class MainSessionState extends Equatable {
   final int dailyAdEarnings;
   final int dailyAdLimit;
   final DateTime? lastCheckInAt;
+  final int lastCheckInRewardAwarded;
+  final int lastCheckInEventId;
   final DateTime? lastAdRewardAt;
   final String currentPageInteraction;
   final int interactionCount;
   final String? errorMessage;
   final List<ComparisonProfile> compareProfiles;
   final String? selectedCompareProfileId;
+  final List<CompatibilityHistoryItem> compatibilityHistory;
 
   bool get hasAnyProfile => profiles.isNotEmpty;
   bool get hasCompareProfiles => compareProfiles.isNotEmpty;
@@ -142,6 +152,8 @@ class MainSessionState extends Equatable {
     int? dailyAdLimit,
     DateTime? lastCheckInAt,
     bool clearLastCheckInAt = false,
+    int? lastCheckInRewardAwarded,
+    int? lastCheckInEventId,
     DateTime? lastAdRewardAt,
     bool clearLastAdRewardAt = false,
     String? currentPageInteraction,
@@ -151,6 +163,7 @@ class MainSessionState extends Equatable {
     List<ComparisonProfile>? compareProfiles,
     String? selectedCompareProfileId,
     bool clearSelectedCompareProfileId = false,
+    List<CompatibilityHistoryItem>? compatibilityHistory,
   }) {
     return MainSessionState(
       viewState: viewState ?? this.viewState,
@@ -176,6 +189,9 @@ class MainSessionState extends Equatable {
       lastCheckInAt: clearLastCheckInAt
           ? null
           : lastCheckInAt ?? this.lastCheckInAt,
+      lastCheckInRewardAwarded:
+          lastCheckInRewardAwarded ?? this.lastCheckInRewardAwarded,
+      lastCheckInEventId: lastCheckInEventId ?? this.lastCheckInEventId,
       lastAdRewardAt: clearLastAdRewardAt
           ? null
           : lastAdRewardAt ?? this.lastAdRewardAt,
@@ -189,6 +205,7 @@ class MainSessionState extends Equatable {
       selectedCompareProfileId: clearSelectedCompareProfileId
           ? null
           : selectedCompareProfileId ?? this.selectedCompareProfileId,
+      compatibilityHistory: compatibilityHistory ?? this.compatibilityHistory,
     );
   }
 
@@ -212,11 +229,14 @@ class MainSessionState extends Equatable {
     dailyAdEarnings,
     dailyAdLimit,
     lastCheckInAt,
+    lastCheckInRewardAwarded,
+    lastCheckInEventId,
     lastAdRewardAt,
     currentPageInteraction,
     interactionCount,
     errorMessage,
     compareProfiles,
     selectedCompareProfileId,
+    compatibilityHistory,
   ];
 }

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/user_profile.dart';
 
 sealed class ComparisonResultEvent extends Equatable {
@@ -24,4 +25,17 @@ final class ComparisonResultLoaded extends ComparisonResultEvent {
     targetProfile,
     languageCode,
   ];
+}
+
+final class ComparisonResultLoadedFromHistory extends ComparisonResultEvent {
+  const ComparisonResultLoadedFromHistory({
+    required this.item,
+    required this.languageCode,
+  });
+
+  final CompatibilityHistoryItem item;
+  final String languageCode;
+
+  @override
+  List<Object?> get props => <Object?>[item, languageCode];
 }

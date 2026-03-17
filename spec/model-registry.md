@@ -3,7 +3,7 @@
 ## AppSessionSnapshot
 - **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/app_session_snapshot.dart`
 - **Type**: UI/Domain state snapshot
-- **Purpose**: Persist app-level session data (auth, profiles, soul points, check-in metrics).
+- **Purpose**: Persist app-level session data (auth, profiles, soul points, check-in metrics, compatibility history).
 - **Source**: Local storage (`shared_preferences`) via repository.
 
 ## UserProfile
@@ -17,6 +17,12 @@
 - **Type**: UI/Domain model
 - **Purpose**: Represents a compatibility target profile (name, relation, birth date, life path) used in Compatibility and Comparison Result flows.
 - **Source**: Local user input in compatibility add-profile modal.
+
+## CompatibilityHistoryItem
+- **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/compatibility_history_item.dart`
+- **Type**: UI/Domain model
+- **Purpose**: Represents a persisted compatibility result item (pair identity + computed scores) for history listing and view-only reopening of past comparison results.
+- **Source**: Computed on compare action in app, then persisted local snapshot and optionally synchronized to Supabase RPC.
 
 ## Numerology Reading Models
 - **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/numerology_reading_models.dart`

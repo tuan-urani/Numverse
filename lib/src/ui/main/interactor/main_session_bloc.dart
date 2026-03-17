@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test/src/core/model/app_session_snapshot.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/profile_time_life_snapshot.dart';
@@ -24,6 +25,8 @@ import 'package:test/src/ui/main/interactor/services/session_reward_service.dart
 import 'package:test/src/ui/widgets/app_state_view.dart';
 
 class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
+  static const int _compatibilityHistoryMaxItems = 100;
+
   /// Khởi tạo bloc session trung tâm và đăng ký toàn bộ event handler.
   MainSessionBloc(
     this._sessionRepository,
@@ -51,10 +54,12 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     on<MainSessionProfileRemoved>(_onProfileRemoved);
     on<MainSessionCompareProfileAdded>(_onCompareProfileAdded);
     on<MainSessionCompareProfileSelected>(_onCompareProfileSelected);
+    on<MainSessionCompatibilityHistorySaved>(_onCompatibilityHistorySaved);
     on<MainSessionSoulPointsAdded>(_onSoulPointsAdded);
     on<MainSessionAdRewardClaimed>(_onAdRewardClaimed);
     on<MainSessionSoulPointsDeducted>(_onSoulPointsDeducted);
     on<MainSessionCheckedIn>(_onCheckedIn);
+    on<MainSessionCheckInCelebrationConsumed>(_onCheckInCelebrationConsumed);
     on<MainSessionInteractionTracked>(_onInteractionTracked);
     on<MainSessionPageInteractionReset>(_onPageInteractionReset);
     on<MainSessionTimeLifeRefreshRequested>(_onTimeLifeRefreshRequested);
@@ -127,11 +132,16 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           effectiveSnapshot.hasCloudSession &&
           _cloudAccountRepository.isConfigured) {
         try {
-          effectiveSnapshot = await _cloudAccountRepository
+          final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
               .fetchCloudSessionSnapshot(
                 fallbackEmail: localSnapshot.userEmail ?? '',
                 fallbackDisplayName: localSnapshot.userName ?? '',
               );
+          effectiveSnapshot = _mergeCloudSnapshotWithFallbackHistory(
+            cloudSnapshot: cloudSnapshot,
+            fallbackHistory: effectiveSnapshot.compatibilityHistory,
+            fallbackCloudUserId: effectiveSnapshot.cloudUserId,
+          );
         } catch (error, stackTrace) {
           developer.log(
             'Failed to fetch cloud session snapshot on initialize. Use local snapshot as fallback.',
@@ -171,6 +181,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           lastAdRewardAt: effectiveSnapshot.lastAdRewardAt,
           compareProfiles: effectiveSnapshot.compareProfiles,
           selectedCompareProfileId: effectiveSnapshot.selectedCompareProfileId,
+          compatibilityHistory: effectiveSnapshot.compatibilityHistory,
           clearErrorMessage: true,
         ),
       );
@@ -179,6 +190,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       await _normalizeAdRewardStateIfNeeded(emit);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
+      await _tryRefreshCompatibilityHistoryFromCloud(emit);
+      await _tryAutoClaimDailyCheckInFromCloud(emit);
     } catch (_) {
       emit(
         state.copyWith(
@@ -253,8 +266,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               fallbackEmail: identity.email,
               fallbackDisplayName: identity.name,
             );
+        final AppSessionSnapshot mergedCloudSnapshot =
+            _mergeCloudSnapshotWithFallbackHistory(
+              cloudSnapshot: cloudSnapshot,
+              fallbackHistory: state.compatibilityHistory,
+              fallbackCloudUserId: state.cloudUserId,
+            );
         await _applySnapshotToState(
-          cloudSnapshot.copyWith(
+          mergedCloudSnapshot.copyWith(
             authMode: SessionAuthMode.registered,
             pendingAnonymousBootstrap: false,
             cloudUserId: _cloudAccountRepository.currentUserId,
@@ -294,8 +313,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               fallbackEmail: identity.email,
               fallbackDisplayName: identity.name,
             );
+        final AppSessionSnapshot mergedCloudSnapshot =
+            _mergeCloudSnapshotWithFallbackHistory(
+              cloudSnapshot: cloudSnapshot,
+              fallbackHistory: localSnapshotBeforeAuth.compatibilityHistory,
+              fallbackCloudUserId: localSnapshotBeforeAuth.cloudUserId,
+            );
         await _applySnapshotToState(
-          cloudSnapshot,
+          mergedCloudSnapshot,
           emit,
           recomputeMetrics: true,
           forceRecomputeMetrics: true,
@@ -371,8 +396,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               fallbackEmail: identity.email,
               fallbackDisplayName: identity.name,
             );
+        final AppSessionSnapshot mergedCloudSnapshot =
+            _mergeCloudSnapshotWithFallbackHistory(
+              cloudSnapshot: cloudSnapshot,
+              fallbackHistory: localSnapshotBeforeAuth.compatibilityHistory,
+              fallbackCloudUserId: localSnapshotBeforeAuth.cloudUserId,
+            );
         await _applySnapshotToState(
-          cloudSnapshot,
+          mergedCloudSnapshot,
           emit,
           recomputeMetrics: true,
           forceRecomputeMetrics: true,
@@ -658,6 +689,53 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// API public lưu một bản ghi lịch sử tương hợp.
+  Future<void> saveCompatibilityHistory(CompatibilityHistoryItem item) async {
+    final Completer<void> completer = Completer<void>();
+    add(MainSessionCompatibilityHistorySaved(item: item, completer: completer));
+    await completer.future;
+  }
+
+  /// Xử lý lưu lịch sử: luôn persist local, cloud sync best-effort.
+  Future<void> _onCompatibilityHistorySaved(
+    MainSessionCompatibilityHistorySaved event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    try {
+      final List<CompatibilityHistoryItem> localHistory =
+          _upsertCompatibilityHistory(state.compatibilityHistory, event.item);
+      emit(state.copyWith(compatibilityHistory: localHistory));
+      await _persistSnapshot();
+
+      if (state.hasCloudSession && _cloudAccountRepository.isConfigured) {
+        try {
+          final CompatibilityHistoryItem cloudItem =
+              await _cloudAccountRepository.saveCompatibilityHistory(
+                item: event.item,
+              );
+          final List<CompatibilityHistoryItem> mergedHistory =
+              _upsertCompatibilityHistory(
+                state.compatibilityHistory,
+                cloudItem,
+              );
+          emit(state.copyWith(compatibilityHistory: mergedHistory));
+          await _persistSnapshot();
+        } catch (error, stackTrace) {
+          developer.log(
+            'Failed to sync compatibility history item to cloud.',
+            name: 'MainSessionBloc',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      }
+
+      _completeVoid(event.completer);
+    } catch (error, stackTrace) {
+      _completeError(event.completer, error, stackTrace);
+    }
+  }
+
   /// Xử lý chọn hồ sơ đối chiếu nếu profile id hợp lệ.
   Future<void> _onCompareProfileSelected(
     MainSessionCompareProfileSelected event,
@@ -825,6 +903,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  void consumeCheckInCelebration({required int eventId}) {
+    add(MainSessionCheckInCelebrationConsumed(eventId: eventId));
+  }
+
   /// Xử lý check-in hàng ngày và cập nhật streak/reward.
   Future<void> _onCheckedIn(
     MainSessionCheckedIn event,
@@ -858,6 +940,19 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
   }
 
+  void _onCheckInCelebrationConsumed(
+    MainSessionCheckInCelebrationConsumed event,
+    Emitter<MainSessionState> emit,
+  ) {
+    if (event.eventId != state.lastCheckInEventId) {
+      return;
+    }
+    if (state.lastCheckInRewardAwarded == 0) {
+      return;
+    }
+    emit(state.copyWith(lastCheckInRewardAwarded: 0));
+  }
+
   /// Check-in local cho guest: cập nhật điểm/streak và persist xuống session snapshot.
   Future<void> _checkInGuestLocal(Emitter<MainSessionState> emit) async {
     final SessionCheckInUpdate? checkInUpdate = _rewardService.computeCheckIn(
@@ -870,6 +965,9 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     if (checkInUpdate == null) {
       return;
     }
+    final int rewardAwarded = _normalizeRewardAwarded(
+      checkInUpdate.soulPoints - state.soulPoints,
+    );
 
     emit(
       state.copyWith(
@@ -877,6 +975,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         currentStreak: checkInUpdate.currentStreak,
         soulPoints: checkInUpdate.soulPoints,
         lastCheckInAt: checkInUpdate.lastCheckInAt,
+        lastCheckInRewardAwarded: rewardAwarded,
+        lastCheckInEventId: state.lastCheckInEventId + 1,
       ),
     );
     await _persistSnapshot();
@@ -887,15 +987,36 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     final String requestId = 'checkin:${DateTime.now().microsecondsSinceEpoch}';
     final CloudDailyCheckInResult result = await _cloudAccountRepository
         .claimDailyCheckIn(requestId: requestId);
+    final int rewardAwarded = _normalizeRewardAwarded(result.rewardAwarded);
     emit(
       state.copyWith(
         dailyEarnings: result.dailyEarnings,
         currentStreak: result.currentStreak,
         soulPoints: result.soulPoints,
         lastCheckInAt: result.lastCheckInAt,
+        lastCheckInRewardAwarded: rewardAwarded,
+        lastCheckInEventId: state.lastCheckInEventId + 1,
       ),
     );
     await _persistSnapshot();
+  }
+
+  Future<void> _tryAutoClaimDailyCheckInFromCloud(
+    Emitter<MainSessionState> emit,
+  ) async {
+    if (!state.hasCloudSession || !_cloudAccountRepository.isConfigured) {
+      return;
+    }
+    try {
+      await _checkInCloud(emit);
+    } catch (error, stackTrace) {
+      developer.log(
+        'Auto check-in skipped due to cloud error.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   /// Chuẩn hoá reward local cho guest theo ngày:
@@ -1142,6 +1263,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       lastAdRewardAt: state.lastAdRewardAt,
       compareProfiles: state.compareProfiles,
       selectedCompareProfileId: state.selectedCompareProfileId,
+      compatibilityHistory: state.compatibilityHistory,
     );
     await _sessionRepository.saveSnapshot(snapshot);
     if (!syncCloud ||
@@ -1198,15 +1320,115 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         lastAdRewardAt: snapshot.lastAdRewardAt,
         compareProfiles: snapshot.compareProfiles,
         selectedCompareProfileId: snapshot.selectedCompareProfileId,
+        compatibilityHistory: snapshot.compatibilityHistory,
         clearErrorMessage: true,
       ),
     );
     await _persistSnapshot();
-    if (!recomputeMetrics) {
+    if (recomputeMetrics) {
+      await _ensureLifeBasedForCurrentProfile(
+        emit,
+        force: forceRecomputeMetrics,
+      );
+      await _refreshTimeLifeForCurrentProfile(
+        emit,
+        force: forceRecomputeMetrics,
+      );
+    }
+    await _tryRefreshCompatibilityHistoryFromCloud(emit);
+    await _tryAutoClaimDailyCheckInFromCloud(emit);
+  }
+
+  int _normalizeRewardAwarded(int rawReward) {
+    if (rawReward <= 0) {
+      return 0;
+    }
+    return rawReward;
+  }
+
+  Future<void> _tryRefreshCompatibilityHistoryFromCloud(
+    Emitter<MainSessionState> emit,
+  ) async {
+    if (!state.hasCloudSession || !_cloudAccountRepository.isConfigured) {
       return;
     }
-    await _ensureLifeBasedForCurrentProfile(emit, force: forceRecomputeMetrics);
-    await _refreshTimeLifeForCurrentProfile(emit, force: forceRecomputeMetrics);
+    try {
+      final List<CompatibilityHistoryItem> cloudHistory =
+          await _cloudAccountRepository.fetchCompatibilityHistory(
+            limit: _compatibilityHistoryMaxItems,
+          );
+      final List<CompatibilityHistoryItem> mergedHistory =
+          _mergeCompatibilityHistory(state.compatibilityHistory, cloudHistory);
+      emit(state.copyWith(compatibilityHistory: mergedHistory));
+      await _persistSnapshot();
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to fetch compatibility history from cloud.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  List<CompatibilityHistoryItem> _upsertCompatibilityHistory(
+    List<CompatibilityHistoryItem> source,
+    CompatibilityHistoryItem item,
+  ) {
+    final String requestId = item.requestId.trim();
+    final List<CompatibilityHistoryItem> next = source.where((
+      CompatibilityHistoryItem existing,
+    ) {
+      if (requestId.isNotEmpty && existing.requestId.trim() == requestId) {
+        return false;
+      }
+      return existing.id != item.id;
+    }).toList();
+    next.insert(0, item);
+    next.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (next.length > _compatibilityHistoryMaxItems) {
+      return next.take(_compatibilityHistoryMaxItems).toList();
+    }
+    return next;
+  }
+
+  List<CompatibilityHistoryItem> _mergeCompatibilityHistory(
+    List<CompatibilityHistoryItem> current,
+    List<CompatibilityHistoryItem> incoming,
+  ) {
+    List<CompatibilityHistoryItem> merged = List<CompatibilityHistoryItem>.from(
+      current,
+    );
+    for (final CompatibilityHistoryItem item in incoming) {
+      merged = _upsertCompatibilityHistory(merged, item);
+    }
+    return merged;
+  }
+
+  AppSessionSnapshot _mergeCloudSnapshotWithFallbackHistory({
+    required AppSessionSnapshot cloudSnapshot,
+    required List<CompatibilityHistoryItem> fallbackHistory,
+    String? fallbackCloudUserId,
+  }) {
+    if (cloudSnapshot.compatibilityHistory.isNotEmpty ||
+        fallbackHistory.isEmpty) {
+      return cloudSnapshot;
+    }
+
+    final String cloudUserId = (cloudSnapshot.cloudUserId ?? '').trim();
+    final String fallbackUserId = (fallbackCloudUserId ?? '').trim();
+    if (cloudUserId.isNotEmpty &&
+        fallbackUserId.isNotEmpty &&
+        cloudUserId != fallbackUserId) {
+      return cloudSnapshot;
+    }
+
+    return cloudSnapshot.copyWith(
+      compatibilityHistory: _mergeCompatibilityHistory(
+        cloudSnapshot.compatibilityHistory,
+        fallbackHistory,
+      ),
+    );
   }
 
   Future<void> _ensureAnonymousSessionIfNeeded(

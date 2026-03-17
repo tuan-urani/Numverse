@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 
 class MainSessionEvent extends Equatable {
   const MainSessionEvent();
@@ -143,6 +144,19 @@ final class MainSessionCompareProfileSelected extends MainSessionEvent {
   List<Object?> get props => <Object?>[profileId];
 }
 
+final class MainSessionCompatibilityHistorySaved extends MainSessionEvent {
+  const MainSessionCompatibilityHistorySaved({
+    required this.item,
+    required this.completer,
+  });
+
+  final CompatibilityHistoryItem item;
+  final Completer<void> completer;
+
+  @override
+  List<Object?> get props => <Object?>[item];
+}
+
 final class MainSessionSoulPointsAdded extends MainSessionEvent {
   const MainSessionSoulPointsAdded({
     required this.amount,
@@ -192,6 +206,15 @@ final class MainSessionCheckedIn extends MainSessionEvent {
   const MainSessionCheckedIn({required this.completer});
 
   final Completer<void> completer;
+}
+
+final class MainSessionCheckInCelebrationConsumed extends MainSessionEvent {
+  const MainSessionCheckInCelebrationConsumed({required this.eventId});
+
+  final int eventId;
+
+  @override
+  List<Object?> get props => <Object?>[eventId];
 }
 
 final class MainSessionInteractionTracked extends MainSessionEvent {

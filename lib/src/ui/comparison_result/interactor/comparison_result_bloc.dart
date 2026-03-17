@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/numerology_content_models.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
@@ -17,6 +18,7 @@ class ComparisonResultBloc
   }) : _contentRepository = contentRepository,
        super(ComparisonResultState.initial()) {
     on<ComparisonResultLoaded>(_onLoaded);
+    on<ComparisonResultLoadedFromHistory>(_onLoadedFromHistory);
   }
 
   final INumerologyContentRepository _contentRepository;
@@ -32,6 +34,15 @@ class ComparisonResultBloc
         targetProfile: targetProfile,
         languageCode: languageCode,
       ),
+    );
+  }
+
+  void loadFromHistory({
+    required CompatibilityHistoryItem item,
+    required String languageCode,
+  }) {
+    add(
+      ComparisonResultLoadedFromHistory(item: item, languageCode: languageCode),
     );
   }
 
@@ -93,6 +104,61 @@ class ComparisonResultBloc
         communicationScore: scores.communication,
         soulScore: scores.soul,
         personalityScore: scores.personality,
+        strengths: compatibilityContent.strengths,
+        challenges: compatibilityContent.challenges,
+        advice: compatibilityContent.advice,
+        quote: compatibilityContent.quote,
+      ),
+    );
+  }
+
+  void _onLoadedFromHistory(
+    ComparisonResultLoadedFromHistory event,
+    Emitter<ComparisonResultState> emit,
+  ) {
+    final CompatibilityHistoryItem item = event.item;
+    final String languageCode = event.languageCode.trim().toLowerCase();
+
+    if (state.selfProfileId == item.primaryProfileId &&
+        state.targetProfileId == item.targetProfileId &&
+        state.languageCode == languageCode &&
+        state.overallScore == item.overallScore &&
+        state.coreScore == item.coreScore &&
+        state.communicationScore == item.communicationScore &&
+        state.soulScore == item.soulScore &&
+        state.personalityScore == item.personalityScore) {
+      return;
+    }
+
+    final NumerologyCompatibilityContent compatibilityContent =
+        _contentRepository.getCompatibilityContent(
+          overallScore: item.overallScore,
+          languageCode: languageCode,
+        );
+
+    emit(
+      state.copyWith(
+        languageCode: languageCode,
+        selfProfileId: item.primaryProfileId,
+        targetProfileId: item.targetProfileId,
+        selfName: item.primaryName,
+        selfDate: _formatDate(item.primaryBirthDate),
+        selfLifePath: item.primaryLifePath,
+        selfSoul: item.primarySoul,
+        selfPersonality: item.primaryPersonality,
+        selfExpression: item.primaryExpression,
+        targetName: item.targetName,
+        targetRelation: item.targetRelation,
+        targetDate: _formatDate(item.targetBirthDate),
+        targetLifePath: item.targetLifePath,
+        targetSoul: item.targetSoul,
+        targetPersonality: item.targetPersonality,
+        targetExpression: item.targetExpression,
+        overallScore: item.overallScore,
+        coreScore: item.coreScore,
+        communicationScore: item.communicationScore,
+        soulScore: item.soulScore,
+        personalityScore: item.personalityScore,
         strengths: compatibilityContent.strengths,
         challenges: compatibilityContent.challenges,
         advice: compatibilityContent.advice,

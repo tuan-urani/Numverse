@@ -52,8 +52,8 @@ class TodayPersonalContent extends StatelessWidget {
             _DailyCheckInCard(
               soulPoints: state.soulPoints,
               currentStreak: state.currentStreak,
-              hasCheckedInToday: state.hasCheckedInToday,
-              onCheckIn: () => sessionBloc.checkIn(),
+              lastCheckInRewardAwarded: state.lastCheckInRewardAwarded,
+              lastCheckInEventId: state.lastCheckInEventId,
             ),
             12.height,
             _PersonalHeroCard(
@@ -327,14 +327,14 @@ class _DailyCheckInCard extends StatefulWidget {
   const _DailyCheckInCard({
     required this.soulPoints,
     required this.currentStreak,
-    required this.hasCheckedInToday,
-    required this.onCheckIn,
+    required this.lastCheckInRewardAwarded,
+    required this.lastCheckInEventId,
   });
 
   final int soulPoints;
   final int currentStreak;
-  final bool hasCheckedInToday;
-  final Future<void> Function() onCheckIn;
+  final int lastCheckInRewardAwarded;
+  final int lastCheckInEventId;
 
   @override
   State<_DailyCheckInCard> createState() => _DailyCheckInCardState();
@@ -343,9 +343,9 @@ class _DailyCheckInCard extends StatefulWidget {
 class _DailyCheckInCardState extends State<_DailyCheckInCard>
     with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
-  bool _autoClaimAttempted = false;
   OverlayEntry? _celebrationOverlayEntry;
   late final AnimationController _ambientController;
+  int _lastCelebratedEventId = 0;
 
   @override
   void initState() {
@@ -354,7 +354,7 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
       vsync: this,
       duration: const Duration(milliseconds: 3600),
     )..repeat(reverse: true);
-    _scheduleAutoClaimIfNeeded();
+    _tryTriggerCelebrationIfNeeded();
   }
 
   @override
@@ -368,46 +368,24 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
   @override
   void didUpdateWidget(covariant _DailyCheckInCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final bool didCheckInTodayTransition =
-        !oldWidget.hasCheckedInToday && widget.hasCheckedInToday;
-    final bool didStreakAdvanceWithCheckedIn =
-        widget.hasCheckedInToday &&
-        widget.currentStreak > oldWidget.currentStreak;
-    final bool didSoulPointsIncreaseWithCheckedIn =
-        widget.hasCheckedInToday && widget.soulPoints > oldWidget.soulPoints;
-    if (didCheckInTodayTransition ||
-        didStreakAdvanceWithCheckedIn ||
-        didSoulPointsIncreaseWithCheckedIn) {
-      _triggerCelebration(oldWidget);
-    }
-    if (oldWidget.hasCheckedInToday && !widget.hasCheckedInToday) {
-      _autoClaimAttempted = false;
-      _scheduleAutoClaimIfNeeded();
-      return;
-    }
-    _scheduleAutoClaimIfNeeded();
+    _tryTriggerCelebrationIfNeeded();
   }
 
-  void _scheduleAutoClaimIfNeeded() {
-    if (widget.hasCheckedInToday || _autoClaimAttempted) {
+  void _tryTriggerCelebrationIfNeeded() {
+    final int eventId = widget.lastCheckInEventId;
+    final int rewardAwarded = widget.lastCheckInRewardAwarded;
+    final bool hasFreshEvent = eventId > _lastCelebratedEventId;
+    if (!hasFreshEvent || rewardAwarded <= 0) {
       return;
     }
-    _autoClaimAttempted = true;
-    Future<void>.delayed(const Duration(milliseconds: 800), () async {
-      if (!mounted || widget.hasCheckedInToday) {
-        return;
-      }
-      await widget.onCheckIn();
-    });
+    _lastCelebratedEventId = eventId;
+    _triggerCelebration(rewardAwarded);
+    Get.find<MainSessionBloc>().consumeCheckInCelebration(eventId: eventId);
   }
 
-  void _triggerCelebration(_DailyCheckInCard oldWidget) {
-    int reward = widget.soulPoints - oldWidget.soulPoints;
-    if (reward <= 0 && widget.currentStreak > oldWidget.currentStreak) {
-      reward = _rewardByStreak(oldWidget.currentStreak);
-    }
-    reward = reward.clamp(0, 9999);
-    if (reward <= 0) {
+  void _triggerCelebration(int rewardAwarded) {
+    final int reward = rewardAwarded.clamp(0, 9999);
+    if (reward == 0) {
       return;
     }
     final _CheckInMilestone? celebrationMilestone = _milestoneOfDay(
@@ -503,19 +481,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
         }
       });
     });
-  }
-
-  int _rewardByStreak(int streak) {
-    if (streak >= 30) {
-      return 30;
-    }
-    if (streak >= 14) {
-      return 20;
-    }
-    if (streak >= 7) {
-      return 15;
-    }
-    return 10;
   }
 
   _CheckInMilestone _nextMilestone(int streak) {
@@ -1391,7 +1356,7 @@ class _PersonalHeroCard extends StatelessWidget {
                   8.width,
                   Text(
                     cardTitle,
-                    style: AppStyles.h3(
+                    style: AppStyles.h5(
                       fontWeight: FontWeight.w600,
                     ).copyWith(fontSize: 18, height: 1.3),
                   ),

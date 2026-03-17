@@ -30,6 +30,9 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.compatibilityNeedMorePoints:
       '比較するには Soul Points があと @points 必要です',
   PagesLocaleKey.compatibilityNeedMorePointsCta: '今すぐ獲得',
+  PagesLocaleKey.compatibilityHistoryTitle: '比較履歴',
+  PagesLocaleKey.compatibilityHistorySubtitle: '項目をタップするとポイント消費なしで再表示できます。',
+  PagesLocaleKey.compatibilityHistoryEmpty: 'まだ比較履歴がありません。最初の比較を始めましょう。',
   PagesLocaleKey.compatibilityAddDialogTitle: '新しいプロフィールを追加',
   PagesLocaleKey.compatibilityAddDialogNameLabel: '名前',
   PagesLocaleKey.compatibilityAddDialogNameHint: '名前を入力',

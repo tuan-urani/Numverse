@@ -46,6 +46,7 @@ class SessionAuthService {
       lastAdRewardAt: state.lastAdRewardAt,
       compareProfiles: state.compareProfiles,
       selectedCompareProfileId: state.selectedCompareProfileId,
+      compatibilityHistory: state.compatibilityHistory,
     );
   }
 }
