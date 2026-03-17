@@ -9,6 +9,7 @@ import 'package:test/src/core/model/comparison_profile.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/profile_time_life_snapshot.dart';
+import 'package:test/src/core/model/session_auth_mode.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
@@ -51,6 +52,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     on<MainSessionCompareProfileAdded>(_onCompareProfileAdded);
     on<MainSessionCompareProfileSelected>(_onCompareProfileSelected);
     on<MainSessionSoulPointsAdded>(_onSoulPointsAdded);
+    on<MainSessionAdRewardClaimed>(_onAdRewardClaimed);
     on<MainSessionSoulPointsDeducted>(_onSoulPointsDeducted);
     on<MainSessionCheckedIn>(_onCheckedIn);
     on<MainSessionInteractionTracked>(_onInteractionTracked);
@@ -89,7 +91,40 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           .loadSnapshot();
 
       AppSessionSnapshot effectiveSnapshot = localSnapshot;
-      if (localSnapshot.isAuthenticated &&
+      bool didBootstrapAnonymousOnInitialize = false;
+      if (_cloudAccountRepository.isConfigured &&
+          (localSnapshot.pendingAnonymousBootstrap ||
+              (localSnapshot.authMode == SessionAuthMode.anonymous &&
+                  !localSnapshot.hasCloudSession))) {
+        try {
+          await _cloudAccountRepository.ensureAnonymousSession();
+          didBootstrapAnonymousOnInitialize = true;
+          effectiveSnapshot = localSnapshot.copyWith(
+            isAuthenticated: true,
+            authMode: SessionAuthMode.anonymous,
+            pendingAnonymousBootstrap: false,
+            cloudUserId: _cloudAccountRepository.currentUserId,
+            clearUserEmail: true,
+          );
+        } catch (error, stackTrace) {
+          developer.log(
+            'Failed to bootstrap anonymous session. Keep pending bootstrap mode.',
+            name: 'MainSessionBloc',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          effectiveSnapshot = localSnapshot.copyWith(
+            isAuthenticated: false,
+            authMode: SessionAuthMode.anonymous,
+            pendingAnonymousBootstrap: true,
+            clearUserEmail: true,
+            clearCloudUserId: true,
+          );
+        }
+      }
+
+      if (!didBootstrapAnonymousOnInitialize &&
+          effectiveSnapshot.hasCloudSession &&
           _cloudAccountRepository.isConfigured) {
         try {
           effectiveSnapshot = await _cloudAccountRepository
@@ -115,8 +150,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         state.copyWith(
           viewState: AppViewStateStatus.success,
           isAuthenticated: effectiveSnapshot.isAuthenticated,
+          authMode: effectiveSnapshot.authMode,
+          pendingAnonymousBootstrap:
+              effectiveSnapshot.pendingAnonymousBootstrap,
+          cloudUserId: effectiveSnapshot.cloudUserId,
           userEmail: effectiveSnapshot.userEmail,
+          clearUserEmail: effectiveSnapshot.userEmail == null,
           userName: effectiveSnapshot.userName,
+          clearUserName: effectiveSnapshot.userName == null,
           profiles: effectiveSnapshot.profiles,
           lifeBasedByProfileId: effectiveSnapshot.lifeBasedByProfileId,
           timeLifeByProfileId: effectiveSnapshot.timeLifeByProfileId,
@@ -124,7 +165,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           soulPoints: effectiveSnapshot.soulPoints,
           currentStreak: effectiveSnapshot.currentStreak,
           dailyEarnings: effectiveSnapshot.dailyEarnings,
+          dailyAdEarnings: effectiveSnapshot.dailyAdEarnings,
+          dailyAdLimit: effectiveSnapshot.dailyAdLimit,
           lastCheckInAt: effectiveSnapshot.lastCheckInAt,
+          lastAdRewardAt: effectiveSnapshot.lastAdRewardAt,
           compareProfiles: effectiveSnapshot.compareProfiles,
           selectedCompareProfileId: effectiveSnapshot.selectedCompareProfileId,
           clearErrorMessage: true,
@@ -132,6 +176,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       );
       await _persistSnapshot();
       await _normalizeGuestRewardStateIfNeeded(emit);
+      await _normalizeAdRewardStateIfNeeded(emit);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
     } catch (_) {
@@ -195,6 +240,33 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         email: event.email,
         name: event.name,
       );
+
+      if (_cloudAccountRepository.isConfigured &&
+          state.authMode == SessionAuthMode.anonymous &&
+          state.hasCloudSession) {
+        await _cloudAccountRepository.signInExistingAccount(
+          email: identity.email,
+          password: event.password,
+        );
+        final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
+            .fetchCloudSessionSnapshot(
+              fallbackEmail: identity.email,
+              fallbackDisplayName: identity.name,
+            );
+        await _applySnapshotToState(
+          cloudSnapshot.copyWith(
+            authMode: SessionAuthMode.registered,
+            pendingAnonymousBootstrap: false,
+            cloudUserId: _cloudAccountRepository.currentUserId,
+          ),
+          emit,
+          recomputeMetrics: true,
+          forceRecomputeMetrics: true,
+        );
+        _completeVoid(event.completer);
+        return;
+      }
+
       final AppSessionSnapshot localSnapshotBeforeAuth = _authService
           .buildLocalSnapshotBeforeAuth(state: state, identity: identity);
 
@@ -253,6 +325,28 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       );
       final AppSessionSnapshot localSnapshotBeforeAuth = _authService
           .buildLocalSnapshotBeforeAuth(state: state, identity: identity);
+
+      if (_cloudAccountRepository.isConfigured &&
+          state.authMode == SessionAuthMode.anonymous &&
+          state.hasCloudSession) {
+        await _cloudAccountRepository.upgradeAnonymousToEmail(
+          email: identity.email,
+          password: event.password,
+          displayName: identity.name,
+        );
+        await _applySnapshotToState(
+          localSnapshotBeforeAuth.copyWith(
+            authMode: SessionAuthMode.registered,
+            pendingAnonymousBootstrap: false,
+            cloudUserId: _cloudAccountRepository.currentUserId,
+          ),
+          emit,
+          recomputeMetrics: false,
+        );
+        await _persistSnapshot(syncCloud: true);
+        _completeVoid(event.completer);
+        return;
+      }
 
       if (_cloudAccountRepository.isConfigured) {
         final CloudLoginResult loginResult = await _cloudAccountRepository
@@ -594,6 +688,13 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// API public nhận thưởng point từ quảng cáo.
+  Future<bool> claimAdReward({required int amount}) async {
+    final Completer<bool> completer = Completer<bool>();
+    add(MainSessionAdRewardClaimed(amount: amount, completer: completer));
+    return completer.future;
+  }
+
   /// Xử lý cộng điểm soul points và persist snapshot.
   Future<void> _onSoulPointsAdded(
     MainSessionSoulPointsAdded event,
@@ -608,6 +709,46 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       emit(state.copyWith(soulPoints: nextSoulPoints));
       await _persistSnapshot();
       _completeVoid(event.completer);
+    } catch (error, stackTrace) {
+      _completeError(event.completer, error, stackTrace);
+    }
+  }
+
+  /// Xử lý nhận thưởng quảng cáo với giới hạn point mỗi ngày.
+  Future<void> _onAdRewardClaimed(
+    MainSessionAdRewardClaimed event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    try {
+      await _normalizeAdRewardStateIfNeeded(emit);
+      if (event.amount <= 0) {
+        _completeBool(event.completer, false);
+        return;
+      }
+
+      final int remainingDailyAdPoints =
+          state.dailyAdLimit - state.dailyAdEarnings;
+      if (remainingDailyAdPoints <= 0) {
+        _completeBool(event.completer, false);
+        return;
+      }
+
+      final int awardedPoints = remainingDailyAdPoints < event.amount
+          ? remainingDailyAdPoints
+          : event.amount;
+      final int nextSoulPoints = _rewardService.addSoulPoints(
+        currentSoulPoints: state.soulPoints,
+        amount: awardedPoints,
+      );
+      emit(
+        state.copyWith(
+          soulPoints: nextSoulPoints,
+          dailyAdEarnings: state.dailyAdEarnings + awardedPoints,
+          lastAdRewardAt: DateTime.now(),
+        ),
+      );
+      await _persistSnapshot();
+      _completeBool(event.completer, true);
     } catch (error, stackTrace) {
       _completeError(event.completer, error, stackTrace);
     }
@@ -642,7 +783,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
   ) async {
     // Trừ điểm an toàn: account đăng nhập ưu tiên cloud-authoritative.
     try {
-      if (state.isAuthenticated && _cloudAccountRepository.isConfigured) {
+      if (state.hasCloudSession && _cloudAccountRepository.isConfigured) {
         final result = await _cloudAccountRepository.spendSoulPoints(
           amount: event.amount,
           sourceType: event.sourceType,
@@ -692,7 +833,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     // V1: guest xử lý local-only.
     // Với account đã đăng nhập: claim cloud-authoritative, không fallback local.
     try {
-      if (!state.isAuthenticated) {
+      if (!state.hasCloudSession) {
         await _normalizeGuestRewardStateIfNeeded(emit);
         await _checkInGuestLocal(emit);
         _completeVoid(event.completer);
@@ -708,7 +849,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       await _checkInCloud(emit);
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
-      if (state.isAuthenticated) {
+      if (state.hasCloudSession) {
         emit(state.copyWith(errorMessage: 'checkin_cloud_failed'));
         _completeVoid(event.completer);
         return;
@@ -763,7 +904,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
   Future<void> _normalizeGuestRewardStateIfNeeded(
     Emitter<MainSessionState> emit,
   ) async {
-    if (state.isAuthenticated) {
+    if (state.hasCloudSession) {
       return;
     }
     final DateTime? lastCheckInAt = state.lastCheckInAt;
@@ -803,6 +944,35 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         currentStreak: nextCurrentStreak,
       ),
     );
+    await _persistSnapshot();
+  }
+
+  /// Chuẩn hóa điểm nhận từ quảng cáo theo ngày.
+  Future<void> _normalizeAdRewardStateIfNeeded(
+    Emitter<MainSessionState> emit,
+  ) async {
+    final DateTime? lastAdRewardAt = state.lastAdRewardAt;
+    if (lastAdRewardAt == null) {
+      if (state.dailyAdEarnings == 0) {
+        return;
+      }
+      emit(state.copyWith(dailyAdEarnings: 0));
+      await _persistSnapshot();
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final DateTime adRewardDay = DateTime(
+      lastAdRewardAt.year,
+      lastAdRewardAt.month,
+      lastAdRewardAt.day,
+    );
+    final int dayDiff = today.difference(adRewardDay).inDays;
+    if (dayDiff <= 0) {
+      return;
+    }
+    emit(state.copyWith(dailyAdEarnings: 0, clearLastAdRewardAt: true));
     await _persistSnapshot();
   }
 
@@ -885,6 +1055,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
   ) async {
     // Event handler refresh time-based theo mốc refreshAt hoặc force refresh.
     try {
+      await _ensureAnonymousSessionIfNeeded(emit);
       await _normalizeGuestRewardStateIfNeeded(emit);
       await _refreshTimeLifeForCurrentProfile(
         emit,
@@ -953,6 +1124,9 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     // Đồng bộ toàn bộ MainSessionState hiện tại xuống storage local.
     final AppSessionSnapshot snapshot = AppSessionSnapshot(
       isAuthenticated: state.isAuthenticated,
+      authMode: state.authMode,
+      pendingAnonymousBootstrap: state.pendingAnonymousBootstrap,
+      cloudUserId: state.cloudUserId,
       userEmail: state.userEmail,
       userName: state.userName,
       profiles: state.profiles,
@@ -962,13 +1136,16 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       soulPoints: state.soulPoints,
       currentStreak: state.currentStreak,
       dailyEarnings: state.dailyEarnings,
+      dailyAdEarnings: state.dailyAdEarnings,
+      dailyAdLimit: state.dailyAdLimit,
       lastCheckInAt: state.lastCheckInAt,
+      lastAdRewardAt: state.lastAdRewardAt,
       compareProfiles: state.compareProfiles,
       selectedCompareProfileId: state.selectedCompareProfileId,
     );
     await _sessionRepository.saveSnapshot(snapshot);
     if (!syncCloud ||
-        !state.isAuthenticated ||
+        !state.hasCloudSession ||
         !_cloudAccountRepository.isConfigured) {
       return;
     }
@@ -1001,8 +1178,13 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     emit(
       state.copyWith(
         isAuthenticated: snapshot.isAuthenticated,
+        authMode: snapshot.authMode,
+        pendingAnonymousBootstrap: snapshot.pendingAnonymousBootstrap,
+        cloudUserId: snapshot.cloudUserId,
         userEmail: snapshot.userEmail,
+        clearUserEmail: snapshot.userEmail == null,
         userName: snapshot.userName,
+        clearUserName: snapshot.userName == null,
         profiles: snapshot.profiles,
         lifeBasedByProfileId: snapshot.lifeBasedByProfileId,
         timeLifeByProfileId: snapshot.timeLifeByProfileId,
@@ -1010,7 +1192,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         soulPoints: snapshot.soulPoints,
         currentStreak: snapshot.currentStreak,
         dailyEarnings: snapshot.dailyEarnings,
+        dailyAdEarnings: snapshot.dailyAdEarnings,
+        dailyAdLimit: snapshot.dailyAdLimit,
         lastCheckInAt: snapshot.lastCheckInAt,
+        lastAdRewardAt: snapshot.lastAdRewardAt,
         compareProfiles: snapshot.compareProfiles,
         selectedCompareProfileId: snapshot.selectedCompareProfileId,
         clearErrorMessage: true,
@@ -1022,6 +1207,52 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
     await _ensureLifeBasedForCurrentProfile(emit, force: forceRecomputeMetrics);
     await _refreshTimeLifeForCurrentProfile(emit, force: forceRecomputeMetrics);
+  }
+
+  Future<void> _ensureAnonymousSessionIfNeeded(
+    Emitter<MainSessionState> emit,
+  ) async {
+    if (!_cloudAccountRepository.isConfigured) {
+      return;
+    }
+    if (state.authMode != SessionAuthMode.anonymous) {
+      return;
+    }
+    if (state.hasCloudSession && !state.pendingAnonymousBootstrap) {
+      return;
+    }
+
+    try {
+      await _cloudAccountRepository.ensureAnonymousSession();
+      emit(
+        state.copyWith(
+          isAuthenticated: true,
+          authMode: SessionAuthMode.anonymous,
+          pendingAnonymousBootstrap: false,
+          cloudUserId: _cloudAccountRepository.currentUserId,
+          clearUserEmail: true,
+          clearErrorMessage: true,
+        ),
+      );
+      await _persistSnapshot(syncCloud: true);
+    } catch (error, stackTrace) {
+      developer.log(
+        'Anonymous bootstrap retry failed.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(
+        state.copyWith(
+          isAuthenticated: false,
+          authMode: SessionAuthMode.anonymous,
+          pendingAnonymousBootstrap: true,
+          clearCloudUserId: true,
+          clearUserEmail: true,
+        ),
+      );
+      await _persistSnapshot();
+    }
   }
 
   /// Complete `Completer<void>` an toàn, tránh complete nhiều lần.

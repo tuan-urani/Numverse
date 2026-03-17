@@ -35,7 +35,8 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.compatibilitySoulPointsLabel: 'Soul Points của bạn',
   PagesLocaleKey.compatibilityCostLabel: 'Chi phí so sánh',
   PagesLocaleKey.compatibilityNeedMorePoints:
-      'Bạn cần thêm @points Soul Points để so sánh',
+      'Cần thêm @points Soul Points để so sánh.',
+  PagesLocaleKey.compatibilityNeedMorePointsCta: 'Nhận thêm',
   PagesLocaleKey.compatibilityAddDialogTitle: 'Thêm hồ sơ mới',
   PagesLocaleKey.compatibilityAddDialogNameLabel: 'Tên người',
   PagesLocaleKey.compatibilityAddDialogNameHint: 'Nhập tên',
@@ -64,7 +65,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.soulPointsBuyAction: 'Mua point',
   PagesLocaleKey.compatibilityUnlockTitle: 'Mở khóa thông tin',
   PagesLocaleKey.compatibilityUnlockSubtitle:
-      'Nhập thông tin chính xác trùng với trên CCCD của bạn',
+      'Nhập thông tin chính xác của bạn',
   PagesLocaleKey.compatibilityUnlockDateHint: 'Định dạng: Ngày/Tháng/Năm',
   PagesLocaleKey.compatibilityUnlockInvalid:
       'Vui lòng nhập đầy đủ và chính xác thông tin',
@@ -161,15 +162,14 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.numaiChatHint: 'Hỏi NumAI về thần số học...',
   PagesLocaleKey.numaiChatCostLabel: 'Mỗi tin nhắn: 3 Soul Points',
   PagesLocaleKey.numaiChatNoPoints: 'Hết Soul Points',
-  PagesLocaleKey.numaiChatNoPointsHint:
-      'Không đủ Soul Points. Hãy check-in ở tab Hôm nay!',
+  PagesLocaleKey.numaiChatNoPointsHint: 'Không đủ Soul Points.',
   PagesLocaleKey.numaiChatActionTapHere: 'Nhấn tại đây',
   PagesLocaleKey.numaiChatNew: 'Chat mới',
   PagesLocaleKey.numaiChatSelectDomainHint:
       'Chọn một chủ đề ở phía trên ô nhập để bắt đầu',
   PagesLocaleKey.numaiChatActiveDomainHint: 'Đang ở chủ đề @domain',
   PagesLocaleKey.numaiChatInputPlaceholder:
-      'Chọn chủ đề ở trên rồi nhập câu hỏi...',
+      'Nhập câu hỏi...',
   PagesLocaleKey.numaiChatCostFootnote: '-3 SP mỗi câu hỏi',
   PagesLocaleKey.numaiDomainPersonalityLabel: 'Tính cách',
   PagesLocaleKey.numaiDomainCareerLabel: 'Sự nghiệp',
@@ -191,6 +191,8 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.numaiDomainCyclesPlaceholder: 'Khám phá nhịp đập cuộc đời...',
   PagesLocaleKey.profileTitle: 'Tôi',
   PagesLocaleKey.profileSubtitle: 'Hồ sơ năng lượng của bạn',
+  PagesLocaleKey.profileSubtitleUnbacked:
+      'Hồ sơ năng lượng của bạn chưa được sao lưu.',
   PagesLocaleKey.profileMyInfo: 'Hồ sơ của tôi',
   PagesLocaleKey.profileSavedProfiles: 'Hồ sơ đã lưu',
   PagesLocaleKey.profileSubscription: 'Gói dịch vụ',
@@ -204,9 +206,23 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileCreateProfileCta: 'Tạo hồ sơ của bạn',
   PagesLocaleKey.profilePlanFreeTag: 'Free',
   PagesLocaleKey.profileSoulPointsLabel: '@points Soul Points',
+  PagesLocaleKey.profileSoulPointsEarnMoreCta: 'Nhận thêm ->',
   PagesLocaleKey.profileCoreLifePathLabel: 'Số chủ đạo',
   PagesLocaleKey.profileCoreMissionLabel: 'Sứ mệnh',
   PagesLocaleKey.profileCoreSoulLabel: 'Linh hồn',
+  PagesLocaleKey.profileSoulPointsActionTitle: 'Nhận thêm Soul Points',
+  PagesLocaleKey.profileSoulPointsActionSubtitle:
+      'Chọn cách nhận thêm point để tiếp tục trải nghiệm.',
+  PagesLocaleKey.profileSoulPointsActionAdsProgress:
+      'Point từ quảng cáo hôm nay: @earned/@limit',
+  PagesLocaleKey.profileSoulPointsActionAdsLimitReached:
+      'Bạn đã đạt giới hạn point quảng cáo hôm nay.',
+  PagesLocaleKey.profileSoulPointsActionWatchAdTitle: 'Xem quảng cáo',
+  PagesLocaleKey.profileSoulPointsActionWatchAdBody:
+      'Xem 1 quảng cáo để nhận thêm point.',
+  PagesLocaleKey.profileSoulPointsActionBuyPointTitle: 'Mua point',
+  PagesLocaleKey.profileSoulPointsActionBuyPointBody:
+      'Đi tới màn Subscription để nạp point.',
   PagesLocaleKey.profileGuestWarning: 'Dữ liệu của bạn chưa được sao lưu.',
   PagesLocaleKey.profileGuestAuthAction: 'Sao lưu ngay',
   PagesLocaleKey.profileGuestAuthTitle: 'Đăng ký / Đăng nhập để sao lưu',
@@ -274,10 +290,40 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileLogoutConfirmBody: 'Bạn có chắc chắn muốn đăng xuất?',
   PagesLocaleKey.myProfileTitle: 'Hồ sơ của tôi',
   PagesLocaleKey.savedProfilesTitle: 'Hồ sơ đã lưu',
-  PagesLocaleKey.subscriptionTitle: 'Gói dịch vụ',
+  PagesLocaleKey.subscriptionTitle: 'Mua point',
   PagesLocaleKey.subscriptionSubtitle:
-      'Nâng cấp PRO để mở full Hôm nay và dùng NumAI mượt hơn.',
-  PagesLocaleKey.subscriptionAction: 'Nâng cấp PRO',
+      'Nạp Soul Points để tiếp tục dùng các trải nghiệm premium.',
+  PagesLocaleKey.subscriptionAction: 'Mua ngay',
+  PagesLocaleKey.subscriptionBalanceLabel: 'Số dư hiện tại',
+  PagesLocaleKey.subscriptionBalanceUnit: 'Soul Points',
+  PagesLocaleKey.subscriptionBalanceHint:
+      'Point được dùng cho NumAI và các tính năng cao cấp.',
+  PagesLocaleKey.subscriptionPacksTitle: 'Các gói point',
+  PagesLocaleKey.subscriptionTopupHint:
+      'Chọn gói phù hợp và thanh toán để nhận point ngay lập tức.',
+  PagesLocaleKey.subscriptionTrustTitle: 'Thanh toán an toàn',
+  PagesLocaleKey.subscriptionTrustBody:
+      'Giao dịch sẽ được xử lý bảo mật qua App Store hoặc Google Play.',
+  PagesLocaleKey.subscriptionPackPointsLabel: '@points point',
+  PagesLocaleKey.subscriptionPackStarterName: 'Gói Khởi Đầu',
+  PagesLocaleKey.subscriptionPackStarterPrice: '29.000đ',
+  PagesLocaleKey.subscriptionPackStarterBonus: 'Phù hợp nạp nhanh',
+  PagesLocaleKey.subscriptionPackStarterValue: '~483đ / point',
+  PagesLocaleKey.subscriptionPackSmartName: 'Gói Tiết Kiệm',
+  PagesLocaleKey.subscriptionPackSmartPrice: '59.000đ',
+  PagesLocaleKey.subscriptionPackSmartBonus:
+      'Giá trị tốt nhất cho dùng hằng ngày',
+  PagesLocaleKey.subscriptionPackSmartValue: '~369đ / point',
+  PagesLocaleKey.subscriptionPackLegendName: 'Gói Chuyên Sâu',
+  PagesLocaleKey.subscriptionPackLegendPrice: '109.000đ',
+  PagesLocaleKey.subscriptionPackLegendBonus: 'Hiệu suất point tối đa',
+  PagesLocaleKey.subscriptionPackLegendValue: '~302đ / point',
+  PagesLocaleKey.subscriptionPopularTag: 'Đề xuất',
+  PagesLocaleKey.subscriptionBuyButton: 'Mua',
+  PagesLocaleKey.subscriptionPurchaseSuccess:
+      'Đã cộng thêm @points point vào ví của bạn.',
+  PagesLocaleKey.subscriptionPurchaseNote:
+      'Đây là UI nạp point tạm thời, billing thật sẽ được nối ở bước tiếp theo.',
   PagesLocaleKey.settingsTitle: 'Cài đặt',
   PagesLocaleKey.settingsSectionAppearance: 'Giao diện',
   PagesLocaleKey.settingsThemeTitle: 'Chủ đề',

@@ -9,7 +9,7 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_bloc.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
-import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
+import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
@@ -24,6 +24,8 @@ class NumAiPage extends StatefulWidget {
 }
 
 class _NumAiPageState extends State<NumAiPage> {
+  static const int _adRewardPointsPerWatch = 5;
+
   late final MainSessionBloc _sessionBloc;
   late final NumAiChatBloc _chatBloc;
   late final TextEditingController _controller;
@@ -85,8 +87,7 @@ class _NumAiPageState extends State<NumAiPage> {
                   final bool canSend =
                       _controller.text.trim().isNotEmpty &&
                       !chatState.isLoading &&
-                      canAffordMessage &&
-                      activeDomain != null;
+                      canAffordMessage;
                   final String emptyHint = activeDomain == null
                       ? LocaleKey.numaiChatSelectDomainHint.tr
                       : LocaleKey.numaiChatActiveDomainHint.trParams(
@@ -108,57 +109,51 @@ class _NumAiPageState extends State<NumAiPage> {
                         ],
                       ),
                     ),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 560),
-                        child: Column(
-                          children: <Widget>[
-                            _NumAiHeaderBar(
-                              activeDomainLabel: activeDomain?.labelKey.tr,
-                              soulPoints: sessionState.soulPoints,
-                              onNewChatTap: _resetConversation,
-                            ),
-                            Expanded(
-                              child: _NumAiMessagesPanel(
-                                messages: chatState.messages,
-                                isLoading: chatState.isLoading,
-                                emptyHint: emptyHint,
-                                scrollController: _scrollController,
-                                onActionTap: _onProfileActionTap,
-                                showFollowupSuggestions: !isChatBlank,
-                                followupDomains: _visibleDomainSuggestions,
-                                onFollowupTap: (_NumAiDomain domain) {
-                                  _sendMessage(
-                                    messageText: domain.featuredPromptKey.tr,
-                                    domain: domain,
-                                  );
-                                },
-                              ),
-                            ),
-                            _NumAiComposer(
-                              domains: _visibleDomainSuggestions,
-                              activeDomainId: _activeDomainId,
-                              canAffordMessage: canAffordMessage,
-                              canSend: canSend,
-                              isLoading: chatState.isLoading,
-                              controller: _controller,
-                              inputHint: inputHint,
-                              noPointsMessage:
-                                  LocaleKey.numaiChatNoPointsHint.tr,
-                              onChanged: (_) => setState(() {}),
-                              onSendTap: () => _sendMessage(),
-                              showSuggestions: isChatBlank,
-                              onDomainTap: (_NumAiDomain domain) {
-                                _sendMessage(
-                                  messageText: domain.featuredPromptKey.tr,
-                                  domain: domain,
-                                );
-                              },
-                            ),
-                          ],
+                    child: Column(
+                      children: <Widget>[
+                        _NumAiHeaderBar(
+                          activeDomainLabel: activeDomain?.labelKey.tr,
+                          soulPoints: sessionState.soulPoints,
+                          onNewChatTap: _resetConversation,
                         ),
-                      ),
+                        Expanded(
+                          child: _NumAiMessagesPanel(
+                            messages: chatState.messages,
+                            isLoading: chatState.isLoading,
+                            emptyHint: emptyHint,
+                            scrollController: _scrollController,
+                            onActionTap: _onProfileActionTap,
+                            showFollowupSuggestions: !isChatBlank,
+                            followupDomains: _visibleDomainSuggestions,
+                            onFollowupTap: (_NumAiDomain domain) {
+                              _sendMessage(
+                                messageText: domain.featuredPromptKey.tr,
+                                domain: domain,
+                              );
+                            },
+                          ),
+                        ),
+                        _NumAiComposer(
+                          domains: _visibleDomainSuggestions,
+                          activeDomainId: _activeDomainId,
+                          canAffordMessage: canAffordMessage,
+                          canSend: canSend,
+                          isLoading: chatState.isLoading,
+                          controller: _controller,
+                          inputHint: inputHint,
+                          noPointsMessage: LocaleKey.numaiChatNoPointsHint.tr,
+                          onChanged: (_) => setState(() {}),
+                          onSendTap: () => _sendMessage(),
+                          showSuggestions: isChatBlank,
+                          onNoPointsTap: _showSoulPointsActionDialog,
+                          onDomainTap: (_NumAiDomain domain) {
+                            _sendMessage(
+                              messageText: domain.featuredPromptKey.tr,
+                              domain: domain,
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -177,30 +172,22 @@ class _NumAiPageState extends State<NumAiPage> {
     }
 
     final _NumAiDomain? selectedDomain = domain ?? _domainById(_activeDomainId);
-    if (selectedDomain == null) {
-      return;
-    }
-
-    if (domain != null) {
+    if (domain != null && selectedDomain != null) {
       _rotateSuggestionsAfterSelection(selectedDomain.id);
     }
 
     if (_sessionBloc.state.soulPoints < NumAiChatBloc.messageCost) {
-      await _showSoulPointsInsufficientModal(
-        requiredPoints: NumAiChatBloc.messageCost,
-      );
+      await _showSoulPointsInsufficientModal();
       return;
     }
 
-    setState(() {
-      _activeDomainId = selectedDomain.id;
-    });
+    if (selectedDomain != null) {
+      setState(() {
+        _activeDomainId = selectedDomain.id;
+      });
+    }
 
     final bool hasProfile = _sessionBloc.state.currentProfile != null;
-    if (selectedDomain.needsProfile && !hasProfile) {
-      await _promptProfileInputDialog();
-      return;
-    }
 
     final bool sent = await _chatBloc.sendMessage(
       rawMessage: resolvedMessage,
@@ -256,15 +243,6 @@ class _NumAiPageState extends State<NumAiPage> {
     });
   }
 
-  Future<void> _promptProfileInputDialog() async {
-    await CompatibilityProfileInputDialog.show(
-      context,
-      onSubmit: (String name, DateTime birthDate) async {
-        await _sessionBloc.addProfile(name: name, birthDate: birthDate);
-      },
-    );
-  }
-
   Future<void> _onProfileActionTap() async {
     await CompatibilityProfileInputDialog.show(
       context,
@@ -278,22 +256,20 @@ class _NumAiPageState extends State<NumAiPage> {
     _chatBloc.appendPendingQuestionAnswerAfterProfile();
   }
 
-  Future<void> _showSoulPointsInsufficientModal({
-    required int requiredPoints,
-  }) async {
-    await SoulPointsInsufficientDialog.show(
-      context,
-      requiredPoints: requiredPoints,
-      onWatchAdTap: _onWatchAdTap,
-      onBuyPointsTap: _onBuyPointsTap,
-    );
+  Future<void> _showSoulPointsInsufficientModal() async {
+    await _showSoulPointsActionDialog();
   }
 
-  Future<void> _onWatchAdTap() async {
-    Get.snackbar(
-      LocaleKey.commonComingSoon.tr,
-      LocaleKey.commonComingSoon.tr,
-      snackPosition: SnackPosition.BOTTOM,
+  Future<void> _showSoulPointsActionDialog() async {
+    final MainSessionState sessionState = _sessionBloc.state;
+    await ProfileSoulPointsActionsDialog.show(
+      context,
+      adEarnedToday: sessionState.dailyAdEarnings,
+      adDailyLimit: sessionState.dailyAdLimit,
+      onWatchAdTap: () async {
+        await _sessionBloc.claimAdReward(amount: _adRewardPointsPerWatch);
+      },
+      onBuyPointsTap: _onBuyPointsTap,
     );
   }
 
@@ -762,6 +738,7 @@ class _NumAiComposer extends StatelessWidget {
     required this.noPointsMessage,
     required this.onChanged,
     required this.onSendTap,
+    required this.onNoPointsTap,
     required this.showSuggestions,
     required this.onDomainTap,
   });
@@ -776,6 +753,7 @@ class _NumAiComposer extends StatelessWidget {
   final String noPointsMessage;
   final ValueChanged<String> onChanged;
   final VoidCallback onSendTap;
+  final Future<void> Function() onNoPointsTap;
   final bool showSuggestions;
   final ValueChanged<_NumAiDomain> onDomainTap;
 
@@ -789,6 +767,7 @@ class _NumAiComposer extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + resolvedBottomInset),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.background.withValues(alpha: 0.84),
         border: Border(
@@ -809,43 +788,87 @@ class _NumAiComposer extends StatelessWidget {
             10.height,
           ],
           if (!canAffordMessage) ...<Widget>[
-            Text(
-              noPointsMessage,
-              textAlign: TextAlign.center,
-              style: AppStyles.bodySmall(color: AppColors.error),
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              runSpacing: 4,
+              children: <Widget>[
+                Text(
+                  noPointsMessage,
+                  textAlign: TextAlign.center,
+                  style: AppStyles.bodySmall(color: AppColors.error),
+                ),
+                Material(
+                  color: AppColors.transparent,
+                  child: InkWell(
+                    onTap: onNoPointsTap,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      child: Text(
+                        LocaleKey.compatibilityNeedMorePointsCta.tr,
+                        style: AppStyles.bodySmall(
+                          color: AppColors.richGold,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ] else ...<Widget>[
             Row(
               children: <Widget>[
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.card.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.border.withValues(alpha: 0.65),
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 3,
+                    textInputAction: TextInputAction.send,
+                    onChanged: onChanged,
+                    onSubmitted: (_) {
+                      if (canSend) {
+                        onSendTap();
+                      }
+                    },
+                    style: AppStyles.bodyMedium(),
+                    decoration: InputDecoration(
+                      hintText: inputHint,
+                      hintStyle: AppStyles.bodyMedium(
+                        color: AppColors.textMuted,
                       ),
-                    ),
-                    child: TextField(
-                      controller: controller,
-                      minLines: 1,
-                      maxLines: 3,
-                      textInputAction: TextInputAction.send,
-                      onChanged: onChanged,
-                      onSubmitted: (_) {
-                        if (canSend) {
-                          onSendTap();
-                        }
-                      },
-                      style: AppStyles.bodyMedium(),
-                      decoration: InputDecoration(
-                        hintText: inputHint,
-                        hintStyle: AppStyles.bodySmall(
-                          color: AppColors.textMuted,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.deepViolet.withValues(alpha: 0.48),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColors.border.withValues(alpha: 0.7),
+                          width: 1.1,
                         ),
-                        border: InputBorder.none,
-                        isDense: true,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColors.border.withValues(alpha: 0.7),
+                          width: 1.1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: AppColors.richGold,
+                          width: 1.4,
+                        ),
                       ),
                     ),
                   ),
@@ -1004,7 +1027,6 @@ class _NumAiDomain {
     required this.featuredPromptKey,
     required this.placeholderKey,
     required this.icon,
-    required this.needsProfile,
   });
 
   final String id;
@@ -1012,7 +1034,6 @@ class _NumAiDomain {
   final String featuredPromptKey;
   final String placeholderKey;
   final IconData icon;
-  final bool needsProfile;
 }
 
 const List<_NumAiDomain> _domains = <_NumAiDomain>[
@@ -1022,7 +1043,6 @@ const List<_NumAiDomain> _domains = <_NumAiDomain>[
     featuredPromptKey: LocaleKey.numaiDomainPersonalityFeatured,
     placeholderKey: LocaleKey.numaiDomainPersonalityPlaceholder,
     icon: Icons.account_circle_outlined,
-    needsProfile: true,
   ),
   _NumAiDomain(
     id: 'career',
@@ -1030,7 +1050,6 @@ const List<_NumAiDomain> _domains = <_NumAiDomain>[
     featuredPromptKey: LocaleKey.numaiDomainCareerFeatured,
     placeholderKey: LocaleKey.numaiDomainCareerPlaceholder,
     icon: Icons.work_outline_rounded,
-    needsProfile: true,
   ),
   _NumAiDomain(
     id: 'love',
@@ -1038,7 +1057,6 @@ const List<_NumAiDomain> _domains = <_NumAiDomain>[
     featuredPromptKey: LocaleKey.numaiDomainLoveFeatured,
     placeholderKey: LocaleKey.numaiDomainLovePlaceholder,
     icon: Icons.favorite_border_rounded,
-    needsProfile: true,
   ),
   _NumAiDomain(
     id: 'cycles',
@@ -1046,6 +1064,5 @@ const List<_NumAiDomain> _domains = <_NumAiDomain>[
     featuredPromptKey: LocaleKey.numaiDomainCyclesFeatured,
     placeholderKey: LocaleKey.numaiDomainCyclesPlaceholder,
     icon: Icons.refresh_rounded,
-    needsProfile: true,
   ),
 ];

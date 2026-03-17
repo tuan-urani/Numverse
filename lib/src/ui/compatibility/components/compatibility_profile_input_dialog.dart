@@ -7,19 +7,28 @@ import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class CompatibilityProfileInputDialog extends StatefulWidget {
-  const CompatibilityProfileInputDialog({required this.onSubmit, super.key});
+  const CompatibilityProfileInputDialog({
+    required this.onSubmit,
+    this.title,
+    super.key,
+  });
 
   final Future<void> Function(String name, DateTime birthDate) onSubmit;
+  final String? title;
 
   static Future<void> show(
     BuildContext context, {
     required Future<void> Function(String name, DateTime birthDate) onSubmit,
+    String? title,
   }) {
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
-        return CompatibilityProfileInputDialog(onSubmit: onSubmit);
+        return CompatibilityProfileInputDialog(
+          onSubmit: onSubmit,
+          title: title,
+        );
       },
     );
   }
@@ -32,9 +41,8 @@ class CompatibilityProfileInputDialog extends StatefulWidget {
 class _CompatibilityProfileInputDialogState
     extends State<CompatibilityProfileInputDialog> {
   late final TextEditingController _nameController;
-  late final TextEditingController _dayController;
-  late final TextEditingController _monthController;
-  late final TextEditingController _yearController;
+  late final TextEditingController _birthDateController;
+  DateTime? _birthDate;
   String? _errorText;
   bool _isSubmitting = false;
 
@@ -42,17 +50,13 @@ class _CompatibilityProfileInputDialogState
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _dayController = TextEditingController();
-    _monthController = TextEditingController();
-    _yearController = TextEditingController();
+    _birthDateController = TextEditingController();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _dayController.dispose();
-    _monthController.dispose();
-    _yearController.dispose();
+    _birthDateController.dispose();
     super.dispose();
   }
 
@@ -89,7 +93,7 @@ class _CompatibilityProfileInputDialogState
                   8.width,
                   Expanded(
                     child: Text(
-                      LocaleKey.compatibilityUnlockTitle.tr,
+                      widget.title ?? LocaleKey.compatibilityUnlockTitle.tr,
                       style: AppStyles.h3(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -115,87 +119,40 @@ class _CompatibilityProfileInputDialogState
               14.height,
               _FieldLabel(text: LocaleKey.profileNameLabel.tr),
               6.height,
-              _InputContainer(
-                child: TextField(
-                  controller: _nameController,
-                  style: AppStyles.bodyMedium(),
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: LocaleKey.compatibilityAddDialogNameHint.tr,
-                    hintStyle: AppStyles.bodySmall(color: AppColors.textMuted),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                ),
+              _DialogInputField(
+                controller: _nameController,
+                hintText: LocaleKey.compatibilityAddDialogNameHint.tr,
+                errorText: _errorText,
+                onChanged: (_) {
+                  if (_errorText == null) {
+                    return;
+                  }
+                  setState(() {
+                    _errorText = null;
+                  });
+                },
               ),
               12.height,
               _FieldLabel(text: LocaleKey.profileBirthDateLabel.tr),
               6.height,
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _InputContainer(
-                      child: TextField(
-                        controller: _dayController,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        style: AppStyles.bodyMedium(),
-                        decoration: InputDecoration(
-                          hintText: 'DD',
-                          hintStyle: AppStyles.bodySmall(
-                            color: AppColors.textMuted,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                  ),
-                  8.width,
-                  Expanded(
-                    child: _InputContainer(
-                      child: TextField(
-                        controller: _monthController,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        style: AppStyles.bodyMedium(),
-                        decoration: InputDecoration(
-                          hintText: 'MM',
-                          hintStyle: AppStyles.bodySmall(
-                            color: AppColors.textMuted,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                  ),
-                  8.width,
-                  Expanded(
-                    child: _InputContainer(
-                      child: TextField(
-                        controller: _yearController,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        style: AppStyles.bodyMedium(),
-                        decoration: InputDecoration(
-                          hintText: 'YYYY',
-                          hintStyle: AppStyles.bodySmall(
-                            color: AppColors.textMuted,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _DialogInputField(
+                controller: _birthDateController,
+                hintText:
+                    LocaleKey.compatibilityAddDialogBirthDatePlaceholder.tr,
+                readOnly: true,
+                onTap: _pickBirthDate,
+                errorText: _errorText,
+                suffixIcon: Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18,
+                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                ),
               ),
-              8.height,
-              Text(
-                LocaleKey.compatibilityUnlockDateHint.tr,
-                style: AppStyles.caption(color: AppColors.textMuted),
-              ),
+              // 8.height,
+              // Text(
+              //   LocaleKey.compatibilityUnlockDateHint.tr,
+              //   style: AppStyles.caption(color: AppColors.textMuted),
+              // ),
               if (_errorText != null) ...<Widget>[
                 8.height,
                 Text(
@@ -268,19 +225,15 @@ class _CompatibilityProfileInputDialogState
 
   Future<void> _submit() async {
     final String name = _nameController.text.trim();
-    final int? day = int.tryParse(_dayController.text.trim());
-    final int? month = int.tryParse(_monthController.text.trim());
-    final int? year = int.tryParse(_yearController.text.trim());
-
-    if (name.isEmpty || day == null || month == null || year == null) {
+    if (name.isEmpty || _birthDate == null) {
       setState(() {
         _errorText = LocaleKey.compatibilityUnlockInvalid.tr;
       });
       return;
     }
 
-    final DateTime? birthDate = _safeDate(year, month, day);
-    if (birthDate == null || birthDate.isAfter(DateTime.now())) {
+    final DateTime birthDate = _birthDate!;
+    if (birthDate.isAfter(DateTime.now())) {
       setState(() {
         _errorText = LocaleKey.compatibilityUnlockInvalid.tr;
       });
@@ -301,15 +254,48 @@ class _CompatibilityProfileInputDialogState
     Navigator.of(context).pop();
   }
 
-  DateTime? _safeDate(int year, int month, int day) {
-    if (year < 1900 || year > DateTime.now().year) {
-      return null;
+  Future<void> _pickBirthDate() async {
+    final DateTime now = DateTime.now();
+    final DateTime initialDate =
+        _birthDate ?? DateTime(now.year - 20, now.month, now.day);
+    final DateTime? selected = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: now,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.richGold,
+              onPrimary: AppColors.midnight,
+              surface: AppColors.midnightSoft,
+              onSurface: AppColors.textPrimary,
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: AppColors.midnightSoft,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
+      return;
     }
 
-    final DateTime value = DateTime(year, month, day);
-    final bool valid =
-        value.year == year && value.month == month && value.day == day;
-    return valid ? value : null;
+    setState(() {
+      _birthDate = selected;
+      _birthDateController.text = _formatBirthDate(selected);
+      _errorText = null;
+    });
+  }
+
+  String _formatBirthDate(DateTime date) {
+    final String day = date.day.toString().padLeft(2, '0');
+    final String month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
   }
 }
 
@@ -330,22 +316,77 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-class _InputContainer extends StatelessWidget {
-  const _InputContainer({required this.child});
+class _DialogInputField extends StatelessWidget {
+  const _DialogInputField({
+    required this.controller,
+    required this.hintText,
+    this.errorText,
+    this.onChanged,
+    this.readOnly = false,
+    this.onTap,
+    this.suffixIcon,
+  });
 
-  final Widget child;
+  final TextEditingController controller;
+  final String hintText;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.75)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: child,
+    final bool hasError = errorText != null;
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      readOnly: readOnly,
+      onTap: onTap,
+      showCursor: !readOnly,
+      style: AppStyles.bodyMedium(),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: AppStyles.bodyMedium(color: AppColors.textMuted),
+        suffixIcon: suffixIcon == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: suffixIcon,
+              ),
+        suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
+        errorText: hasError ? '' : null,
+        errorStyle: const TextStyle(height: 0, fontSize: 0),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
+        filled: true,
+        fillColor: AppColors.deepViolet.withValues(alpha: 0.48),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.7),
+            width: 1.1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: hasError
+                ? AppColors.error.withValues(alpha: 0.9)
+                : AppColors.border.withValues(alpha: 0.7),
+            width: 1.1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: hasError ? AppColors.error : AppColors.richGold,
+            width: 1.4,
+          ),
+        ),
       ),
     );
   }

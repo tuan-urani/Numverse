@@ -13,14 +13,14 @@ import 'package:test/src/utils/app_styles.dart';
 class ProfileIdentityCard extends StatelessWidget {
   const ProfileIdentityCard({
     required this.sessionState,
-    this.onTapAuthCta,
     this.onTapManageProfiles,
+    this.onTapEarnMorePoints,
     super.key,
   });
 
   final MainSessionState sessionState;
-  final VoidCallback? onTapAuthCta;
   final VoidCallback? onTapManageProfiles;
+  final VoidCallback? onTapEarnMorePoints;
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +55,6 @@ class ProfileIdentityCard extends StatelessWidget {
                 sessionState.currentProfile!.name,
               )
         : 0;
-    final bool showGuestBackupWarning =
-        hasProfile && !sessionState.isAuthenticated;
-
     return AppMysticalCard(
       padding: EdgeInsets.zero,
       borderColor: AppColors.richGold.withValues(alpha: 0.2),
@@ -72,54 +69,12 @@ class ProfileIdentityCard extends StatelessWidget {
                 avatarLabel: avatarLabel.toUpperCase(),
                 profileName: profileName,
                 birthDate: birthDate,
-                showPlanTag: sessionState.isAuthenticated && hasProfile,
+                showPlanTag: sessionState.isRegisteredUser && hasProfile,
                 soulPoints: sessionState.soulPoints,
+                onTapEarnMorePoints: onTapEarnMorePoints,
                 onTap: onTapManageProfiles,
               ),
-              12.height,
-              if (showGuestBackupWarning) ...<Widget>[
-                Row(
-                  children: <Widget>[
-                    const Icon(
-                      Icons.warning_amber_rounded,
-                      size: 16,
-                      color: AppColors.energyAmber,
-                    ),
-                    6.width,
-                    Expanded(
-                      child: Text(
-                        LocaleKey.profileGuestWarning.tr,
-                        style: AppStyles.caption(
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    6.width,
-                    Material(
-                      color: AppColors.transparent,
-                      child: InkWell(
-                        onTap: onTapAuthCta,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          child: Text(
-                            LocaleKey.profileGuestAuthAction.tr,
-                            style: AppStyles.caption(
-                              color: AppColors.richGold,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                10.height,
-              ],
+              14.height,
               Container(
                 decoration: BoxDecoration(
                   border: Border(
@@ -173,6 +128,7 @@ class _TopProfileSection extends StatelessWidget {
     required this.birthDate,
     required this.showPlanTag,
     required this.soulPoints,
+    required this.onTapEarnMorePoints,
     required this.onTap,
   });
 
@@ -181,6 +137,7 @@ class _TopProfileSection extends StatelessWidget {
   final String birthDate;
   final bool showPlanTag;
   final int soulPoints;
+  final VoidCallback? onTapEarnMorePoints;
   final VoidCallback? onTap;
 
   @override
@@ -219,46 +176,95 @@ class _TopProfileSection extends StatelessWidget {
                 style: AppStyles.bodySmall(color: AppColors.textMuted),
               ),
               8.height,
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: <Widget>[
-                  if (showPlanTag) ...<Widget>[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                  // if (showPlanTag)
+                  //   Container(
+                  //     padding: const EdgeInsets.symmetric(
+                  //       horizontal: 8,
+                  //       vertical: 2,
+                  //     ),
+                  //     decoration: BoxDecoration(
+                  //       color: AppColors.textMuted.withValues(alpha: 0.16),
+                  //       borderRadius: BorderRadius.circular(999),
+                  //       border: Border.all(
+                  //         color: AppColors.border.withValues(alpha: 0.55),
+                  //       ),
+                  //     ),
+                  //     child: Text(
+                  //       LocaleKey.profilePlanFreeTag.tr,
+                  //       style: AppStyles.caption(
+                  //         color: AppColors.textMuted,
+                  //         fontWeight: FontWeight.w600,
+                  //       ),
+                  //     ),
+                  //   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.richGold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: AppColors.richGold.withValues(alpha: 0.25),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.textMuted.withValues(alpha: 0.16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 12,
+                          color: AppColors.richGold,
+                        ),
+                        4.width,
+                        Text(
+                          '$soulPoints SP',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppStyles.caption(
+                            color: AppColors.richGold,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onTapEarnMorePoints != null)
+                    Material(
+                      color: AppColors.transparent,
+                      child: InkWell(
+                        onTap: onTapEarnMorePoints,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: AppColors.border.withValues(alpha: 0.55),
-                        ),
-                      ),
-                      child: Text(
-                        LocaleKey.profilePlanFreeTag.tr,
-                        style: AppStyles.caption(
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w600,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.violetAccent.withValues(
+                              alpha: 0.24,
+                            ),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: AppColors.richGold.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Text(
+                            LocaleKey.compatibilityNeedMorePointsCta.tr,
+                            style: AppStyles.caption(
+                              color: AppColors.richGold,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    8.width,
-                  ],
-                  const Icon(
-                    Icons.star_rounded,
-                    size: 13,
-                    color: AppColors.richGold,
-                  ),
-                  4.width,
-                  Text(
-                    LocaleKey.profileSoulPointsLabel.trParams(<String, String>{
-                      'points': '$soulPoints',
-                    }),
-                    style: AppStyles.caption(
-                      color: AppColors.richGold,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ],
               ),
             ],

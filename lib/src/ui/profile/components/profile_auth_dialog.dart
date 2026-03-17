@@ -9,7 +9,6 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/utils/app_colors.dart';
-import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 enum ProfileAuthDialogTab { login, register }
@@ -61,6 +60,7 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
   bool _isLoginLoading = false;
   bool _isRegisterLoading = false;
   bool _isSuccess = false;
+  bool _showSuccessSubtitle = true;
   String _successMessage = '';
   String? _formError;
   Map<String, String> _loginErrors = <String, String>{};
@@ -116,7 +116,10 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
         password: password,
         name: _nameFromEmail(email),
       );
-      await _showSuccessAndClose(LocaleKey.profileAuthLoginSuccess.tr);
+      await _showSuccessAndClose(
+        LocaleKey.profileAuthLoginSuccess.tr,
+        showSubtitle: false,
+      );
     } catch (error) {
       if (!mounted) {
         return;
@@ -151,7 +154,10 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
       final String password = _registerPasswordController.text.trim();
       final String name = _resolveRegisterName(email);
       await _sessionBloc.register(email: email, password: password, name: name);
-      await _showSuccessAndClose(LocaleKey.profileAuthRegisterSuccess.tr);
+      await _showSuccessAndClose(
+        LocaleKey.profileAuthRegisterSuccess.tr,
+        showSubtitle: true,
+      );
     } catch (error) {
       if (!mounted) {
         return;
@@ -168,23 +174,26 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
     }
   }
 
-  Future<void> _showSuccessAndClose(String successMessage) async {
+  Future<void> _showSuccessAndClose(
+    String successMessage, {
+    required bool showSubtitle,
+  }) async {
     if (!mounted) {
       return;
     }
     setState(() {
       _isSuccess = true;
+      _showSuccessSubtitle = showSubtitle;
       _successMessage = successMessage;
     });
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) {
       return;
     }
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
     widget.onSuccess?.call();
-    Get.offAllNamed(
-      AppPages.splash,
-      arguments: <String, dynamic>{'skipOnboarding': true},
-    );
   }
 
   bool _validateLogin() {
@@ -388,12 +397,14 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
             fontWeight: FontWeight.w700,
           ),
         ),
-        8.height,
-        Text(
-          LocaleKey.profileAuthSuccessSubtitle.tr,
-          textAlign: TextAlign.center,
-          style: AppStyles.bodyMedium(color: AppColors.textSecondary),
-        ),
+        if (_showSuccessSubtitle) ...<Widget>[
+          8.height,
+          Text(
+            LocaleKey.profileAuthSuccessSubtitle.tr,
+            textAlign: TextAlign.center,
+            style: AppStyles.bodyMedium(color: AppColors.textSecondary),
+          ),
+        ],
         10.height,
       ],
     );

@@ -7,11 +7,12 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
+import 'package:test/src/ui/profile/components/profile_auth_dialog.dart';
 import 'package:test/src/ui/profile/components/profile_header.dart';
 import 'package:test/src/ui/profile/components/profile_identity_card.dart';
-import 'package:test/src/ui/profile/components/profile_auth_dialog.dart';
 import 'package:test/src/ui/profile/components/profile_manage_bottom_sheet.dart';
 import 'package:test/src/ui/profile/components/profile_reading_section.dart';
+import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/profile/components/profile_settings_bottom_sheet.dart';
 import 'package:test/src/ui/profile/interactor/profile_state.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
@@ -28,6 +29,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  static const int _adRewardPointsPerWatch = 5;
+
   late final MainSessionBloc _sessionBloc;
 
   @override
@@ -45,6 +48,14 @@ class _ProfilePageState extends State<ProfilePage> {
     return BlocBuilder<MainSessionBloc, MainSessionState>(
       bloc: _sessionBloc,
       builder: (BuildContext context, MainSessionState state) {
+        final bool showUnbackedSubtitle =
+            state.hasAnyProfile && !state.isRegisteredUser;
+        final String headerSubtitle = showUnbackedSubtitle
+            ? LocaleKey.profileSubtitleUnbacked.tr
+            : LocaleKey.profileSubtitle.tr;
+        final String? headerSubtitleAction = showUnbackedSubtitle
+            ? LocaleKey.profileGuestAuthAction.tr
+            : null;
         return AppStateView(
           status: state.viewState,
           onRetry: _sessionBloc.initialize,
@@ -56,13 +67,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   ProfileHeader(
+                    subtitle: headerSubtitle,
+                    subtitleActionLabel: headerSubtitleAction,
+                    onTapSubtitleAction: showUnbackedSubtitle
+                        ? () => _showAuthDialog(context)
+                        : null,
                     onOpenSettings: () => _showSettingsSheet(context, state),
                   ),
                   20.height,
                   ProfileIdentityCard(
                     sessionState: state,
-                    onTapAuthCta: () => _showAuthDialog(context),
                     onTapManageProfiles: () => _showProfileManageSheet(context),
+                    onTapEarnMorePoints: () =>
+                        _showSoulPointsActionDialog(context, state),
                   ),
                   20.height,
                   Expanded(
@@ -107,12 +124,32 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future<void> _showAuthDialog(BuildContext context) async {
-    await ProfileAuthDialog.show(context);
+  Future<void> _showSoulPointsActionDialog(
+    BuildContext context,
+    MainSessionState state,
+  ) async {
+    await ProfileSoulPointsActionsDialog.show(
+      context,
+      adEarnedToday: state.dailyAdEarnings,
+      adDailyLimit: state.dailyAdLimit,
+      onWatchAdTap: () async {
+        await _sessionBloc.claimAdReward(amount: _adRewardPointsPerWatch);
+      },
+      onBuyPointsTap: () async {
+        TabNavigationHelper.pushCommonRoute(AppPages.subscription);
+      },
+    );
   }
 
   Future<void> _showProfileManageSheet(BuildContext context) async {
     await ProfileManageBottomSheet.show(context, sessionBloc: _sessionBloc);
+  }
+
+  Future<void> _showAuthDialog(BuildContext context) async {
+    await ProfileAuthDialog.show(
+      context,
+      defaultTab: ProfileAuthDialogTab.register,
+    );
   }
 
   Future<void> _showSettingsSheet(
@@ -122,15 +159,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final List<ProfileMenuItem> items = ProfileState.initial().menuItems;
 
     await ProfileSettingsBottomSheet.show(
-      context,
       items: items,
-      showLogout: state.isAuthenticated,
+      showLogout: state.isRegisteredUser && state.hasCloudSession,
       onTapItem: (ProfileMenuItem item) {
-        Navigator.of(context).pop();
+        Get.back<void>();
         TabNavigationHelper.pushCommonRoute(item.route);
       },
       onTapLogout: () async {
-        Navigator.of(context).pop();
+        Get.back<void>();
         final bool confirmed = await _confirmLogout(context);
         if (!confirmed || !mounted) {
           return;

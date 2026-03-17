@@ -68,50 +68,63 @@ class NumAiChatInputBar extends StatelessWidget {
           Row(
             children: <Widget>[
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.only(left: 12, right: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.background.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.border.withValues(alpha: 0.7),
+                child: TextField(
+                  controller: controller,
+                  minLines: 1,
+                  maxLines: 4,
+                  textInputAction: TextInputAction.send,
+                  onChanged: onTextChanged,
+                  onSubmitted: (_) => onSendTap(),
+                  style: AppStyles.bodyMedium(),
+                  decoration: InputDecoration(
+                    hintText: LocaleKey.numaiChatHint.tr,
+                    hintStyle: AppStyles.bodyMedium(color: AppColors.textMuted),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: TextField(
-                          controller: controller,
-                          minLines: 1,
-                          maxLines: 4,
-                          textInputAction: TextInputAction.send,
-                          onChanged: onTextChanged,
-                          onSubmitted: (_) => onSendTap(),
-                          style: AppStyles.bodyMedium(),
-                          decoration: InputDecoration(
-                            hintText: LocaleKey.numaiChatHint.tr,
-                            hintStyle: AppStyles.bodySmall(
-                              color: AppColors.textMuted,
-                            ),
-                            border: InputBorder.none,
-                            isDense: true,
-                          ),
-                        ),
+                    filled: true,
+                    fillColor: AppColors.deepViolet.withValues(alpha: 0.48),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: AppColors.border.withValues(alpha: 0.7),
+                        width: 1.1,
                       ),
-                      if (controller.text.isNotEmpty)
-                        InkWell(
-                          onTap: onClearTap,
-                          borderRadius: BorderRadius.circular(999),
-                          child: const Padding(
-                            padding: EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.close_rounded,
-                              size: 16,
-                              color: AppColors.textMuted,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: AppColors.border.withValues(alpha: 0.7),
+                        width: 1.1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: AppColors.richGold,
+                        width: 1.4,
+                      ),
+                    ),
+                    suffixIcon: controller.text.isEmpty
+                        ? null
+                        : InkWell(
+                            onTap: onClearTap,
+                            borderRadius: BorderRadius.circular(999),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 16,
+                                color: AppColors.textMuted,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                    suffixIconConstraints: const BoxConstraints(
+                      minHeight: 0,
+                      minWidth: 0,
+                    ),
                   ),
                 ),
               ),

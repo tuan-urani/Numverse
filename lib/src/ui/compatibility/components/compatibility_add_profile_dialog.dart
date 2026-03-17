@@ -39,6 +39,7 @@ class CompatibilityAddProfileDialog extends StatefulWidget {
 class _CompatibilityAddProfileDialogState
     extends State<CompatibilityAddProfileDialog> {
   late final TextEditingController _nameController;
+  late final TextEditingController _birthDateController;
   DateTime? _birthDate;
   String? _relation;
 
@@ -46,11 +47,13 @@ class _CompatibilityAddProfileDialogState
   void initState() {
     super.initState();
     _nameController = TextEditingController();
+    _birthDateController = TextEditingController();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _birthDateController.dispose();
     super.dispose();
   }
 
@@ -90,12 +93,6 @@ class _CompatibilityAddProfileDialogState
         label: LocaleKey.compatibilityRelationOther.tr,
       ),
     ];
-
-    final String dateLabel = _birthDate == null
-        ? LocaleKey.compatibilityAddDialogBirthDatePlaceholder.tr
-        : '${_birthDate!.day.toString().padLeft(2, '0')}/'
-              '${_birthDate!.month.toString().padLeft(2, '0')}/'
-              '${_birthDate!.year}';
 
     return Dialog(
       backgroundColor: AppColors.transparent,
@@ -149,18 +146,9 @@ class _CompatibilityAddProfileDialogState
                 icon: Icons.person_outline_rounded,
               ),
               6.height,
-              _InputContainer(
-                child: TextField(
-                  controller: _nameController,
-                  style: AppStyles.bodyMedium(),
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: LocaleKey.compatibilityAddDialogNameHint.tr,
-                    hintStyle: AppStyles.bodySmall(color: AppColors.textMuted),
-                    isDense: true,
-                    border: InputBorder.none,
-                  ),
-                ),
+              _DialogInputField(
+                controller: _nameController,
+                hintText: LocaleKey.compatibilityAddDialogNameHint.tr,
               ),
               12.height,
               _FieldLabel(
@@ -171,6 +159,7 @@ class _CompatibilityAddProfileDialogState
               _InputContainer(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
+                    isDense: true,
                     isExpanded: true,
                     value: _relation,
                     icon: const Icon(
@@ -204,29 +193,16 @@ class _CompatibilityAddProfileDialogState
                 icon: Icons.calendar_today_rounded,
               ),
               6.height,
-              InkWell(
+              _DialogInputField(
+                controller: _birthDateController,
+                hintText:
+                    LocaleKey.compatibilityAddDialogBirthDatePlaceholder.tr,
+                readOnly: true,
                 onTap: _pickBirthDate,
-                borderRadius: BorderRadius.circular(12),
-                child: _InputContainer(
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          dateLabel,
-                          style: AppStyles.bodyMedium(
-                            color: _birthDate == null
-                                ? AppColors.textMuted
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.calendar_today_rounded,
-                        size: 16,
-                        color: AppColors.richGold,
-                      ),
-                    ],
-                  ),
+                suffixIcon: Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18,
+                  color: AppColors.textMuted.withValues(alpha: 0.9),
                 ),
               ),
               18.height,
@@ -290,9 +266,11 @@ class _CompatibilityAddProfileDialogState
 
   Future<void> _pickBirthDate() async {
     final DateTime now = DateTime.now();
+    final DateTime initialDate =
+        _birthDate ?? DateTime(now.year - 20, now.month, now.day);
     final DateTime? selected = await showDatePicker(
       context: context,
-      initialDate: DateTime(now.year - 20),
+      initialDate: initialDate.isAfter(now) ? now : initialDate,
       firstDate: DateTime(1900),
       lastDate: now,
       builder: (BuildContext context, Widget? child) {
@@ -319,7 +297,14 @@ class _CompatibilityAddProfileDialogState
 
     setState(() {
       _birthDate = selected;
+      _birthDateController.text = _formatBirthDate(selected);
     });
+  }
+
+  String _formatBirthDate(DateTime date) {
+    final String day = date.day.toString().padLeft(2, '0');
+    final String month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
   }
 
   void _submit() {
@@ -378,6 +363,69 @@ class _InputContainer extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: child,
+      ),
+    );
+  }
+}
+
+class _DialogInputField extends StatelessWidget {
+  const _DialogInputField({
+    required this.controller,
+    required this.hintText,
+    this.readOnly = false,
+    this.onTap,
+    this.suffixIcon,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Widget? suffixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      readOnly: readOnly,
+      onTap: onTap,
+      showCursor: !readOnly,
+      style: AppStyles.bodyMedium(),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: AppStyles.bodyMedium(color: AppColors.textMuted),
+        suffixIcon: suffixIcon == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: suffixIcon,
+              ),
+        suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
+        filled: true,
+        fillColor: AppColors.deepViolet.withValues(alpha: 0.48),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.7),
+            width: 1.1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.7),
+            width: 1.1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.richGold, width: 1.4),
+        ),
       ),
     );
   }

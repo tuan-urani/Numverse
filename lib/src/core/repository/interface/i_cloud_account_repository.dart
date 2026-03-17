@@ -5,6 +5,22 @@ import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
 
 abstract class ICloudAccountRepository {
   bool get isConfigured;
+  String? get currentUserId;
+
+  Future<void> ensureAnonymousSession();
+
+  Future<bool> refreshAccessTokenIfNeeded();
+
+  Future<void> upgradeAnonymousToEmail({
+    required String email,
+    required String password,
+    required String displayName,
+  });
+
+  Future<void> signInExistingAccount({
+    required String email,
+    required String password,
+  });
 
   Future<CloudLoginResult> loginAndSyncFirstTime({
     required String email,

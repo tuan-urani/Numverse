@@ -555,6 +555,7 @@ Features:
 - Compare-profile list with selected state.
 - Add compare-profile modal (name/relation/birth date).
 - Soul-point summary card + compare CTA with cost badge.
+- Inline shortage CTA: `Bạn cần thêm ...` + `Nhận thêm ngay`.
 - Guard flow:
 - no own profile -> unlock profile dialog,
 - insufficient soul points -> insufficient modal,
@@ -579,6 +580,7 @@ Features:
 - If no own profile -> profile unlock dialog appears.
 - If soul points < 20 -> insufficient modal appears.
 - Else deduct 20 soul points and navigate to `/comparison-result` with selected profile payload.
+5) When soul points are insufficient, tapping `Nhận thêm ngay` opens `ProfileSoulPointsActionsDialog` (watch ad / buy points).
 
 ### 4. Key Dependencies
 - `MainSessionCubit` for current profile + soul points.
@@ -641,6 +643,7 @@ Features:
 - "Bạn có thể hỏi về" topic list.
 - Suggested question cards with profile-required badge.
 - Start-chat CTA with disabled state when points are insufficient.
+- Insufficient-points hint includes `Nhận thêm ngay` CTA to open earn/buy dialog.
 
 ### 2. UI Structure
 - `numai_page.dart` (composition + session state wiring)
@@ -662,6 +665,7 @@ Features:
 - tap a suggested question -> navigate to `/numai-chat` with `initialMessage` argument,
 - tap start-chat CTA -> navigate to `/numai-chat`.
 4) If points < 3, CTA becomes disabled and warning text appears.
+5) Tapping `Nhận thêm ngay` opens `ProfileSoulPointsActionsDialog` (watch ad / buy points).
 
 ### 4. Key Dependencies
 - `MainSessionCubit` for session/profile/soul points.
@@ -705,7 +709,7 @@ Features:
 - assistant returns profile-required response + action button,
 - user taps action -> profile dialog opens,
 - after successful profile creation, pending question receives personalized follow-up response.
-4) If insufficient points, send is blocked and warning state is shown.
+4) If insufficient points, send is blocked and `ProfileSoulPointsActionsDialog` is shown to let user watch ad or buy points.
 
 ### 4. Key Dependencies
 - `MainSessionCubit` for point deduction and profile creation.
@@ -722,8 +726,8 @@ Features:
 Goal: Match Figma `/profile` with personal identity card, account warnings, utility menu, and authenticated logout action.
 Features:
 - Header title “Tôi”.
+- Subtitle switches by auth state: normal subtitle vs “chưa được sao lưu” for guest with profile.
 - Identity card with avatar initial, name/birth date, Soul Points badge.
-- Guest warning line when profile exists but user is not authenticated.
 - Menu entries: Settings, Privacy, Help.
 - Logout action card shown only when authenticated.
 
@@ -741,12 +745,13 @@ Features:
 
 ### 3. User Flow & Logic
 1) User opens Profile tab.
-2) Tapping identity card:
+2) If user has profile but not registered, header subtitle shows backup warning.
+3) Tapping identity card:
 - no profile -> open profile input dialog and create profile,
 - has profile but not authenticated -> navigate to Login,
 - has profile + authenticated -> open My Profile route.
-3) Menu cards navigate to `/settings`, `/privacy`, `/help`.
-4) Authenticated users can logout via confirmation dialog and return to main route.
+4) Menu cards navigate to `/settings`, `/privacy`, `/help`.
+5) Authenticated users can logout via confirmation dialog and return to main route.
 
 ### 4. Key Dependencies
 - `MainSessionCubit` (profile/auth/soul points/logout).
@@ -853,3 +858,62 @@ Features:
 
 ### 5. Notes & Known Issues (Optional)
 - Contact actions are currently informative rows; external intents can be wired in a later iteration.
+
+## [Profile Soul Points Actions]
+**Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/profile
+
+### 1. Description
+Goal: Add quick "Earn more" entry in profile identity card so users can watch ads or move to point purchase flow.
+Features:
+- CTA `Nhận thêm ->` next to current Soul Points.
+- Modal with 2 options: watch ad / buy point.
+- Display ad-earned progress for today and lock watch-ad option when daily limit is reached.
+
+### 2. UI Structure
+- `profile_page.dart`
+- `components/profile_identity_card.dart`
+- `components/profile_soul_points_actions_dialog.dart`
+
+### 3. User Flow & Logic
+1) User taps `Nhận thêm ->` on profile card.
+2) Modal shows progress `earned/limit` and action options.
+3) If ad limit not reached, tap watch-ad grants points via `MainSessionBloc.claimAdReward`.
+4) Tap buy-point routes to `/subscription`.
+
+### 4. Key Dependencies
+- `MainSessionBloc` ad reward state: `dailyAdEarnings`, `dailyAdLimit`.
+- GetX route helper to open `AppPages.subscription`.
+
+### 5. Notes & Known Issues (Optional)
+- Watch-ad now grants points through app logic; ad SDK trigger can be connected next.
+
+## [Subscription Point Purchase]
+**Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/subscription
+
+### 1. Description
+Goal: Redesign Subscription page into point top-up page.
+Features:
+- Trust hint card for secure checkout context.
+- Current balance card with quick Soul Points snapshot.
+- Point pack list with 2 options and one highlighted "best value" pack.
+- Each pack includes points, price, and buy action.
+- Buy action per pack and purchase success feedback.
+
+### 2. UI Structure
+- `subscription_page.dart`
+- Components:
+  - `components/subscription_balance_card.dart`
+  - `components/subscription_point_pack_card.dart`
+
+### 3. User Flow & Logic
+1) User opens `/subscription`.
+2) Page shows secure checkout hint + current Soul Points from `MainSessionBloc`.
+3) User selects a preferred pack and taps buy.
+4) App adds points locally and shows success snackbar.
+
+### 4. Key Dependencies
+- `MainSessionBloc.addSoulPoints`.
+- Localization keys under `subscription_*`.
+
+### 5. Notes & Known Issues (Optional)
+- Current purchase flow is UI-first mock top-up and does not connect to billing gateway yet.

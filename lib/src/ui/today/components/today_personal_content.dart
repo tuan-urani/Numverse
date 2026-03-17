@@ -370,12 +370,14 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
     super.didUpdateWidget(oldWidget);
     final bool didCheckInTodayTransition =
         !oldWidget.hasCheckedInToday && widget.hasCheckedInToday;
-    final bool didStreakAdvance =
+    final bool didStreakAdvanceWithCheckedIn =
+        widget.hasCheckedInToday &&
         widget.currentStreak > oldWidget.currentStreak;
-    final bool didSoulPointsIncrease = widget.soulPoints > oldWidget.soulPoints;
+    final bool didSoulPointsIncreaseWithCheckedIn =
+        widget.hasCheckedInToday && widget.soulPoints > oldWidget.soulPoints;
     if (didCheckInTodayTransition ||
-        didStreakAdvance ||
-        didSoulPointsIncrease) {
+        didStreakAdvanceWithCheckedIn ||
+        didSoulPointsIncreaseWithCheckedIn) {
       _triggerCelebration(oldWidget);
     }
     if (oldWidget.hasCheckedInToday && !widget.hasCheckedInToday) {

@@ -11,6 +11,7 @@ import 'package:test/src/ui/compatibility/interactor/compatibility_constants.dar
 import 'package:test/src/ui/compatibility/interactor/compatibility_state.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
+import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
@@ -19,6 +20,8 @@ import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class CompatibilityPage extends StatelessWidget {
   const CompatibilityPage({super.key});
+
+  static const int _adRewardPointsPerWatch = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +60,11 @@ class CompatibilityPage extends StatelessWidget {
                     sessionCubit: sessionCubit,
                     sessionState: sessionState,
                     compatibilityState: compatibilityState,
+                  ),
+                  onNeedMorePointsTap: () => _showSoulPointsActionDialog(
+                    context,
+                    sessionCubit: sessionCubit,
+                    sessionState: sessionState,
                   ),
                 ),
               ),
@@ -153,6 +161,22 @@ class CompatibilityPage extends StatelessWidget {
       LocaleKey.commonComingSoon.tr,
       LocaleKey.commonComingSoon.tr,
       snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> _showSoulPointsActionDialog(
+    BuildContext context, {
+    required MainSessionBloc sessionCubit,
+    required MainSessionState sessionState,
+  }) async {
+    await ProfileSoulPointsActionsDialog.show(
+      context,
+      adEarnedToday: sessionState.dailyAdEarnings,
+      adDailyLimit: sessionState.dailyAdLimit,
+      onWatchAdTap: () async {
+        await sessionCubit.claimAdReward(amount: _adRewardPointsPerWatch);
+      },
+      onBuyPointsTap: _onBuyPointsTap,
     );
   }
 

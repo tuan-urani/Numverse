@@ -37,6 +37,8 @@ class PagesLocaleKey {
   static const String compatibilityCostLabel = 'compatibility_cost_label';
   static const String compatibilityNeedMorePoints =
       'compatibility_need_more_points';
+  static const String compatibilityNeedMorePointsCta =
+      'compatibility_need_more_points_cta';
   static const String compatibilityAddDialogTitle =
       'compatibility_add_dialog_title';
   static const String compatibilityAddDialogNameLabel =
@@ -209,6 +211,7 @@ class PagesLocaleKey {
 
   static const String profileTitle = 'profile_title';
   static const String profileSubtitle = 'profile_subtitle';
+  static const String profileSubtitleUnbacked = 'profile_subtitle_unbacked';
   static const String profileMyInfo = 'profile_my_info';
   static const String profileSavedProfiles = 'profile_saved_profiles';
   static const String profileSubscription = 'profile_subscription';
@@ -224,9 +227,27 @@ class PagesLocaleKey {
   static const String profileCreateProfileCta = 'profile_create_profile_cta';
   static const String profilePlanFreeTag = 'profile_plan_free_tag';
   static const String profileSoulPointsLabel = 'profile_soul_points_label';
+  static const String profileSoulPointsEarnMoreCta =
+      'profile_soul_points_earn_more_cta';
   static const String profileCoreLifePathLabel = 'profile_core_life_path_label';
   static const String profileCoreMissionLabel = 'profile_core_mission_label';
   static const String profileCoreSoulLabel = 'profile_core_soul_label';
+  static const String profileSoulPointsActionTitle =
+      'profile_soul_points_action_title';
+  static const String profileSoulPointsActionSubtitle =
+      'profile_soul_points_action_subtitle';
+  static const String profileSoulPointsActionAdsProgress =
+      'profile_soul_points_action_ads_progress';
+  static const String profileSoulPointsActionAdsLimitReached =
+      'profile_soul_points_action_ads_limit_reached';
+  static const String profileSoulPointsActionWatchAdTitle =
+      'profile_soul_points_action_watch_ad_title';
+  static const String profileSoulPointsActionWatchAdBody =
+      'profile_soul_points_action_watch_ad_body';
+  static const String profileSoulPointsActionBuyPointTitle =
+      'profile_soul_points_action_buy_point_title';
+  static const String profileSoulPointsActionBuyPointBody =
+      'profile_soul_points_action_buy_point_body';
   static const String profileGuestWarning = 'profile_guest_warning';
   static const String profileGuestAuthAction = 'profile_guest_auth_action';
   static const String profileGuestAuthTitle = 'profile_guest_auth_title';
@@ -312,6 +333,44 @@ class PagesLocaleKey {
   static const String subscriptionTitle = 'subscription_title';
   static const String subscriptionSubtitle = 'subscription_subtitle';
   static const String subscriptionAction = 'subscription_action';
+  static const String subscriptionBalanceLabel = 'subscription_balance_label';
+  static const String subscriptionBalanceUnit = 'subscription_balance_unit';
+  static const String subscriptionBalanceHint = 'subscription_balance_hint';
+  static const String subscriptionPacksTitle = 'subscription_packs_title';
+  static const String subscriptionTopupHint = 'subscription_topup_hint';
+  static const String subscriptionTrustTitle = 'subscription_trust_title';
+  static const String subscriptionTrustBody = 'subscription_trust_body';
+  static const String subscriptionPackPointsLabel =
+      'subscription_pack_points_label';
+  static const String subscriptionPackStarterName =
+      'subscription_pack_starter_name';
+  static const String subscriptionPackStarterPrice =
+      'subscription_pack_starter_price';
+  static const String subscriptionPackStarterBonus =
+      'subscription_pack_starter_bonus';
+  static const String subscriptionPackStarterValue =
+      'subscription_pack_starter_value';
+  static const String subscriptionPackSmartName =
+      'subscription_pack_smart_name';
+  static const String subscriptionPackSmartPrice =
+      'subscription_pack_smart_price';
+  static const String subscriptionPackSmartBonus =
+      'subscription_pack_smart_bonus';
+  static const String subscriptionPackSmartValue =
+      'subscription_pack_smart_value';
+  static const String subscriptionPackLegendName =
+      'subscription_pack_legend_name';
+  static const String subscriptionPackLegendPrice =
+      'subscription_pack_legend_price';
+  static const String subscriptionPackLegendBonus =
+      'subscription_pack_legend_bonus';
+  static const String subscriptionPackLegendValue =
+      'subscription_pack_legend_value';
+  static const String subscriptionPopularTag = 'subscription_popular_tag';
+  static const String subscriptionBuyButton = 'subscription_buy_button';
+  static const String subscriptionPurchaseSuccess =
+      'subscription_purchase_success';
+  static const String subscriptionPurchaseNote = 'subscription_purchase_note';
   static const String settingsTitle = 'settings_title';
   static const String settingsSectionAppearance = 'settings_section_appearance';
   static const String settingsThemeTitle = 'settings_theme_title';

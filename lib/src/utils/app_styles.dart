@@ -40,7 +40,7 @@ class AppStyles {
     FontWeight weight,
     Color color,
     double height,
-  ) => GoogleFonts.cinzel(
+  ) => GoogleFonts.beVietnamPro(
     fontSize: size,
     fontWeight: weight,
     color: color,

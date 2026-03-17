@@ -131,6 +131,7 @@ class ProfileManageBottomSheet extends StatelessWidget {
                           bool didSubmit = false;
                           await CompatibilityProfileInputDialog.show(
                             context,
+                            title: LocaleKey.todayProfileSwitcherAddProfile.tr,
                             onSubmit: (String name, DateTime birthDate) async {
                               didSubmit = true;
                               await sessionBloc.addProfile(

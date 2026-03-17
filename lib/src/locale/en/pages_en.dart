@@ -36,6 +36,7 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.compatibilityCostLabel: 'Comparison cost',
   PagesLocaleKey.compatibilityNeedMorePoints:
       'You need @points more Soul Points to compare',
+  PagesLocaleKey.compatibilityNeedMorePointsCta: 'Get more now',
   PagesLocaleKey.compatibilityAddDialogTitle: 'Add new profile',
   PagesLocaleKey.compatibilityAddDialogNameLabel: 'Name',
   PagesLocaleKey.compatibilityAddDialogNameHint: 'Enter name',
@@ -193,6 +194,8 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.numaiDomainCyclesPlaceholder: 'Explore your life rhythm...',
   PagesLocaleKey.profileTitle: 'Me',
   PagesLocaleKey.profileSubtitle: 'Your energy profile.',
+  PagesLocaleKey.profileSubtitleUnbacked:
+      'Your energy profile is not backed up yet.',
   PagesLocaleKey.profileMyInfo: 'My profile',
   PagesLocaleKey.profileSavedProfiles: 'Saved profiles',
   PagesLocaleKey.profileSubscription: 'Subscription',
@@ -206,9 +209,23 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileCreateProfileCta: 'Create your profile',
   PagesLocaleKey.profilePlanFreeTag: 'Free',
   PagesLocaleKey.profileSoulPointsLabel: '@points Soul Points',
+  PagesLocaleKey.profileSoulPointsEarnMoreCta: 'Earn more ->',
   PagesLocaleKey.profileCoreLifePathLabel: 'Life path',
   PagesLocaleKey.profileCoreMissionLabel: 'Mission',
   PagesLocaleKey.profileCoreSoulLabel: 'Soul urge',
+  PagesLocaleKey.profileSoulPointsActionTitle: 'Get more Soul Points',
+  PagesLocaleKey.profileSoulPointsActionSubtitle:
+      'Choose how you want to earn more points.',
+  PagesLocaleKey.profileSoulPointsActionAdsProgress:
+      'Ad points earned today: @earned/@limit',
+  PagesLocaleKey.profileSoulPointsActionAdsLimitReached:
+      'You have reached today ad reward limit.',
+  PagesLocaleKey.profileSoulPointsActionWatchAdTitle: 'Watch ad',
+  PagesLocaleKey.profileSoulPointsActionWatchAdBody:
+      'Watch one ad to receive bonus points.',
+  PagesLocaleKey.profileSoulPointsActionBuyPointTitle: 'Buy points',
+  PagesLocaleKey.profileSoulPointsActionBuyPointBody:
+      'Go to subscription page and top up instantly.',
   PagesLocaleKey.profileGuestWarning: 'Your data has not been backed up yet.',
   PagesLocaleKey.profileGuestAuthAction: 'Back up now',
   PagesLocaleKey.profileGuestAuthTitle: 'Sign up / Sign in to back up',
@@ -277,10 +294,39 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileLogoutConfirmBody: 'Are you sure you want to log out?',
   PagesLocaleKey.myProfileTitle: 'My profile',
   PagesLocaleKey.savedProfilesTitle: 'Saved profiles',
-  PagesLocaleKey.subscriptionTitle: 'Subscription',
+  PagesLocaleKey.subscriptionTitle: 'Buy points',
   PagesLocaleKey.subscriptionSubtitle:
-      'Upgrade to PRO for full daily reading and seamless NumAI usage.',
-  PagesLocaleKey.subscriptionAction: 'Upgrade to PRO',
+      'Top up Soul Points to continue using premium experiences.',
+  PagesLocaleKey.subscriptionAction: 'Buy now',
+  PagesLocaleKey.subscriptionBalanceLabel: 'Current balance',
+  PagesLocaleKey.subscriptionBalanceUnit: 'Soul Points',
+  PagesLocaleKey.subscriptionBalanceHint:
+      'Use points for NumAI and other premium features.',
+  PagesLocaleKey.subscriptionPacksTitle: 'Point packs',
+  PagesLocaleKey.subscriptionTopupHint:
+      'Choose a suitable pack and complete payment to receive points instantly.',
+  PagesLocaleKey.subscriptionTrustTitle: 'Secure checkout',
+  PagesLocaleKey.subscriptionTrustBody:
+      'Payments will be processed safely by App Store or Google Play.',
+  PagesLocaleKey.subscriptionPackPointsLabel: '@points points',
+  PagesLocaleKey.subscriptionPackStarterName: 'Starter Pack',
+  PagesLocaleKey.subscriptionPackStarterPrice: '\$0.99',
+  PagesLocaleKey.subscriptionPackStarterBonus: 'Good for quick top-up',
+  PagesLocaleKey.subscriptionPackStarterValue: '~1.6¢ / point',
+  PagesLocaleKey.subscriptionPackSmartName: 'Smart Pack',
+  PagesLocaleKey.subscriptionPackSmartPrice: '\$2.49',
+  PagesLocaleKey.subscriptionPackSmartBonus: 'Best value for active users',
+  PagesLocaleKey.subscriptionPackSmartValue: '~1.5¢ / point',
+  PagesLocaleKey.subscriptionPackLegendName: 'Legend Pack',
+  PagesLocaleKey.subscriptionPackLegendPrice: '\$4.99',
+  PagesLocaleKey.subscriptionPackLegendBonus: 'Maximum point efficiency',
+  PagesLocaleKey.subscriptionPackLegendValue: '~1.4¢ / point',
+  PagesLocaleKey.subscriptionPopularTag: 'Best Value',
+  PagesLocaleKey.subscriptionBuyButton: 'Buy',
+  PagesLocaleKey.subscriptionPurchaseSuccess:
+      'Added @points points to your wallet.',
+  PagesLocaleKey.subscriptionPurchaseNote:
+      'This is temporary top-up UI. Connect billing provider next.',
   PagesLocaleKey.settingsTitle: 'Settings',
   PagesLocaleKey.settingsSectionAppearance: 'Appearance',
   PagesLocaleKey.settingsThemeTitle: 'Theme',

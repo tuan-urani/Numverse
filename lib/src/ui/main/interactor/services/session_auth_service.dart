@@ -1,4 +1,5 @@
 import 'package:test/src/core/model/app_session_snapshot.dart';
+import 'package:test/src/core/model/session_auth_mode.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 
 class NormalizedIdentity {
@@ -27,6 +28,9 @@ class SessionAuthService {
   }) {
     return AppSessionSnapshot(
       isAuthenticated: true,
+      authMode: SessionAuthMode.registered,
+      pendingAnonymousBootstrap: false,
+      cloudUserId: state.cloudUserId,
       userEmail: identity.email,
       userName: identity.name,
       profiles: state.profiles,
@@ -36,7 +40,10 @@ class SessionAuthService {
       soulPoints: state.soulPoints,
       currentStreak: state.currentStreak,
       dailyEarnings: state.dailyEarnings,
+      dailyAdEarnings: state.dailyAdEarnings,
+      dailyAdLimit: state.dailyAdLimit,
       lastCheckInAt: state.lastCheckInAt,
+      lastAdRewardAt: state.lastAdRewardAt,
       compareProfiles: state.compareProfiles,
       selectedCompareProfileId: state.selectedCompareProfileId,
     );

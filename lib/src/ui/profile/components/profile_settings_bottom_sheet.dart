@@ -21,25 +21,21 @@ class ProfileSettingsBottomSheet extends StatelessWidget {
   final ValueChanged<ProfileMenuItem> onTapItem;
   final VoidCallback onTapLogout;
 
-  static Future<void> show(
-    BuildContext context, {
+  static Future<void> show({
     required List<ProfileMenuItem> items,
     required bool showLogout,
     required ValueChanged<ProfileMenuItem> onTapItem,
     required VoidCallback onTapLogout,
-  }) {
-    return showModalBottomSheet<void>(
-      context: context,
+  }) async {
+    await Get.bottomSheet<void>(
+      ProfileSettingsBottomSheet(
+        items: items,
+        showLogout: showLogout,
+        onTapItem: onTapItem,
+        onTapLogout: onTapLogout,
+      ),
       isScrollControlled: false,
       backgroundColor: AppColors.transparent,
-      builder: (BuildContext context) {
-        return ProfileSettingsBottomSheet(
-          items: items,
-          showLogout: showLogout,
-          onTapItem: onTapItem,
-          onTapLogout: onTapLogout,
-        );
-      },
     );
   }
 
@@ -71,14 +67,14 @@ class ProfileSettingsBottomSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              12.height,
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Text(
-                  LocaleKey.profileSettings.tr,
-                  style: AppStyles.h5(fontWeight: FontWeight.w600),
-                ),
-              ),
+              // 12.height,
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 2),
+              //   child: Text(
+              //     LocaleKey.profileSettings.tr,
+              //     style: AppStyles.h5(fontWeight: FontWeight.w600),
+              //   ),
+              // ),
               12.height,
               for (int index = 0; index < items.length; index++) ...<Widget>[
                 _SettingsMenuItem(
@@ -96,28 +92,28 @@ class ProfileSettingsBottomSheet extends StatelessWidget {
                 12.height,
                 _LogoutButton(onTap: onTapLogout),
               ],
-              10.height,
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    backgroundColor: AppColors.card.withValues(alpha: 0.38),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: AppColors.border.withValues(alpha: 0.75),
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    LocaleKey.profileSettingsSheetClose.tr,
-                    style: AppStyles.bodyMedium(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
+              // 10.height,
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: TextButton(
+              //     onPressed: () => Navigator.of(context).pop(),
+              //     style: TextButton.styleFrom(
+              //       foregroundColor: AppColors.textSecondary,
+              //       padding: const EdgeInsets.symmetric(vertical: 12),
+              //       backgroundColor: AppColors.card.withValues(alpha: 0.38),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(12),
+              //         side: BorderSide(
+              //           color: AppColors.border.withValues(alpha: 0.75),
+              //         ),
+              //       ),
+              //     ),
+              //     child: Text(
+              //       LocaleKey.profileSettingsSheetClose.tr,
+              //       style: AppStyles.bodyMedium(fontWeight: FontWeight.w600),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

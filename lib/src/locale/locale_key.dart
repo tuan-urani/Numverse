@@ -383,6 +383,8 @@ class LocaleKey {
       PagesLocaleKey.compatibilityCostLabel;
   static const String compatibilityNeedMorePoints =
       PagesLocaleKey.compatibilityNeedMorePoints;
+  static const String compatibilityNeedMorePointsCta =
+      PagesLocaleKey.compatibilityNeedMorePointsCta;
   static const String compatibilityAddDialogTitle =
       PagesLocaleKey.compatibilityAddDialogTitle;
   static const String compatibilityAddDialogNameLabel =
@@ -588,6 +590,8 @@ class LocaleKey {
 
   static const String profileTitle = PagesLocaleKey.profileTitle;
   static const String profileSubtitle = PagesLocaleKey.profileSubtitle;
+  static const String profileSubtitleUnbacked =
+      PagesLocaleKey.profileSubtitleUnbacked;
   static const String profileMyInfo = PagesLocaleKey.profileMyInfo;
   static const String profileSavedProfiles =
       PagesLocaleKey.profileSavedProfiles;
@@ -608,12 +612,30 @@ class LocaleKey {
   static const String profilePlanFreeTag = PagesLocaleKey.profilePlanFreeTag;
   static const String profileSoulPointsLabel =
       PagesLocaleKey.profileSoulPointsLabel;
+  static const String profileSoulPointsEarnMoreCta =
+      PagesLocaleKey.profileSoulPointsEarnMoreCta;
   static const String profileCoreLifePathLabel =
       PagesLocaleKey.profileCoreLifePathLabel;
   static const String profileCoreMissionLabel =
       PagesLocaleKey.profileCoreMissionLabel;
   static const String profileCoreSoulLabel =
       PagesLocaleKey.profileCoreSoulLabel;
+  static const String profileSoulPointsActionTitle =
+      PagesLocaleKey.profileSoulPointsActionTitle;
+  static const String profileSoulPointsActionSubtitle =
+      PagesLocaleKey.profileSoulPointsActionSubtitle;
+  static const String profileSoulPointsActionAdsProgress =
+      PagesLocaleKey.profileSoulPointsActionAdsProgress;
+  static const String profileSoulPointsActionAdsLimitReached =
+      PagesLocaleKey.profileSoulPointsActionAdsLimitReached;
+  static const String profileSoulPointsActionWatchAdTitle =
+      PagesLocaleKey.profileSoulPointsActionWatchAdTitle;
+  static const String profileSoulPointsActionWatchAdBody =
+      PagesLocaleKey.profileSoulPointsActionWatchAdBody;
+  static const String profileSoulPointsActionBuyPointTitle =
+      PagesLocaleKey.profileSoulPointsActionBuyPointTitle;
+  static const String profileSoulPointsActionBuyPointBody =
+      PagesLocaleKey.profileSoulPointsActionBuyPointBody;
   static const String profileGuestWarning = PagesLocaleKey.profileGuestWarning;
   static const String profileGuestAuthAction =
       PagesLocaleKey.profileGuestAuthAction;
@@ -717,6 +739,54 @@ class LocaleKey {
   static const String subscriptionSubtitle =
       PagesLocaleKey.subscriptionSubtitle;
   static const String subscriptionAction = PagesLocaleKey.subscriptionAction;
+  static const String subscriptionBalanceLabel =
+      PagesLocaleKey.subscriptionBalanceLabel;
+  static const String subscriptionBalanceUnit =
+      PagesLocaleKey.subscriptionBalanceUnit;
+  static const String subscriptionBalanceHint =
+      PagesLocaleKey.subscriptionBalanceHint;
+  static const String subscriptionPacksTitle =
+      PagesLocaleKey.subscriptionPacksTitle;
+  static const String subscriptionTopupHint =
+      PagesLocaleKey.subscriptionTopupHint;
+  static const String subscriptionTrustTitle =
+      PagesLocaleKey.subscriptionTrustTitle;
+  static const String subscriptionTrustBody =
+      PagesLocaleKey.subscriptionTrustBody;
+  static const String subscriptionPackPointsLabel =
+      PagesLocaleKey.subscriptionPackPointsLabel;
+  static const String subscriptionPackStarterName =
+      PagesLocaleKey.subscriptionPackStarterName;
+  static const String subscriptionPackStarterPrice =
+      PagesLocaleKey.subscriptionPackStarterPrice;
+  static const String subscriptionPackStarterBonus =
+      PagesLocaleKey.subscriptionPackStarterBonus;
+  static const String subscriptionPackStarterValue =
+      PagesLocaleKey.subscriptionPackStarterValue;
+  static const String subscriptionPackSmartName =
+      PagesLocaleKey.subscriptionPackSmartName;
+  static const String subscriptionPackSmartPrice =
+      PagesLocaleKey.subscriptionPackSmartPrice;
+  static const String subscriptionPackSmartBonus =
+      PagesLocaleKey.subscriptionPackSmartBonus;
+  static const String subscriptionPackSmartValue =
+      PagesLocaleKey.subscriptionPackSmartValue;
+  static const String subscriptionPackLegendName =
+      PagesLocaleKey.subscriptionPackLegendName;
+  static const String subscriptionPackLegendPrice =
+      PagesLocaleKey.subscriptionPackLegendPrice;
+  static const String subscriptionPackLegendBonus =
+      PagesLocaleKey.subscriptionPackLegendBonus;
+  static const String subscriptionPackLegendValue =
+      PagesLocaleKey.subscriptionPackLegendValue;
+  static const String subscriptionPopularTag =
+      PagesLocaleKey.subscriptionPopularTag;
+  static const String subscriptionBuyButton =
+      PagesLocaleKey.subscriptionBuyButton;
+  static const String subscriptionPurchaseSuccess =
+      PagesLocaleKey.subscriptionPurchaseSuccess;
+  static const String subscriptionPurchaseNote =
+      PagesLocaleKey.subscriptionPurchaseNote;
   static const String settingsTitle = PagesLocaleKey.settingsTitle;
   static const String settingsSectionAppearance =
       PagesLocaleKey.settingsSectionAppearance;

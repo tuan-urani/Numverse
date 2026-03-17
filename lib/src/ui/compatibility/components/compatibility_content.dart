@@ -19,6 +19,7 @@ class CompatibilityContent extends StatelessWidget {
     required this.onAddProfileTap,
     required this.onSelectProfile,
     required this.onCompareTap,
+    required this.onNeedMorePointsTap,
     super.key,
   });
 
@@ -29,6 +30,7 @@ class CompatibilityContent extends StatelessWidget {
   final VoidCallback onAddProfileTap;
   final ValueChanged<String> onSelectProfile;
   final VoidCallback onCompareTap;
+  final VoidCallback onNeedMorePointsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -124,23 +126,45 @@ class CompatibilityContent extends StatelessWidget {
               if (soulPoints < comparisonCost) ...<Widget>[
                 8.height,
                 Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    runSpacing: 4,
                     children: <Widget>[
                       const Icon(
                         Icons.error_outline_rounded,
                         size: 13,
                         color: AppColors.error,
                       ),
-                      4.width,
                       Text(
                         LocaleKey.compatibilityNeedMorePoints.trParams(
                           <String, String>{
                             'points': '${comparisonCost - soulPoints}',
                           },
                         ),
-                        style: AppStyles.caption(color: AppColors.error),
+                        style: AppStyles.bodySmall(color: AppColors.error),
                         textAlign: TextAlign.center,
+                      ),
+                      Material(
+                        color: AppColors.transparent,
+                        child: InkWell(
+                          onTap: onNeedMorePointsTap,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            child: Text(
+                              LocaleKey.compatibilityNeedMorePointsCta.tr,
+                              style: AppStyles.bodySmall(
+                                color: AppColors.richGold,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

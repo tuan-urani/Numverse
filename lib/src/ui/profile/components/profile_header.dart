@@ -7,9 +7,18 @@ import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({required this.onOpenSettings, super.key});
+  const ProfileHeader({
+    required this.onOpenSettings,
+    required this.subtitle,
+    this.subtitleActionLabel,
+    this.onTapSubtitleAction,
+    super.key,
+  });
 
   final VoidCallback onOpenSettings;
+  final String subtitle;
+  final String? subtitleActionLabel;
+  final VoidCallback? onTapSubtitleAction;
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +59,42 @@ class ProfileHeader extends StatelessWidget {
           ],
         ),
         4.height,
-        Text(
-          LocaleKey.profileSubtitle.tr,
-          style: AppStyles.bodyMedium(color: AppColors.textSecondary),
-        ),
+        if (subtitleActionLabel == null || onTapSubtitleAction == null)
+          Text(
+            subtitle,
+            style: AppStyles.bodyMedium(color: AppColors.textSecondary),
+          )
+        else
+          Wrap(
+            spacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              Text(
+                subtitle,
+                style: AppStyles.bodyMedium(color: AppColors.textSecondary),
+              ),
+              Material(
+                color: AppColors.transparent,
+                child: InkWell(
+                  onTap: onTapSubtitleAction,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 1,
+                    ),
+                    child: Text(
+                      subtitleActionLabel!,
+                      style: AppStyles.bodyMedium(
+                        color: AppColors.richGold,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

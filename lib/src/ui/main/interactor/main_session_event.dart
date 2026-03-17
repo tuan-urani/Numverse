@@ -156,6 +156,19 @@ final class MainSessionSoulPointsAdded extends MainSessionEvent {
   List<Object?> get props => <Object?>[amount];
 }
 
+final class MainSessionAdRewardClaimed extends MainSessionEvent {
+  const MainSessionAdRewardClaimed({
+    required this.amount,
+    required this.completer,
+  });
+
+  final int amount;
+  final Completer<bool> completer;
+
+  @override
+  List<Object?> get props => <Object?>[amount];
+}
+
 final class MainSessionSoulPointsDeducted extends MainSessionEvent {
   const MainSessionSoulPointsDeducted({
     required this.amount,

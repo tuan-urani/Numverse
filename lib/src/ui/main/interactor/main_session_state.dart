@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:test/src/core/model/comparison_profile.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/profile_time_life_snapshot.dart';
+import 'package:test/src/core/model/session_auth_mode.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 
@@ -10,6 +11,9 @@ class MainSessionState extends Equatable {
   const MainSessionState({
     required this.viewState,
     required this.isAuthenticated,
+    required this.authMode,
+    required this.pendingAnonymousBootstrap,
+    required this.cloudUserId,
     required this.userEmail,
     required this.userName,
     required this.profiles,
@@ -20,7 +24,10 @@ class MainSessionState extends Equatable {
     required this.currentStreak,
     required this.dailyEarnings,
     required this.dailyLimit,
+    required this.dailyAdEarnings,
+    required this.dailyAdLimit,
     required this.lastCheckInAt,
+    required this.lastAdRewardAt,
     required this.currentPageInteraction,
     required this.interactionCount,
     required this.errorMessage,
@@ -32,6 +39,9 @@ class MainSessionState extends Equatable {
     return const MainSessionState(
       viewState: AppViewStateStatus.loading,
       isAuthenticated: false,
+      authMode: SessionAuthMode.anonymous,
+      pendingAnonymousBootstrap: true,
+      cloudUserId: null,
       userEmail: null,
       userName: null,
       profiles: <UserProfile>[],
@@ -42,7 +52,10 @@ class MainSessionState extends Equatable {
       currentStreak: 0,
       dailyEarnings: 0,
       dailyLimit: 100,
+      dailyAdEarnings: 0,
+      dailyAdLimit: 50,
       lastCheckInAt: null,
+      lastAdRewardAt: null,
       currentPageInteraction: '',
       interactionCount: 0,
       errorMessage: null,
@@ -53,6 +66,9 @@ class MainSessionState extends Equatable {
 
   final AppViewStateStatus viewState;
   final bool isAuthenticated;
+  final SessionAuthMode authMode;
+  final bool pendingAnonymousBootstrap;
+  final String? cloudUserId;
   final String? userEmail;
   final String? userName;
   final List<UserProfile> profiles;
@@ -63,7 +79,10 @@ class MainSessionState extends Equatable {
   final int currentStreak;
   final int dailyEarnings;
   final int dailyLimit;
+  final int dailyAdEarnings;
+  final int dailyAdLimit;
   final DateTime? lastCheckInAt;
+  final DateTime? lastAdRewardAt;
   final String currentPageInteraction;
   final int interactionCount;
   final String? errorMessage;
@@ -72,6 +91,10 @@ class MainSessionState extends Equatable {
 
   bool get hasAnyProfile => profiles.isNotEmpty;
   bool get hasCompareProfiles => compareProfiles.isNotEmpty;
+  bool get isAnonymousUser => authMode == SessionAuthMode.anonymous;
+  bool get isRegisteredUser => authMode == SessionAuthMode.registered;
+  bool get hasCloudSession =>
+      isAuthenticated && (cloudUserId ?? '').trim().isNotEmpty;
 
   ComparisonProfile? get selectedCompareProfile {
     if (selectedCompareProfileId == null) {
@@ -98,6 +121,10 @@ class MainSessionState extends Equatable {
   MainSessionState copyWith({
     AppViewStateStatus? viewState,
     bool? isAuthenticated,
+    SessionAuthMode? authMode,
+    bool? pendingAnonymousBootstrap,
+    String? cloudUserId,
+    bool clearCloudUserId = false,
     String? userEmail,
     bool clearUserEmail = false,
     String? userName,
@@ -111,8 +138,12 @@ class MainSessionState extends Equatable {
     int? currentStreak,
     int? dailyEarnings,
     int? dailyLimit,
+    int? dailyAdEarnings,
+    int? dailyAdLimit,
     DateTime? lastCheckInAt,
     bool clearLastCheckInAt = false,
+    DateTime? lastAdRewardAt,
+    bool clearLastAdRewardAt = false,
     String? currentPageInteraction,
     int? interactionCount,
     String? errorMessage,
@@ -124,6 +155,10 @@ class MainSessionState extends Equatable {
     return MainSessionState(
       viewState: viewState ?? this.viewState,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      authMode: authMode ?? this.authMode,
+      pendingAnonymousBootstrap:
+          pendingAnonymousBootstrap ?? this.pendingAnonymousBootstrap,
+      cloudUserId: clearCloudUserId ? null : cloudUserId ?? this.cloudUserId,
       userEmail: clearUserEmail ? null : userEmail ?? this.userEmail,
       userName: clearUserName ? null : userName ?? this.userName,
       profiles: profiles ?? this.profiles,
@@ -136,9 +171,14 @@ class MainSessionState extends Equatable {
       currentStreak: currentStreak ?? this.currentStreak,
       dailyEarnings: dailyEarnings ?? this.dailyEarnings,
       dailyLimit: dailyLimit ?? this.dailyLimit,
+      dailyAdEarnings: dailyAdEarnings ?? this.dailyAdEarnings,
+      dailyAdLimit: dailyAdLimit ?? this.dailyAdLimit,
       lastCheckInAt: clearLastCheckInAt
           ? null
           : lastCheckInAt ?? this.lastCheckInAt,
+      lastAdRewardAt: clearLastAdRewardAt
+          ? null
+          : lastAdRewardAt ?? this.lastAdRewardAt,
       currentPageInteraction:
           currentPageInteraction ?? this.currentPageInteraction,
       interactionCount: interactionCount ?? this.interactionCount,
@@ -156,6 +196,9 @@ class MainSessionState extends Equatable {
   List<Object?> get props => <Object?>[
     viewState,
     isAuthenticated,
+    authMode,
+    pendingAnonymousBootstrap,
+    cloudUserId,
     userEmail,
     userName,
     profiles,
@@ -166,7 +209,10 @@ class MainSessionState extends Equatable {
     currentStreak,
     dailyEarnings,
     dailyLimit,
+    dailyAdEarnings,
+    dailyAdLimit,
     lastCheckInAt,
+    lastAdRewardAt,
     currentPageInteraction,
     interactionCount,
     errorMessage,

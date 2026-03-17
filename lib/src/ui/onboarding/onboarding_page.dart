@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
@@ -23,9 +22,7 @@ class OnboardingPage extends StatefulWidget {
 
 class _OnboardingPageState extends State<OnboardingPage> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _dayController = TextEditingController();
-  final TextEditingController _monthController = TextEditingController();
-  final TextEditingController _yearController = TextEditingController();
+  final TextEditingController _birthDateController = TextEditingController();
 
   static const int _profileStep = 3;
   static const int _loadingStep = 4;
@@ -35,6 +32,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int _analysisProgress = 0;
   bool _isSubmitting = false;
   Map<_OnboardingField, String> _errors = <_OnboardingField, String>{};
+  DateTime? _selectedBirthDate;
   Timer? _analysisTimer;
 
   @override
@@ -261,11 +259,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Widget _buildProfileStep() {
     final String? nameError = _errors[_OnboardingField.name];
-    final String? birthDateError =
-        _errors[_OnboardingField.date] ??
-        _errors[_OnboardingField.day] ??
-        _errors[_OnboardingField.month] ??
-        _errors[_OnboardingField.year];
+    final String? birthDateError = _errors[_OnboardingField.date];
 
     return KeyedSubtree(
       key: const ValueKey<int>(3),
@@ -330,53 +324,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ),
           8.height,
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _OnboardingTextField(
-                  controller: _dayController,
-                  hintText: LocaleKey.onboardingProfileDayHint.tr,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  errorText: birthDateError,
-                  onChanged: (_) => _clearDateErrors(),
-                ),
-              ),
-              8.width,
-              Expanded(
-                child: _OnboardingTextField(
-                  controller: _monthController,
-                  hintText: LocaleKey.onboardingProfileMonthHint.tr,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  errorText: birthDateError,
-                  onChanged: (_) => _clearDateErrors(),
-                ),
-              ),
-              8.width,
-              Expanded(
-                child: _OnboardingTextField(
-                  controller: _yearController,
-                  hintText: LocaleKey.onboardingProfileYearHint.tr,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                  ],
-                  errorText: birthDateError,
-                  onChanged: (_) => _clearDateErrors(),
-                ),
-              ),
-            ],
+          _OnboardingTextField(
+            controller: _birthDateController,
+            hintText:
+                '${LocaleKey.onboardingProfileDayHint.tr}/'
+                '${LocaleKey.onboardingProfileMonthHint.tr}/'
+                '${LocaleKey.onboardingProfileYearHint.tr}',
+            readOnly: true,
+            onTap: _isSubmitting ? null : _pickBirthDate,
+            errorText: birthDateError,
+            suffixIcon: Icon(
+              Icons.calendar_today_rounded,
+              size: 18,
+              color: AppColors.textMuted.withValues(alpha: 0.9),
+            ),
           ),
           if (birthDateError != null) ...<Widget>[
             6.height,
@@ -533,20 +494,47 @@ class _OnboardingPageState extends State<OnboardingPage> {
     });
   }
 
-  void _clearDateErrors() {
-    final bool hasDateError =
-        _errors.containsKey(_OnboardingField.day) ||
-        _errors.containsKey(_OnboardingField.month) ||
-        _errors.containsKey(_OnboardingField.year) ||
-        _errors.containsKey(_OnboardingField.date);
-    if (!hasDateError) {
+  String _formatBirthDate(DateTime date) {
+    final String day = date.day.toString().padLeft(2, '0');
+    final String month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  Future<void> _pickBirthDate() async {
+    final DateTime now = DateTime.now();
+    final DateTime initialDate =
+        _selectedBirthDate ?? DateTime(now.year - 20, now.month, now.day);
+    final DateTime? selected = await showDatePicker(
+      context: context,
+      initialDate: initialDate.isAfter(now) ? now : initialDate,
+      firstDate: DateTime(1900),
+      lastDate: now,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.richGold,
+              onPrimary: AppColors.midnight,
+              surface: AppColors.midnightSoft,
+              onSurface: AppColors.textPrimary,
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: AppColors.midnightSoft,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
       return;
     }
+
     setState(() {
+      _selectedBirthDate = selected;
+      _birthDateController.text = _formatBirthDate(selected);
       _errors = Map<_OnboardingField, String>.from(_errors)
-        ..remove(_OnboardingField.day)
-        ..remove(_OnboardingField.month)
-        ..remove(_OnboardingField.year)
         ..remove(_OnboardingField.date);
     });
   }
@@ -588,10 +576,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         <_OnboardingField, String>{};
 
     final String trimmedName = _nameController.text.trim();
-    final String dayRaw = _dayController.text.trim();
-    final String monthRaw = _monthController.text.trim();
-    final String yearRaw = _yearController.text.trim();
-    final int currentYear = DateTime.now().year;
+    final DateTime? birthDate = _selectedBirthDate;
+    final DateTime now = DateTime.now();
 
     if (trimmedName.isEmpty) {
       validationErrors[_OnboardingField.name] =
@@ -601,29 +587,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           LocaleKey.onboardingErrorNameMinLength.tr;
     }
 
-    final int? day = int.tryParse(dayRaw);
-    final int? month = int.tryParse(monthRaw);
-    final int? year = int.tryParse(yearRaw);
-
-    if (day == null || day < 1 || day > 31) {
-      validationErrors[_OnboardingField.day] =
-          LocaleKey.onboardingErrorDayInvalid.tr;
-    }
-    if (month == null || month < 1 || month > 12) {
-      validationErrors[_OnboardingField.month] =
-          LocaleKey.onboardingErrorMonthInvalid.tr;
-    }
-    if (year == null || year < 1900 || year > currentYear) {
-      validationErrors[_OnboardingField.year] =
-          LocaleKey.onboardingErrorYearInvalid.tr;
-    }
-
-    if (day != null && month != null && year != null) {
-      final DateTime date = DateTime(year, month, day);
-      if (date.year != year || date.month != month || date.day != day) {
-        validationErrors[_OnboardingField.date] =
-            LocaleKey.onboardingErrorDateInvalid.tr;
-      }
+    if (birthDate == null || birthDate.year < 1900 || birthDate.isAfter(now)) {
+      validationErrors[_OnboardingField.date] =
+          LocaleKey.onboardingErrorDateInvalid.tr;
     }
 
     return validationErrors;
@@ -654,11 +620,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Future<void> _completeOnboarding() async {
     final String name = _nameController.text.trim();
-    final int day = int.parse(_dayController.text.trim());
-    final int month = int.parse(_monthController.text.trim());
-    final int year = int.parse(_yearController.text.trim());
+    final DateTime? birthDate = _selectedBirthDate;
+    if (birthDate == null) {
+      setState(() {
+        _isSubmitting = false;
+        _step = _profileStep;
+        _analysisProgress = 0;
+        _errors = <_OnboardingField, String>{
+          _OnboardingField.date: LocaleKey.onboardingErrorDateInvalid.tr,
+        };
+      });
+      return;
+    }
 
-    final DateTime birthDate = DateTime(year, month, day);
     try {
       final MainSessionBloc sessionBloc = Get.find<MainSessionBloc>();
       await sessionBloc.addProfile(name: name, birthDate: birthDate);
@@ -689,14 +663,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void dispose() {
     _analysisTimer?.cancel();
     _nameController.dispose();
-    _dayController.dispose();
-    _monthController.dispose();
-    _yearController.dispose();
+    _birthDateController.dispose();
     super.dispose();
   }
 }
 
-enum _OnboardingField { name, day, month, year, date }
+enum _OnboardingField { name, date }
 
 class _OnboardingProgressDots extends StatelessWidget {
   const _OnboardingProgressDots({required this.currentStep});
@@ -983,20 +955,20 @@ class _OnboardingTextField extends StatelessWidget {
   const _OnboardingTextField({
     required this.controller,
     required this.hintText,
-    this.keyboardType,
-    this.textAlign = TextAlign.start,
-    this.inputFormatters,
     this.errorText,
     this.onChanged,
+    this.readOnly = false,
+    this.onTap,
+    this.suffixIcon,
   });
 
   final TextEditingController controller;
   final String hintText;
-  final TextInputType? keyboardType;
-  final TextAlign textAlign;
-  final List<TextInputFormatter>? inputFormatters;
   final String? errorText;
   final ValueChanged<String>? onChanged;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -1004,13 +976,20 @@ class _OnboardingTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      keyboardType: keyboardType,
-      textAlign: textAlign,
-      inputFormatters: inputFormatters,
+      readOnly: readOnly,
+      onTap: onTap,
+      showCursor: !readOnly,
       style: AppStyles.bodyMedium(),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: AppStyles.bodyMedium(color: AppColors.textMuted),
+        suffixIcon: suffixIcon == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: suffixIcon,
+              ),
+        suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
         errorText: hasError ? '' : null,
         errorStyle: const TextStyle(height: 0, fontSize: 0),
         isDense: true,
