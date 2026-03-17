@@ -1,4 +1,6 @@
 import 'package:test/src/core/model/app_session_snapshot.dart';
+import 'package:test/src/core/model/cloud_ad_reward_grant_result.dart';
+import 'package:test/src/core/model/cloud_ad_reward_status_result.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
@@ -53,6 +55,16 @@ abstract class ICloudAccountRepository {
   });
 
   Future<CloudDailyCheckInResult> claimDailyCheckIn({String? requestId});
+
+  Future<CloudAdRewardStatusResult> getAdRewardStatus({String? placementCode});
+
+  Future<CloudAdRewardGrantResult> grantAdReward({
+    required String requestId,
+    required String placementCode,
+    required int requestedAmount,
+    String? adNetwork,
+    Map<String, dynamic>? metadata,
+  });
 
   Future<CloudSpendSoulPointsResult> spendSoulPoints({
     required int amount,

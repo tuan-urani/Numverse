@@ -50,3 +50,15 @@
 - **Type**: UI/Domain model
 - **Purpose**: Encapsulates Supabase auth result for verified account login and first cloud sync handshake (`userId`, tokens, first-sync outcome).
 - **Source**: Supabase Auth REST response + bootstrap RPC result.
+
+## CloudAdRewardStatusResult
+- **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/cloud_ad_reward_status_result.dart`
+- **Type**: UI/Domain model
+- **Purpose**: Encapsulates ad reward quota snapshot from cloud (`dailyLimit`, `todayEarned`, `remaining`, `canWatch`, `soulPoints`) for pre-check before showing rewarded ads.
+- **Source**: Supabase RPC `get_ad_reward_status`.
+
+## CloudAdRewardGrantResult
+- **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/cloud_ad_reward_grant_result.dart`
+- **Type**: UI/Domain model
+- **Purpose**: Encapsulates server-authoritative reward grant response (`granted/idempotent`, `rewardAwarded`, `todayEarned`, `dailyLimit`, `soulPoints`) after an ad reward claim.
+- **Source**: Supabase RPC `grant_ad_reward`.

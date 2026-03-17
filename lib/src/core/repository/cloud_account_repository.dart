@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import 'package:test/src/core/model/app_session_snapshot.dart';
+import 'package:test/src/core/model/cloud_ad_reward_grant_result.dart';
+import 'package:test/src/core/model/cloud_ad_reward_status_result.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
@@ -444,6 +446,83 @@ class CloudAccountRepository implements ICloudAccountRepository {
       throw StateError('supabase_invalid_checkin_response');
     }
     return CloudDailyCheckInResult.fromJson(payload);
+  }
+
+  @override
+  Future<CloudAdRewardStatusResult> getAdRewardStatus({
+    String? placementCode,
+  }) async {
+    if (!isConfigured) {
+      throw StateError('supabase_not_configured');
+    }
+    final String accessToken = _requireAccessToken();
+    final String cleanPlacementCode = (placementCode ?? '').trim();
+    final Uri rpcUri = _supabaseConfig.rpcUri('get_ad_reward_status');
+    final Response<dynamic> response = await _ensureAuthenticatedRequest((
+      String token,
+    ) {
+      return _dio.postUri(
+        rpcUri,
+        data: <String, dynamic>{
+          if (cleanPlacementCode.isNotEmpty)
+            'p_placement_code': cleanPlacementCode,
+        },
+        options: Options(headers: _authHeaders(accessToken: token)),
+      );
+    }, initialAccessToken: accessToken);
+    final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+    if (payload.isEmpty) {
+      throw StateError('supabase_invalid_ad_reward_status_response');
+    }
+    return CloudAdRewardStatusResult.fromJson(payload);
+  }
+
+  @override
+  Future<CloudAdRewardGrantResult> grantAdReward({
+    required String requestId,
+    required String placementCode,
+    required int requestedAmount,
+    String? adNetwork,
+    Map<String, dynamic>? metadata,
+  }) async {
+    if (!isConfigured) {
+      throw StateError('supabase_not_configured');
+    }
+    final String accessToken = _requireAccessToken();
+    final String cleanRequestId = requestId.trim();
+    final String cleanPlacementCode = placementCode.trim();
+    final String cleanAdNetwork = (adNetwork ?? '').trim();
+    final Map<String, dynamic> cleanMetadata = Map<String, dynamic>.from(
+      metadata ?? const <String, dynamic>{},
+    );
+    if (cleanRequestId.isEmpty) {
+      throw StateError('supabase_missing_ad_reward_request_id');
+    }
+    if (cleanPlacementCode.isEmpty) {
+      throw StateError('supabase_missing_ad_reward_placement_code');
+    }
+
+    final Uri rpcUri = _supabaseConfig.rpcUri('grant_ad_reward');
+    final Response<dynamic> response = await _ensureAuthenticatedRequest((
+      String token,
+    ) {
+      return _dio.postUri(
+        rpcUri,
+        data: <String, dynamic>{
+          'p_reward_amount': requestedAmount,
+          'p_request_id': cleanRequestId,
+          'p_placement_code': cleanPlacementCode,
+          if (cleanAdNetwork.isNotEmpty) 'p_ad_network': cleanAdNetwork,
+          if (cleanMetadata.isNotEmpty) 'p_metadata': cleanMetadata,
+        },
+        options: Options(headers: _authHeaders(accessToken: token)),
+      );
+    }, initialAccessToken: accessToken);
+    final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+    if (payload.isEmpty) {
+      throw StateError('supabase_invalid_ad_reward_grant_response');
+    }
+    return CloudAdRewardGrantResult.fromJson(payload);
   }
 
   @override

@@ -147,3 +147,4 @@ class _SubscriptionContent extends StatelessWidget {
     );
   }
 }
+  

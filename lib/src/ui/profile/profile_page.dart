@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/core/service/admob_rewarded_ad_service.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
@@ -15,6 +16,7 @@ import 'package:test/src/ui/profile/components/profile_reading_section.dart';
 import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/profile/components/profile_settings_bottom_sheet.dart';
 import 'package:test/src/ui/profile/interactor/profile_state.dart';
+import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
@@ -32,11 +34,13 @@ class _ProfilePageState extends State<ProfilePage> {
   static const int _adRewardPointsPerWatch = 5;
 
   late final MainSessionBloc _sessionBloc;
+  late final AdMobRewardedAdService _adMobRewardedAdService;
 
   @override
   void initState() {
     super.initState();
     _sessionBloc = Get.find<MainSessionBloc>();
+    _adMobRewardedAdService = Get.find<AdMobRewardedAdService>();
 
     if (_sessionBloc.state.viewState == AppViewStateStatus.loading) {
       _sessionBloc.initialize();
@@ -79,7 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     sessionState: state,
                     onTapManageProfiles: () => _showProfileManageSheet(context),
                     onTapEarnMorePoints: () =>
-                        _showSoulPointsActionDialog(context, state),
+                        _showSoulPointsActionDialog(context),
                   ),
                   20.height,
                   Expanded(
@@ -124,16 +128,17 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future<void> _showSoulPointsActionDialog(
-    BuildContext context,
-    MainSessionState state,
-  ) async {
+  Future<void> _showSoulPointsActionDialog(BuildContext context) async {
     await ProfileSoulPointsActionsDialog.show(
       context,
-      adEarnedToday: state.dailyAdEarnings,
-      adDailyLimit: state.dailyAdLimit,
+      sessionBloc: _sessionBloc,
       onWatchAdTap: () async {
-        await _sessionBloc.claimAdReward(amount: _adRewardPointsPerWatch);
+        await AdRewardClaimFlow.watchAdThenClaim(
+          sessionBloc: _sessionBloc,
+          adMobRewardedAdService: _adMobRewardedAdService,
+          amount: _adRewardPointsPerWatch,
+          placementCode: 'profile_soul_points_dialog',
+        );
       },
       onBuyPointsTap: () async {
         TabNavigationHelper.pushCommonRoute(AppPages.subscription);

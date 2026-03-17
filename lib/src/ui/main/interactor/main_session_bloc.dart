@@ -4,6 +4,8 @@ import 'dart:developer' as developer;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:test/src/core/model/app_session_snapshot.dart';
+import 'package:test/src/core/model/cloud_ad_reward_grant_result.dart';
+import 'package:test/src/core/model/cloud_ad_reward_status_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
 import 'package:test/src/core/model/comparison_profile.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
@@ -57,6 +59,9 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     on<MainSessionCompatibilityHistorySaved>(_onCompatibilityHistorySaved);
     on<MainSessionSoulPointsAdded>(_onSoulPointsAdded);
     on<MainSessionAdRewardClaimed>(_onAdRewardClaimed);
+    on<MainSessionAdRewardStatusRefreshRequested>(
+      _onAdRewardStatusRefreshRequested,
+    );
     on<MainSessionSoulPointsDeducted>(_onSoulPointsDeducted);
     on<MainSessionCheckedIn>(_onCheckedIn);
     on<MainSessionCheckInCelebrationConsumed>(_onCheckInCelebrationConsumed);
@@ -192,6 +197,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       await _refreshTimeLifeForCurrentProfile(emit);
       await _tryRefreshCompatibilityHistoryFromCloud(emit);
       await _tryAutoClaimDailyCheckInFromCloud(emit);
+      await _tryRefreshAdRewardStatusFromCloud(emit);
     } catch (_) {
       emit(
         state.copyWith(
@@ -767,10 +773,45 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
   }
 
   /// API public nhận thưởng point từ quảng cáo.
-  Future<bool> claimAdReward({required int amount}) async {
+  Future<bool> claimAdReward({
+    required int amount,
+    String placementCode = 'default_rewarded',
+    String? requestId,
+  }) async {
     final Completer<bool> completer = Completer<bool>();
-    add(MainSessionAdRewardClaimed(amount: amount, completer: completer));
+    final String cleanPlacementCode = placementCode.trim().isNotEmpty
+        ? placementCode.trim()
+        : 'default_rewarded';
+    final String trimmedRequestId = (requestId ?? '').trim();
+    final String? cleanRequestId = trimmedRequestId.isNotEmpty
+        ? trimmedRequestId
+        : null;
+    add(
+      MainSessionAdRewardClaimed(
+        amount: amount,
+        placementCode: cleanPlacementCode,
+        requestId: cleanRequestId,
+        completer: completer,
+      ),
+    );
     return completer.future;
+  }
+
+  /// API public đồng bộ trạng thái thưởng quảng cáo từ cloud/local.
+  Future<void> refreshAdRewardStatus({
+    String placementCode = 'default_rewarded',
+  }) async {
+    final Completer<void> completer = Completer<void>();
+    final String cleanPlacementCode = placementCode.trim().isNotEmpty
+        ? placementCode.trim()
+        : 'default_rewarded';
+    add(
+      MainSessionAdRewardStatusRefreshRequested(
+        placementCode: cleanPlacementCode,
+        completer: completer,
+      ),
+    );
+    await completer.future;
   }
 
   /// Xử lý cộng điểm soul points và persist snapshot.
@@ -798,12 +839,64 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     Emitter<MainSessionState> emit,
   ) async {
     try {
-      await _normalizeAdRewardStateIfNeeded(emit);
       if (event.amount <= 0) {
         _completeBool(event.completer, false);
         return;
       }
 
+      if (state.hasCloudSession && _cloudAccountRepository.isConfigured) {
+        final CloudAdRewardStatusResult status = await _cloudAccountRepository
+            .getAdRewardStatus(placementCode: event.placementCode);
+
+        if (!status.canWatch || status.remaining <= 0) {
+          emit(
+            state.copyWith(
+              soulPoints: status.soulPoints,
+              dailyAdEarnings: status.todayEarned,
+              dailyAdLimit: status.dailyLimit,
+              lastAdRewardAt: status.lastRewardAt,
+              clearLastAdRewardAt: status.lastRewardAt == null,
+            ),
+          );
+          await _persistSnapshot();
+          _completeBool(event.completer, false);
+          return;
+        }
+
+        final String trimmedRequestId = (event.requestId ?? '').trim();
+        final String requestId = trimmedRequestId.isNotEmpty
+            ? trimmedRequestId
+            : _buildAdRewardRequestId(placementCode: event.placementCode);
+        final CloudAdRewardGrantResult grantResult =
+            await _cloudAccountRepository.grantAdReward(
+              requestId: requestId,
+              placementCode: event.placementCode,
+              requestedAmount: event.amount,
+              adNetwork: 'admob',
+              metadata: <String, dynamic>{'placementCode': event.placementCode},
+            );
+
+        emit(
+          state.copyWith(
+            soulPoints: grantResult.soulPoints,
+            dailyAdEarnings: grantResult.todayEarned,
+            dailyAdLimit: grantResult.dailyLimit,
+            lastAdRewardAt: grantResult.granted
+                ? DateTime.now()
+                : status.lastRewardAt,
+            clearLastAdRewardAt:
+                !grantResult.granted && status.lastRewardAt == null,
+          ),
+        );
+        await _persistSnapshot();
+        _completeBool(
+          event.completer,
+          grantResult.granted || grantResult.idempotent,
+        );
+        return;
+      }
+
+      await _normalizeAdRewardStateIfNeeded(emit);
       final int remainingDailyAdPoints =
           state.dailyAdLimit - state.dailyAdEarnings;
       if (remainingDailyAdPoints <= 0) {
@@ -830,6 +923,29 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     } catch (error, stackTrace) {
       _completeError(event.completer, error, stackTrace);
     }
+  }
+
+  Future<void> _onAdRewardStatusRefreshRequested(
+    MainSessionAdRewardStatusRefreshRequested event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    try {
+      await _normalizeAdRewardStateIfNeeded(emit);
+      await _tryRefreshAdRewardStatusFromCloud(
+        emit,
+        placementCode: event.placementCode,
+      );
+      _completeVoid(event.completer);
+    } catch (error, stackTrace) {
+      _completeError(event.completer, error, stackTrace);
+    }
+  }
+
+  String _buildAdRewardRequestId({required String placementCode}) {
+    final String cleanPlacementCode = placementCode.trim().isNotEmpty
+        ? placementCode.trim()
+        : 'default_rewarded';
+    return 'ad_reward:${DateTime.now().microsecondsSinceEpoch}:$cleanPlacementCode';
   }
 
   /// API public trừ soul points, trả về false nếu không đủ điểm.
@@ -1337,6 +1453,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     }
     await _tryRefreshCompatibilityHistoryFromCloud(emit);
     await _tryAutoClaimDailyCheckInFromCloud(emit);
+    await _tryRefreshAdRewardStatusFromCloud(emit);
   }
 
   int _normalizeRewardAwarded(int rawReward) {
@@ -1364,6 +1481,49 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     } catch (error, stackTrace) {
       developer.log(
         'Failed to fetch compatibility history from cloud.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _tryRefreshAdRewardStatusFromCloud(
+    Emitter<MainSessionState> emit, {
+    String placementCode = 'default_rewarded',
+  }) async {
+    if (!state.hasCloudSession || !_cloudAccountRepository.isConfigured) {
+      return;
+    }
+    try {
+      final CloudAdRewardStatusResult status = await _cloudAccountRepository
+          .getAdRewardStatus(placementCode: placementCode);
+      final DateTime? nextLastRewardAt = status.lastRewardAt;
+      final int currentLastRewardAtEpoch =
+          state.lastAdRewardAt?.millisecondsSinceEpoch ?? 0;
+      final int nextLastRewardAtEpoch =
+          nextLastRewardAt?.millisecondsSinceEpoch ?? 0;
+      final bool hasChanged =
+          state.soulPoints != status.soulPoints ||
+          state.dailyAdEarnings != status.todayEarned ||
+          state.dailyAdLimit != status.dailyLimit ||
+          currentLastRewardAtEpoch != nextLastRewardAtEpoch;
+      if (!hasChanged) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          soulPoints: status.soulPoints,
+          dailyAdEarnings: status.todayEarned,
+          dailyAdLimit: status.dailyLimit,
+          lastAdRewardAt: nextLastRewardAt,
+          clearLastAdRewardAt: nextLastRewardAt == null,
+        ),
+      );
+      await _persistSnapshot();
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to refresh ad reward status from cloud.',
         name: 'MainSessionBloc',
         error: error,
         stackTrace: stackTrace,

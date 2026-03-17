@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/core/service/admob_rewarded_ad_service.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
@@ -10,6 +11,7 @@ import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_bloc.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
 import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
+import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
@@ -27,6 +29,7 @@ class _NumAiPageState extends State<NumAiPage> {
   static const int _adRewardPointsPerWatch = 5;
 
   late final MainSessionBloc _sessionBloc;
+  late final AdMobRewardedAdService _adMobRewardedAdService;
   late final NumAiChatBloc _chatBloc;
   late final TextEditingController _controller;
   late final ScrollController _scrollController;
@@ -38,6 +41,7 @@ class _NumAiPageState extends State<NumAiPage> {
   void initState() {
     super.initState();
     _sessionBloc = Get.find<MainSessionBloc>();
+    _adMobRewardedAdService = Get.find<AdMobRewardedAdService>();
     _chatBloc = Get.isRegistered<NumAiChatBloc>()
         ? Get.find<NumAiChatBloc>()
         : Get.put<NumAiChatBloc>(NumAiChatBloc());
@@ -261,13 +265,16 @@ class _NumAiPageState extends State<NumAiPage> {
   }
 
   Future<void> _showSoulPointsActionDialog() async {
-    final MainSessionState sessionState = _sessionBloc.state;
     await ProfileSoulPointsActionsDialog.show(
       context,
-      adEarnedToday: sessionState.dailyAdEarnings,
-      adDailyLimit: sessionState.dailyAdLimit,
+      sessionBloc: _sessionBloc,
       onWatchAdTap: () async {
-        await _sessionBloc.claimAdReward(amount: _adRewardPointsPerWatch);
+        await AdRewardClaimFlow.watchAdThenClaim(
+          sessionBloc: _sessionBloc,
+          adMobRewardedAdService: _adMobRewardedAdService,
+          amount: _adRewardPointsPerWatch,
+          placementCode: 'numai_soul_points_dialog',
+        );
       },
       onBuyPointsTap: _onBuyPointsTap,
     );

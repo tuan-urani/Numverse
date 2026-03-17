@@ -17,6 +17,24 @@ fun loadEnv(name: String): Map<String, String> {
 
 val stagingEnv = loadEnv(".env.staging")
 val prodEnv = loadEnv(".env.prod")
+val defaultEnv = loadEnv(".env")
+
+fun resolveEnvValue(
+    key: String,
+    flavorEnv: Map<String, String>,
+): String {
+    val flavorValue = (flavorEnv[key] ?: "").trim()
+    if (flavorValue.isNotEmpty()) {
+        return flavorValue
+    }
+    val defaultValue = (defaultEnv[key] ?: "").trim()
+    if (defaultValue.isNotEmpty()) {
+        return defaultValue
+    }
+    return ""
+}
+
+const val androidAdMobTestAppId = "ca-app-pub-3940256099942544~3347511713"
 
 plugins {
     id("com.android.application")
@@ -57,13 +75,35 @@ android {
     productFlavors {
         create("prod") {
             dimension = "app"
-            resValue("string", "google_maps_api_key", prodEnv["GOOGLE_MAP_API_KEY"] ?: "")
+            resValue(
+                "string",
+                "google_maps_api_key",
+                resolveEnvValue("GOOGLE_MAP_API_KEY", prodEnv),
+            )
+            resValue(
+                "string",
+                "admob_app_id",
+                resolveEnvValue("ADMOB_ANDROID_APP_ID", prodEnv).ifEmpty {
+                    androidAdMobTestAppId
+                },
+            )
         }
         create("staging") {
             dimension = "app"
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
-            resValue("string", "google_maps_api_key", stagingEnv["GOOGLE_MAP_API_KEY"] ?: "")
+            resValue(
+                "string",
+                "google_maps_api_key",
+                resolveEnvValue("GOOGLE_MAP_API_KEY", stagingEnv),
+            )
+            resValue(
+                "string",
+                "admob_app_id",
+                resolveEnvValue("ADMOB_ANDROID_APP_ID", stagingEnv).ifEmpty {
+                    androidAdMobTestAppId
+                },
+            )
         }
     }
 }

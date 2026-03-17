@@ -152,6 +152,7 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
     if (sessionState.soulPoints < NumAiChatBloc.messageCost) {
       await _showSoulPointsInsufficientModal(
         requiredPoints: NumAiChatBloc.messageCost,
+        sessionCubit: sessionCubit,
       );
       return;
     }
@@ -202,9 +203,11 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
 
   Future<void> _showSoulPointsInsufficientModal({
     required int requiredPoints,
+    required MainSessionBloc sessionCubit,
   }) async {
     await SoulPointsInsufficientDialog.show(
       context,
+      sessionBloc: sessionCubit,
       requiredPoints: requiredPoints,
       onWatchAdTap: _onWatchAdTap,
       onBuyPointsTap: _onBuyPointsTap,

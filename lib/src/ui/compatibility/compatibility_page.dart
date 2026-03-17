@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 import 'package:test/src/core/model/comparison_profile.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/user_profile.dart';
+import 'package:test/src/core/service/admob_rewarded_ad_service.dart';
 import 'package:test/src/helper/compatibility_scoring.dart';
 import 'package:test/src/helper/numerology_helper.dart';
-import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_add_profile_dialog.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_content.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
@@ -18,6 +18,7 @@ import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
+import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/tab_navigation_helper.dart';
@@ -30,6 +31,8 @@ class CompatibilityPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final MainSessionBloc sessionCubit = Get.find<MainSessionBloc>();
+    final AdMobRewardedAdService adMobRewardedAdService =
+        Get.find<AdMobRewardedAdService>();
 
     if (sessionCubit.state.viewState == AppViewStateStatus.loading) {
       sessionCubit.initialize();
@@ -62,13 +65,14 @@ class CompatibilityPage extends StatelessWidget {
                   onCompareTap: () => _onCompareTap(
                     context,
                     sessionCubit: sessionCubit,
+                    adMobRewardedAdService: adMobRewardedAdService,
                     sessionState: sessionState,
                     compatibilityState: compatibilityState,
                   ),
                   onNeedMorePointsTap: () => _showSoulPointsActionDialog(
                     context,
                     sessionCubit: sessionCubit,
-                    sessionState: sessionState,
+                    adMobRewardedAdService: adMobRewardedAdService,
                   ),
                   historyItems: sessionState.compatibilityHistory,
                   onHistoryTap: (CompatibilityHistoryItem item) async {
@@ -107,6 +111,7 @@ class CompatibilityPage extends StatelessWidget {
   Future<void> _onCompareTap(
     BuildContext context, {
     required MainSessionBloc sessionCubit,
+    required AdMobRewardedAdService adMobRewardedAdService,
     required MainSessionState sessionState,
     required CompatibilityState compatibilityState,
   }) async {
@@ -136,8 +141,9 @@ class CompatibilityPage extends StatelessWidget {
     if (latestSessionState.soulPoints < kCompatibilityComparisonCost) {
       await SoulPointsInsufficientDialog.show(
         context,
+        sessionBloc: sessionCubit,
         requiredPoints: kCompatibilityComparisonCost,
-        onWatchAdTap: _onWatchAdTap,
+        onWatchAdTap: () => _onWatchAdTap(sessionCubit, adMobRewardedAdService),
         onBuyPointsTap: _onBuyPointsTap,
       );
       return;
@@ -159,8 +165,9 @@ class CompatibilityPage extends StatelessWidget {
     if (!canDeduct) {
       await SoulPointsInsufficientDialog.show(
         context,
+        sessionBloc: sessionCubit,
         requiredPoints: kCompatibilityComparisonCost,
-        onWatchAdTap: _onWatchAdTap,
+        onWatchAdTap: () => _onWatchAdTap(sessionCubit, adMobRewardedAdService),
         onBuyPointsTap: _onBuyPointsTap,
       );
       return;
@@ -188,25 +195,33 @@ class CompatibilityPage extends StatelessWidget {
     );
   }
 
-  Future<void> _onWatchAdTap() async {
-    Get.snackbar(
-      LocaleKey.commonComingSoon.tr,
-      LocaleKey.commonComingSoon.tr,
-      snackPosition: SnackPosition.BOTTOM,
+  Future<void> _onWatchAdTap(
+    MainSessionBloc sessionCubit,
+    AdMobRewardedAdService adMobRewardedAdService,
+  ) async {
+    await AdRewardClaimFlow.watchAdThenClaim(
+      sessionBloc: sessionCubit,
+      adMobRewardedAdService: adMobRewardedAdService,
+      amount: _adRewardPointsPerWatch,
+      placementCode: 'compatibility_soul_points_dialog',
     );
   }
 
   Future<void> _showSoulPointsActionDialog(
     BuildContext context, {
     required MainSessionBloc sessionCubit,
-    required MainSessionState sessionState,
+    required AdMobRewardedAdService adMobRewardedAdService,
   }) async {
     await ProfileSoulPointsActionsDialog.show(
       context,
-      adEarnedToday: sessionState.dailyAdEarnings,
-      adDailyLimit: sessionState.dailyAdLimit,
+      sessionBloc: sessionCubit,
       onWatchAdTap: () async {
-        await sessionCubit.claimAdReward(amount: _adRewardPointsPerWatch);
+        await AdRewardClaimFlow.watchAdThenClaim(
+          sessionBloc: sessionCubit,
+          adMobRewardedAdService: adMobRewardedAdService,
+          amount: _adRewardPointsPerWatch,
+          placementCode: 'compatibility_soul_points_dialog',
+        );
       },
       onBuyPointsTap: _onBuyPointsTap,
     );

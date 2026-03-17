@@ -880,15 +880,19 @@ Features:
 ### 3. User Flow & Logic
 1) User taps `Nhận thêm ->` on profile card.
 2) Modal shows progress `earned/limit` and action options.
-3) If ad limit not reached, tap watch-ad grants points via `MainSessionBloc.claimAdReward`.
-4) Tap buy-point routes to `/subscription`.
+3) Tap watch-ad dispatches `MainSessionBloc.claimAdReward(amount, placementCode)`.
+4) For cloud session, bloc queries Supabase RPC `get_ad_reward_status` first to gate daily ad quota.
+5) If quota is available, bloc claims reward via Supabase RPC `grant_ad_reward` with unique request id and updates `soulPoints` from server response.
+6) Tap buy-point routes to `/subscription`.
 
 ### 4. Key Dependencies
 - `MainSessionBloc` ad reward state: `dailyAdEarnings`, `dailyAdLimit`.
+- `CloudAccountRepository` RPC methods: `getAdRewardStatus`, `grantAdReward`.
 - GetX route helper to open `AppPages.subscription`.
 
 ### 5. Notes & Known Issues (Optional)
-- Watch-ad now grants points through app logic; ad SDK trigger can be connected next.
+- AdMob SDK callback hook is still required so `claimAdReward` is called only after `onUserEarnedReward`.
+- `grant_ad_reward` is server-authoritative for reward amount, daily limit, and idempotency by `request_id`.
 
 ## [Subscription Point Purchase]
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/subscription
