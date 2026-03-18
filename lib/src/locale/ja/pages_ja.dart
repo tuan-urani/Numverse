@@ -30,6 +30,8 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.compatibilityNeedMorePoints:
       '比較するには Soul Points があと @points 必要です',
   PagesLocaleKey.compatibilityNeedMorePointsCta: '今すぐ獲得',
+  PagesLocaleKey.compatibilityStartNeedMorePointsCta:
+      '比較にはあと @points ポイント必要です。さらに獲得',
   PagesLocaleKey.compatibilityHistoryTitle: '比較履歴',
   PagesLocaleKey.compatibilityHistorySubtitle: '項目をタップするとポイント消費なしで再表示できます。',
   PagesLocaleKey.compatibilityHistoryEmpty: 'まだ比較履歴がありません。最初の比較を始めましょう。',
@@ -190,11 +192,20 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.profileGuestAuthAction: '今すぐバックアップ',
   PagesLocaleKey.profileGuestAuthTitle: '登録 / ログインしてバックアップ',
   PagesLocaleKey.profileGuestAuthSubtitle: 'プロフィールをクラウド同期して、端末変更時のデータ消失を防ぎます。',
-  PagesLocaleKey.profileManageProfilesTitle: 'プロフィール管理',
+  PagesLocaleKey.profileManageProfilesTitle: 'ユーザー管理',
   PagesLocaleKey.profileManageProfilesSubtitle:
       '表示中プロフィールの切替、追加、不要プロフィールの削除ができます。',
   PagesLocaleKey.profileManageProfilesAddHint: '自分用や家族用など、複数プロフィールを保存できます。',
   PagesLocaleKey.profileManageProfilesDeleteConfirm: 'このプロフィールを削除してもよろしいですか？',
+  PagesLocaleKey.profileManageProfilesDeleteLastTitle: '最後のプロフィールを削除しますか？',
+  PagesLocaleKey.profileManageProfilesDeleteLastConfirm:
+      'これは最後のプロフィールです。削除すると、このプロフィールに紐づく個人鑑定とNumAIチャット履歴は失われます。',
+  PagesLocaleKey.profileManageProfilesEditTitle: 'プロフィールを編集',
+  PagesLocaleKey.profileManageProfilesEditSubtitle:
+      '名前や生年月日を変更すると、このプロフィールの数秘データが再計算されます。',
+  PagesLocaleKey.profileManageProfilesEditConfirmTitle: 'プロフィール更新を確認',
+  PagesLocaleKey.profileManageProfilesEditConfirmBody:
+      'アプリは新しいプロフィールを作成し、現在のプロフィールを削除します。続行しますか？',
   PagesLocaleKey.profileAuthDialogTitle: 'データをバックアップ',
   PagesLocaleKey.profileAuthDialogSubtitle:
       'データのバックアップと復元のために、アカウント作成またはログインしてください',

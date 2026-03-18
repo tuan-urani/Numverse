@@ -25,4 +25,15 @@ class AppSupabaseConfig {
   Uri rpcUri(String functionName) {
     return Uri.parse('$resolvedBaseUrl/rest/v1/rpc/$functionName');
   }
+
+  Uri edgeFunctionUri(
+    String functionName, {
+    Map<String, String>? queryParameters,
+  }) {
+    final Uri base = Uri.parse('$resolvedBaseUrl/functions/v1/$functionName');
+    if (queryParameters == null || queryParameters.isEmpty) {
+      return base;
+    }
+    return base.replace(queryParameters: queryParameters);
+  }
 }

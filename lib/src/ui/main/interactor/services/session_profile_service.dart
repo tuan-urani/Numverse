@@ -39,19 +39,23 @@ class SessionProfileService {
     return findProfileById(profiles, profileId) ?? profiles.first;
   }
 
-  List<UserProfile> updateProfile(
+  List<UserProfile> replaceProfile(
     List<UserProfile> profiles, {
-    required String profileId,
-    required String name,
-    required DateTime birthDate,
+    required String oldProfileId,
+    required UserProfile newProfile,
   }) {
-    return profiles
-        .map(
-          (UserProfile profile) => profile.id == profileId
-              ? profile.copyWith(name: name, birthDate: birthDate)
-              : profile,
-        )
-        .toList();
+    final int index = profiles.indexWhere(
+      (UserProfile profile) => profile.id == oldProfileId,
+    );
+    if (index < 0) {
+      return profiles;
+    }
+
+    return <UserProfile>[
+      ...profiles.take(index),
+      newProfile,
+      ...profiles.skip(index + 1),
+    ];
   }
 
   List<UserProfile> removeProfile(

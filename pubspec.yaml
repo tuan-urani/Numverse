@@ -54,6 +54,7 @@ dependencies:
   shared_preferences: ^2.5.4
   google_mobile_ads: ^6.0.0
   percent_indicator: ^4.2.2
+  fl_chart: ^1.2.0
   common_widget:
     git:
       url: https://github.com/tuan-urani/common_widget

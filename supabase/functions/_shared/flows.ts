@@ -10,9 +10,9 @@ import {
   ENGINE_VERSION,
   ensureArrayOfStrings,
   ensureObject,
+  getWalletBalance,
   getLocalDateParts,
   grantSoulPoints,
-  hasActiveProSubscription,
   HttpError,
   NUMAI_SOUL_POINT_COST,
   parseJsonBody,
@@ -36,6 +36,67 @@ import {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function fallbackFollowUpSuggestions(
+  locale: string,
+): string[] {
+  const isVietnamese = locale.toLowerCase().startsWith("vi");
+
+  if (isVietnamese) {
+    return [
+      "Tóm tắt ngắn gọn điểm mạnh cốt lõi của mình.",
+      "Hôm nay mình nên tập trung vào điều gì đầu tiên?",
+      "Tuần này mình nên tránh sai lầm nào?",
+    ];
+  }
+
+  return [
+    "Can you summarize my core strengths?",
+    "What should I prioritize first today?",
+    "Which pitfall should I avoid this week?",
+  ];
+}
+
+function resolveFollowUpSuggestions(
+  output: Record<string, unknown>,
+  locale: string,
+): string[] {
+  const suggestions: string[] = [];
+  const candidates = [
+    ...ensureArrayOfStrings(output.suggestions),
+    ...ensureArrayOfStrings(output.follow_up_suggestions),
+  ];
+
+  for (const candidate of candidates) {
+    const value = candidate.trim();
+    if (!value) {
+      continue;
+    }
+    if (suggestions.includes(value)) {
+      continue;
+    }
+    suggestions.push(value);
+    if (suggestions.length === 3) {
+      return suggestions;
+    }
+  }
+
+  for (const fallback of fallbackFollowUpSuggestions(locale)) {
+    const value = fallback.trim();
+    if (!value) {
+      continue;
+    }
+    if (suggestions.includes(value)) {
+      continue;
+    }
+    suggestions.push(value);
+    if (suggestions.length === 3) {
+      break;
+    }
+  }
+
+  return suggestions.slice(0, 3);
 }
 
 async function invalidateProfileCaches(
@@ -1165,7 +1226,6 @@ export async function handleSendNumaiMessage(
     thread_id?: string;
     primary_profile_id?: string;
     related_profile_id?: string;
-    context_type?: string;
     locale?: string;
     message_text?: string;
   }>(req);
@@ -1185,23 +1245,38 @@ export async function handleSendNumaiMessage(
     const relatedProfileId = body.related_profile_id
       ? String((await resolvePrimaryProfile(admin, user.id, body.related_profile_id)).id)
       : null;
-    const { data, error } = await admin
-      .from("ai_threads")
-      .insert({
-        owner_user_id: user.id,
-        primary_profile_id: primaryProfile.id,
-        related_profile_id: relatedProfileId,
-        context_type: body.context_type ?? "general",
-        title: messageText.slice(0, 48),
-        last_message_at: nowIso(),
-      })
-      .select("*")
-      .single();
 
-    if (error || !data) {
-      throw new HttpError(500, "thread_create_failed", error);
+    const { data: existingThread, error: threadLookupError } = await admin
+      .from("ai_threads")
+      .select("*")
+      .eq("owner_user_id", user.id)
+      .eq("primary_profile_id", primaryProfile.id)
+      .maybeSingle();
+
+    if (threadLookupError) {
+      throw new HttpError(500, "thread_lookup_failed", threadLookupError);
     }
-    thread = data as Record<string, unknown>;
+
+    if (existingThread) {
+      thread = existingThread as Record<string, unknown>;
+    } else {
+      const { data, error } = await admin
+        .from("ai_threads")
+        .insert({
+          owner_user_id: user.id,
+          primary_profile_id: primaryProfile.id,
+          related_profile_id: relatedProfileId,
+          title: messageText.slice(0, 48),
+          last_message_at: nowIso(),
+        })
+        .select("*")
+        .single();
+
+      if (error || !data) {
+        throw new HttpError(500, "thread_create_failed", error);
+      }
+      thread = data as Record<string, unknown>;
+    }
   }
 
   const activeProfile = await resolvePrimaryProfile(
@@ -1210,26 +1285,12 @@ export async function handleSendNumaiMessage(
     String(thread.primary_profile_id),
   );
   const snapshot = await resolveCurrentSnapshot(admin, user.id, String(activeProfile.id));
-  const hasPro = await hasActiveProSubscription(admin, user.id);
-
-  if (!hasPro) {
-    const { data: walletData, error: walletError } = await admin
-      .from("soul_point_wallets")
-      .select("balance")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (walletError) {
-      throw new HttpError(500, "wallet_lookup_failed", walletError);
-    }
-
-    const balance = Number(walletData?.balance ?? 0);
-    if (balance < NUMAI_SOUL_POINT_COST) {
-      throw new HttpError(402, "insufficient_soul_points", {
-        required: NUMAI_SOUL_POINT_COST,
-        balance,
-      });
-    }
+  const currentBalance = await getWalletBalance(admin, user.id);
+  if (currentBalance < NUMAI_SOUL_POINT_COST) {
+    throw new HttpError(402, "insufficient_soul_points", {
+      required: NUMAI_SOUL_POINT_COST,
+      balance: currentBalance,
+    });
   }
 
   const { data: userMessage, error: userMessageError } = await admin
@@ -1240,10 +1301,7 @@ export async function handleSendNumaiMessage(
       sender_type: "user",
       message_text: messageText,
       context_snapshot_id: snapshot.id,
-      soul_point_cost: hasPro ? 0 : NUMAI_SOUL_POINT_COST,
-      metadata_json: {
-        context_type: thread.context_type,
-      },
+      soul_point_cost: NUMAI_SOUL_POINT_COST,
     })
     .select("*")
     .single();
@@ -1253,8 +1311,9 @@ export async function handleSendNumaiMessage(
   }
 
   let charged = false;
-  if (!hasPro) {
-    await spendSoulPoints(
+  let walletBalanceAfterCharge: number | null = null;
+  try {
+    walletBalanceAfterCharge = await spendSoulPoints(
       admin,
       user.id,
       NUMAI_SOUL_POINT_COST,
@@ -1263,6 +1322,19 @@ export async function handleSendNumaiMessage(
       String(userMessage.id),
     );
     charged = true;
+  } catch (error) {
+    const { error: cleanupError } = await admin
+      .from("ai_messages")
+      .delete()
+      .eq("id", userMessage.id);
+
+    if (cleanupError) {
+      throw new HttpError(500, "message_cleanup_after_charge_failure_failed", {
+        charge_error: error,
+        cleanup_error: cleanupError,
+      });
+    }
+    throw error;
   }
 
   const { data: recentMessages, error: recentMessagesError } = await admin
@@ -1313,7 +1385,6 @@ export async function handleSendNumaiMessage(
       life_cycles: snapshot.life_cycles_json,
     },
     user_question: messageText,
-    context_type: thread.context_type,
   };
 
   const generationRun = await createGenerationRun(admin, {
@@ -1336,20 +1407,28 @@ export async function handleSendNumaiMessage(
   try {
     const geminiResult = await callGeminiJson(prompt, contextJson);
     const output = ensureObject(geminiResult.parsedOutput, "invalid_numai_output");
+    const answerText = String(output.answer ?? "").trim();
+    if (!answerText) {
+      throw new HttpError(502, "numai_empty_answer");
+    }
+    const followUpSuggestions = resolveFollowUpSuggestions(
+      output,
+      locale,
+    );
     const { data: assistantMessage, error: assistantError } = await admin
       .from("ai_messages")
       .insert({
         owner_user_id: user.id,
         thread_id: thread.id,
         sender_type: "assistant",
-        message_text: String(output.answer ?? ""),
+        message_text: answerText,
         context_snapshot_id: snapshot.id,
         ai_generation_run_id: generationRun.id,
         prompt_template_id: prompt.id,
         soul_point_cost: 0,
         metadata_json: {
           referenced_sections: output.referenced_sections ?? [],
-          follow_up_suggestions: output.follow_up_suggestions ?? [],
+          follow_up_suggestions: followUpSuggestions,
           model_name: prompt.model_name,
           prompt_version: prompt.version,
         },
@@ -1369,7 +1448,7 @@ export async function handleSendNumaiMessage(
         thread_summary: buildThreadSummary(
           String(thread.thread_summary ?? ""),
           messageText,
-          String(output.answer ?? ""),
+          answerText,
         ),
         thread_summary_updated_at: nowIso(),
       })
@@ -1395,6 +1474,8 @@ export async function handleSendNumaiMessage(
         user_message: userMessage,
         assistant_message: assistantMessage,
         charged_soul_points: charged ? NUMAI_SOUL_POINT_COST : 0,
+        wallet_balance: walletBalanceAfterCharge ?? currentBalance,
+        assistant_suggestions: followUpSuggestions,
       },
       meta: {
         prompt_key: prompt.prompt_key,

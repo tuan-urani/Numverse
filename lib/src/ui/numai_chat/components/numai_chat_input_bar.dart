@@ -74,7 +74,11 @@ class NumAiChatInputBar extends StatelessWidget {
                   maxLines: 4,
                   textInputAction: TextInputAction.send,
                   onChanged: onTextChanged,
-                  onSubmitted: (_) => onSendTap(),
+                  onSubmitted: (_) {
+                    if (canSend) {
+                      onSendTap();
+                    }
+                  },
                   style: AppStyles.bodyMedium(),
                   decoration: InputDecoration(
                     hintText: LocaleKey.numaiChatHint.tr,

@@ -7,10 +7,16 @@ import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class AppDetailStickyHeader extends StatelessWidget {
-  const AppDetailStickyHeader({required this.title, this.onBackTap, super.key});
+  const AppDetailStickyHeader({
+    required this.title,
+    this.onBackTap,
+    this.titleStyle,
+    super.key,
+  });
 
   final String title;
   final VoidCallback? onBackTap;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +57,8 @@ class AppDetailStickyHeader extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: AppStyles.h3(fontWeight: FontWeight.w700),
+                    style:
+                        titleStyle ?? AppStyles.h3(fontWeight: FontWeight.w700),
                   ),
                 ),
               ],

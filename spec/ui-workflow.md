@@ -474,13 +474,18 @@ Features:
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/life_path
 
 ### 1. Description
-Goal: Match Figma `/life-path` with collapsible Pinnacles and Challenges timelines.
+Goal: Present Life Path in a compact stage chart so users quickly identify current phase and open details per pinnacle/challenge.
 Features:
-- Intro card.
-- Expand/collapse Pinnacles section with 4 cycle cards.
-- Expand/collapse Challenges section with 4 cycle cards.
-- Status badges by cycle state: passed / active / future.
-- Opportunities and advice panels per cycle.
+- Intro card with current age context.
+- Radar-style quadrilateral chart:
+  - 4 vertices representing 4 phases.
+  - Single merged stage chart with semantic titles (for example `Đỉnh trưởng thành`) and age labels (`0 - 34 tuổi`).
+- Status coloring per vertex/edge (passed / active / future).
+- Tap each stage vertex to open a combined detail route.
+- Rendering stack uses `fl_chart` (`RadarChart`) for chart geometry, tick/grid, and touch handling.
+- Visual style: app-primary palette, diamond polygon fill, central circular badge (icon-only), and highlighted vertex markers.
+- Vertex labels are clamped to chart bounds so title/age do not overflow on narrow screens.
+- Dynamic detail page renders both `Đỉnh cuộc đời` and `Đỉnh thử thách` sections for the selected stage.
 
 ### 2. UI Structure
 - `life_path_page.dart`
@@ -490,6 +495,9 @@ Features:
 - Interactor:
   - `interactor/life_path_bloc.dart`
   - `interactor/life_path_state.dart`
+- Detail route reused:
+  - `/phase-detail` with `PhaseDetailStageArgs` (legacy `PhaseDetailArgs` still supported)
+  - `lib/src/ui/phase_detail/phase_detail_page.dart`
 
 ### 3. User Flow & Logic
 1) User opens `/life-path`.
@@ -497,8 +505,11 @@ Features:
 - 4 Pinnacles,
 - 4 Challenges,
 with period and status.
-3) User can expand/collapse each section independently.
-4) Each cycle card maps theme/description/opportunities/advice from local data.
+3) UI merges pinnacle/challenge data by stage index and renders 1 radar-like quadrilateral chart.
+4) Active vertex is visually highlighted.
+5) User taps any stage vertex.
+6) App pushes `/phase-detail` and passes stage metadata with both pinnacle/challenge content.
+7) Detail screen shows full interpretation for both sections in one page.
 
 ### 4. Key Dependencies
 - `MainSessionCubit`
@@ -506,7 +517,7 @@ with period and status.
 - `LifePathBloc`
 
 ### 5. Notes & Known Issues (Optional)
-- Status labels and card treatment follow web-state semantics with localized Vietnamese labels.
+- Main Life Path screen is intentionally short-text and chart-first; long narrative is moved to detail route.
 
 ## [Personal Portrait Feature]
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/personal_portrait
@@ -555,7 +566,8 @@ Features:
 - Compare-profile list with selected state.
 - Add compare-profile modal (name/relation/birth date).
 - Soul-point summary card + compare CTA with cost badge.
-- Inline shortage CTA: `Bạn cần thêm ...` + `Nhận thêm ngay`.
+- If points are insufficient, compare button switches to inline CTA text:
+`Cần thêm @points point để so sánh. Kiếm thêm`.
 - Compatibility history list under compare CTA.
 - Guard flow:
 - no own profile -> unlock profile dialog,
@@ -581,7 +593,8 @@ Features:
 - If no own profile -> profile unlock dialog appears.
 - If soul points < 20 -> insufficient modal appears.
 - Else deduct 20 soul points, create/save a compatibility history item, and navigate to `/comparison-result` with history payload.
-5) When soul points are insufficient, tapping `Nhận thêm ngay` opens `ProfileSoulPointsActionsDialog` (watch ad / buy points).
+5) When soul points are insufficient, tapping the compare button CTA opens
+`ProfileSoulPointsActionsDialog` (watch ad / buy points).
 6) User can tap any history item to reopen comparison result in view-only mode (no additional point deduction).
 
 ### 4. Key Dependencies

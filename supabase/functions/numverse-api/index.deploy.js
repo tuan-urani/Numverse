@@ -1694,7 +1694,6 @@ async function handleSendNumaiMessage(req) {
       owner_user_id: user.id,
       primary_profile_id: primaryProfile.id,
       related_profile_id: relatedProfileId,
-      context_type: body.context_type ?? "general",
       title: messageText.slice(0, 48),
       last_message_at: nowIso()
     }).select("*").single();
@@ -1730,9 +1729,6 @@ async function handleSendNumaiMessage(req) {
     message_text: messageText,
     context_snapshot_id: snapshot.id,
     soul_point_cost: hasPro ? 0 : NUMAI_SOUL_POINT_COST,
-    metadata_json: {
-      context_type: thread.context_type
-    }
   }).select("*").single();
   if (userMessageError || !userMessage) {
     throw new HttpError(500, "user_message_insert_failed", userMessageError);
@@ -1786,8 +1782,7 @@ async function handleSendNumaiMessage(req) {
       matrix_aspects: snapshot.matrix_aspects_json,
       life_cycles: snapshot.life_cycles_json
     },
-    user_question: messageText,
-    context_type: thread.context_type
+    user_question: messageText
   };
   const generationRun = await createGenerationRun(admin, {
     owner_user_id: user.id,

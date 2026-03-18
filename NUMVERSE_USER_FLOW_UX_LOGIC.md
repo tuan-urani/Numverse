@@ -376,7 +376,6 @@ NumAI nhận ngữ cảnh từ:
 -> active_profile
 -> snapshot_facts
 -> user_question
--> context_type
 ```
 
 `Backend logic`:

@@ -4,7 +4,11 @@ import 'package:test/src/core/model/cloud_ad_reward_status_result.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
+import 'package:test/src/core/model/cloud_numai_import_guest_history_result.dart';
+import 'package:test/src/core/model/cloud_numai_send_message_result.dart';
+import 'package:test/src/core/model/cloud_numai_thread_messages_result.dart';
 import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
+import 'package:test/src/core/model/local_numai_guest_message.dart';
 
 abstract class ICloudAccountRepository {
   bool get isConfigured;
@@ -71,6 +75,31 @@ abstract class ICloudAccountRepository {
     required String sourceType,
     String? requestId,
     Map<String, dynamic>? metadata,
+  });
+
+  Future<CloudNumAiSendMessageResult> sendNumAiMessage({
+    required String profileId,
+    required String messageText,
+    String? threadId,
+    String? locale,
+  });
+
+  Future<CloudNumAiSendMessageResult> sendNumAiGuestMessage({
+    required String messageText,
+    String? locale,
+    List<Map<String, String>> recentMessages = const <Map<String, String>>[],
+  });
+
+  Future<CloudNumAiThreadMessagesResult> fetchNumAiThreadMessages({
+    required String profileId,
+    String? threadId,
+    int limit = 50,
+  });
+
+  Future<CloudNumAiImportGuestHistoryResult> importGuestNumAiHistory({
+    required String profileId,
+    required List<LocalNumAiGuestMessage> messages,
+    String? requestId,
   });
 
   Future<void> clearSession();

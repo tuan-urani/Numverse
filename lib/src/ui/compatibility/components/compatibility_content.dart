@@ -46,8 +46,9 @@ class CompatibilityContent extends StatelessWidget {
     final String birthDate = hasCurrentProfile
         ? DateFormat('dd/MM/yyyy').format(currentProfile!.birthDate)
         : LocaleKey.compatibilityOwnProfilePlaceholderDate.tr;
-    final bool canCompare =
-        state.selectedProfile != null && soulPoints >= comparisonCost;
+    final bool hasSelectedProfile = state.selectedProfile != null;
+    final bool hasEnoughPoints = soulPoints >= comparisonCost;
+    final bool canCompare = hasSelectedProfile && hasEnoughPoints;
     final List<CompatibilityHistoryItem> visibleHistory = historyItems
         .take(10)
         .toList();
@@ -129,72 +130,28 @@ class CompatibilityContent extends StatelessWidget {
               _CompareButton(
                 enabled: canCompare,
                 comparisonCost: comparisonCost,
-                onTap: onCompareTap,
+                needsMorePointsCta: !hasEnoughPoints,
+                missingPoints: hasEnoughPoints
+                    ? 0
+                    : comparisonCost - soulPoints,
+                onCompareTap: onCompareTap,
+                onNeedMorePointsTap: onNeedMorePointsTap,
               ),
-              if (soulPoints < comparisonCost) ...<Widget>[
-                8.height,
-                Center(
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: <Widget>[
-                      const Icon(
-                        Icons.error_outline_rounded,
-                        size: 13,
-                        color: AppColors.error,
-                      ),
-                      Text(
-                        LocaleKey.compatibilityNeedMorePoints.trParams(
-                          <String, String>{
-                            'points': '${comparisonCost - soulPoints}',
-                          },
-                        ),
-                        style: AppStyles.bodySmall(color: AppColors.error),
-                        textAlign: TextAlign.center,
-                      ),
-                      Material(
-                        color: AppColors.transparent,
-                        child: InkWell(
-                          onTap: onNeedMorePointsTap,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 2,
-                            ),
-                            child: Text(
-                              LocaleKey.compatibilityNeedMorePointsCta.tr,
-                              style: AppStyles.bodySmall(
-                                color: AppColors.richGold,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              if (visibleHistory.isNotEmpty) ...<Widget>[
+                18.height,
+                Text(
+                  LocaleKey.compatibilityHistoryTitle.tr,
+                  style: AppStyles.caption(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ).copyWith(letterSpacing: 0.8),
                 ),
-              ],
-              18.height,
-              Text(
-                LocaleKey.compatibilityHistoryTitle.tr,
-                style: AppStyles.caption(
-                  color: AppColors.textMuted,
-                  fontWeight: FontWeight.w600,
-                ).copyWith(letterSpacing: 0.8),
-              ),
-              4.height,
-              Text(
-                LocaleKey.compatibilityHistorySubtitle.tr,
-                style: AppStyles.bodySmall(color: AppColors.textMuted),
-              ),
-              10.height,
-              if (visibleHistory.isEmpty) ...<Widget>[
-                const _HistoryEmptyCard(),
-              ] else
+                4.height,
+                Text(
+                  LocaleKey.compatibilityHistorySubtitle.tr,
+                  style: AppStyles.bodySmall(color: AppColors.textMuted),
+                ),
+                10.height,
                 for (final CompatibilityHistoryItem item
                     in visibleHistory) ...<Widget>[
                   _HistoryItemCard(
@@ -204,6 +161,7 @@ class CompatibilityContent extends StatelessWidget {
                   ),
                   10.height,
                 ],
+              ],
               12.height,
             ],
           ),
@@ -747,29 +705,97 @@ class _SoulPointsCard extends StatelessWidget {
   }
 }
 
-class _CompareButton extends StatelessWidget {
+class _CompareButton extends StatefulWidget {
   const _CompareButton({
     required this.enabled,
     required this.comparisonCost,
-    required this.onTap,
+    required this.needsMorePointsCta,
+    required this.missingPoints,
+    required this.onCompareTap,
+    required this.onNeedMorePointsTap,
   });
 
   final bool enabled;
   final int comparisonCost;
-  final VoidCallback onTap;
+  final bool needsMorePointsCta;
+  final int missingPoints;
+  final VoidCallback onCompareTap;
+  final VoidCallback onNeedMorePointsTap;
+
+  @override
+  State<_CompareButton> createState() => _CompareButtonState();
+}
+
+class _CompareButtonState extends State<_CompareButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glowController;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    if (widget.needsMorePointsCta) {
+      _glowController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _CompareButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.needsMorePointsCta && widget.needsMorePointsCta) {
+      _glowController.repeat(reverse: true);
+    } else if (oldWidget.needsMorePointsCta && !widget.needsMorePointsCta) {
+      _glowController
+        ..stop()
+        ..value = 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool canTap = widget.enabled || widget.needsMorePointsCta;
+    final bool useActiveStyle = widget.enabled || widget.needsMorePointsCta;
+    final bool emphasizeNeedMore = widget.needsMorePointsCta;
+    final double glowValue = _glowController.value;
+
+    final LinearGradient activeGradient = emphasizeNeedMore
+        ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              AppColors.energyOrange.withValues(alpha: 0.96),
+              AppColors.energyRose.withValues(alpha: 0.92),
+            ],
+          )
+        : AppColors.primaryGradient();
+
+    final Color foregroundColor = useActiveStyle
+        ? (emphasizeNeedMore ? AppColors.white : AppColors.midnight)
+        : AppColors.textMuted;
+
+    final String label = emphasizeNeedMore
+        ? LocaleKey.compatibilityStartNeedMorePointsCta.trParams(
+            <String, String>{'points': '${widget.missingPoints}'},
+          )
+        : LocaleKey.compatibilityStart.tr;
+
     return InkWell(
-      onTap: enabled ? onTap : null,
+      onTap: canTap
+          ? (emphasizeNeedMore
+                ? widget.onNeedMorePointsTap
+                : widget.onCompareTap)
+          : null,
       borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          gradient: enabled
-              ? AppColors.primaryGradient()
+          gradient: useActiveStyle
+              ? activeGradient
               : LinearGradient(
                   colors: <Color>[
                     AppColors.border.withValues(alpha: 0.8),
@@ -777,7 +803,23 @@ class _CompareButton extends StatelessWidget {
                   ],
                 ),
           borderRadius: BorderRadius.circular(14),
-          boxShadow: enabled
+          boxShadow: emphasizeNeedMore
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: AppColors.energyOrange.withValues(
+                      alpha: 0.28 + (glowValue * 0.32),
+                    ),
+                    blurRadius: 18 + (glowValue * 18),
+                    spreadRadius: 1 + (glowValue * 2),
+                  ),
+                  BoxShadow(
+                    color: AppColors.energyRose.withValues(
+                      alpha: 0.2 + (glowValue * 0.2),
+                    ),
+                    blurRadius: 24 + (glowValue * 12),
+                  ),
+                ]
+              : useActiveStyle
               ? <BoxShadow>[
                   BoxShadow(
                     color: AppColors.richGold.withValues(alpha: 0.28),
@@ -789,70 +831,58 @@ class _CompareButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(
-              Icons.favorite_rounded,
-              size: 17,
-              color: enabled ? AppColors.midnight : AppColors.textMuted,
-            ),
-            8.width,
-            Text(
-              LocaleKey.compatibilityStart.tr,
-              style: AppStyles.buttonMedium(
-                color: enabled ? AppColors.midnight : AppColors.textMuted,
+            if (!emphasizeNeedMore) ...<Widget>[
+              Icon(Icons.favorite_rounded, size: 17, color: foregroundColor),
+              8.width,
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                style: AppStyles.buttonMedium(
+                  color: foregroundColor,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            8.width,
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: (enabled ? AppColors.midnight : AppColors.textMuted)
-                    .withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(
-                    Icons.flash_on_rounded,
-                    size: 12,
-                    color: enabled ? AppColors.midnight : AppColors.textMuted,
-                  ),
-                  2.width,
-                  Text(
-                    '$comparisonCost',
-                    style: AppStyles.caption(
-                      color: enabled ? AppColors.midnight : AppColors.textMuted,
-                      fontWeight: FontWeight.w700,
+            if (!emphasizeNeedMore) ...<Widget>[
+              8.width,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: foregroundColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(
+                      Icons.flash_on_rounded,
+                      size: 12,
+                      color: foregroundColor,
                     ),
-                  ),
-                ],
+                    2.width,
+                    Text(
+                      '${widget.comparisonCost}',
+                      style: AppStyles.caption(
+                        color: foregroundColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
     );
   }
-}
-
-class _HistoryEmptyCard extends StatelessWidget {
-  const _HistoryEmptyCard();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
-      ),
-      child: Text(
-        LocaleKey.compatibilityHistoryEmpty.tr,
-        style: AppStyles.bodySmall(color: AppColors.textMuted),
-      ),
-    );
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
   }
 }
 

@@ -39,6 +39,8 @@ class PagesLocaleKey {
       'compatibility_need_more_points';
   static const String compatibilityNeedMorePointsCta =
       'compatibility_need_more_points_cta';
+  static const String compatibilityStartNeedMorePointsCta =
+      'compatibility_start_need_more_points_cta';
   static const String compatibilityHistoryTitle = 'compatibility_history_title';
   static const String compatibilityHistorySubtitle =
       'compatibility_history_subtitle';
@@ -264,6 +266,18 @@ class PagesLocaleKey {
       'profile_manage_profiles_add_hint';
   static const String profileManageProfilesDeleteConfirm =
       'profile_manage_profiles_delete_confirm';
+  static const String profileManageProfilesDeleteLastTitle =
+      'profile_manage_profiles_delete_last_title';
+  static const String profileManageProfilesDeleteLastConfirm =
+      'profile_manage_profiles_delete_last_confirm';
+  static const String profileManageProfilesEditTitle =
+      'profile_manage_profiles_edit_title';
+  static const String profileManageProfilesEditSubtitle =
+      'profile_manage_profiles_edit_subtitle';
+  static const String profileManageProfilesEditConfirmTitle =
+      'profile_manage_profiles_edit_confirm_title';
+  static const String profileManageProfilesEditConfirmBody =
+      'profile_manage_profiles_edit_confirm_body';
   static const String profileAuthDialogTitle = 'profile_auth_dialog_title';
   static const String profileAuthDialogSubtitle =
       'profile_auth_dialog_subtitle';

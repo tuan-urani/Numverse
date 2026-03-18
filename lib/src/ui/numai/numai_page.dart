@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
+import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/core/service/admob_rewarded_ad_service.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
@@ -36,6 +38,7 @@ class _NumAiPageState extends State<NumAiPage> {
   late List<_NumAiDomain> _visibleDomainSuggestions;
 
   String? _activeDomainId;
+  String? _lastHydratedContextKey;
 
   @override
   void initState() {
@@ -44,7 +47,12 @@ class _NumAiPageState extends State<NumAiPage> {
     _adMobRewardedAdService = Get.find<AdMobRewardedAdService>();
     _chatBloc = Get.isRegistered<NumAiChatBloc>()
         ? Get.find<NumAiChatBloc>()
-        : Get.put<NumAiChatBloc>(NumAiChatBloc());
+        : Get.put<NumAiChatBloc>(
+            NumAiChatBloc(
+              cloudAccountRepository: Get.find<ICloudAccountRepository>(),
+              appSessionRepository: Get.find<IAppSessionRepository>(),
+            ),
+          );
     _controller = TextEditingController();
     _scrollController = ScrollController();
     _visibleDomainSuggestions = _domains.take(3).toList();
@@ -81,6 +89,7 @@ class _NumAiPageState extends State<NumAiPage> {
               child: BlocBuilder<NumAiChatBloc, NumAiChatState>(
                 bloc: _chatBloc,
                 builder: (BuildContext context, NumAiChatState chatState) {
+                  _maybeHydrateHistory(sessionState);
                   final bool isChatBlank =
                       chatState.messages.isEmpty && !chatState.isLoading;
                   final _NumAiDomain? activeDomain = _domainById(
@@ -127,6 +136,9 @@ class _NumAiPageState extends State<NumAiPage> {
                             emptyHint: emptyHint,
                             scrollController: _scrollController,
                             onActionTap: _onProfileActionTap,
+                            onSuggestionTap: (String suggestion) {
+                              _sendMessage(messageText: suggestion);
+                            },
                             showFollowupSuggestions: !isChatBlank,
                             followupDomains: _visibleDomainSuggestions,
                             onFollowupTap: (_NumAiDomain domain) {
@@ -141,11 +153,14 @@ class _NumAiPageState extends State<NumAiPage> {
                           domains: _visibleDomainSuggestions,
                           activeDomainId: _activeDomainId,
                           canAffordMessage: canAffordMessage,
+                          missingPoints:
+                              (NumAiChatBloc.messageCost -
+                                      sessionState.soulPoints)
+                                  .clamp(0, NumAiChatBloc.messageCost),
                           canSend: canSend,
                           isLoading: chatState.isLoading,
                           controller: _controller,
                           inputHint: inputHint,
-                          noPointsMessage: LocaleKey.numaiChatNoPointsHint.tr,
                           onChanged: (_) => setState(() {}),
                           onSendTap: () => _sendMessage(),
                           showSuggestions: isChatBlank,
@@ -167,6 +182,30 @@ class _NumAiPageState extends State<NumAiPage> {
         },
       ),
     );
+  }
+
+  void _maybeHydrateHistory(MainSessionState sessionState) {
+    final String profileId = (sessionState.currentProfile?.id ?? '').trim();
+    final String guestKey = (sessionState.cloudUserId ?? '').trim();
+    final String contextKey = profileId.isNotEmpty
+        ? 'profile:$profileId'
+        : 'guest:${guestKey.isEmpty ? 'local' : guestKey}';
+    if (_lastHydratedContextKey == contextKey) {
+      return;
+    }
+
+    _lastHydratedContextKey = contextKey;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _chatBloc.loadCloudHistory(
+        hasCloudSession: sessionState.hasCloudSession,
+        profileId: profileId.isEmpty ? null : profileId,
+        cloudUserId: sessionState.cloudUserId,
+        forceRefresh: true,
+      );
+    });
   }
 
   Future<void> _sendMessage({String? messageText, _NumAiDomain? domain}) async {
@@ -196,11 +235,16 @@ class _NumAiPageState extends State<NumAiPage> {
     final bool sent = await _chatBloc.sendMessage(
       rawMessage: resolvedMessage,
       hasProfile: hasProfile,
+      hasCloudSession: _sessionBloc.state.hasCloudSession,
+      profileId: _sessionBloc.state.currentProfile?.id,
+      cloudUserId: _sessionBloc.state.cloudUserId,
+      locale: null,
       deductSoulPoints: (int amount) => _sessionBloc.deductSoulPoints(
         amount,
         sourceType: 'numai_message',
         metadata: const <String, dynamic>{'screen': 'numai'},
       ),
+      syncSoulPoints: _sessionBloc.syncSoulPointsFromCloud,
     );
     if (!mounted || !sent) {
       return;
@@ -285,7 +329,7 @@ class _NumAiPageState extends State<NumAiPage> {
   }
 
   void _resetConversation() {
-    _chatBloc.resetConversation();
+    _chatBloc.resetConversation(cloudUserId: _sessionBloc.state.cloudUserId);
     _controller.clear();
     setState(() {
       _activeDomainId = null;
@@ -439,6 +483,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
     required this.emptyHint,
     required this.scrollController,
     required this.onActionTap,
+    required this.onSuggestionTap,
     required this.showFollowupSuggestions,
     required this.followupDomains,
     required this.onFollowupTap,
@@ -449,6 +494,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
   final String emptyHint;
   final ScrollController scrollController;
   final Future<void> Function() onActionTap;
+  final ValueChanged<String> onSuggestionTap;
   final bool showFollowupSuggestions;
   final List<_NumAiDomain> followupDomains;
   final ValueChanged<_NumAiDomain> onFollowupTap;
@@ -498,6 +544,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
                   message: messages[index],
                   maxWidth: bubbleMaxWidth,
                   onActionTap: onActionTap,
+                  onSuggestionTap: onSuggestionTap,
                 ),
               );
             }
@@ -571,11 +618,13 @@ class _NumAiMessageBubble extends StatelessWidget {
     required this.message,
     required this.maxWidth,
     required this.onActionTap,
+    required this.onSuggestionTap,
   });
 
   final NumAiChatMessage message;
   final double maxWidth;
   final Future<void> Function() onActionTap;
+  final ValueChanged<String> onSuggestionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -635,6 +684,38 @@ class _NumAiMessageBubble extends StatelessWidget {
             Text.rich(
               TextSpan(children: _buildBoldSpans(message.content, baseStyle)),
             ),
+            if (!isUser && message.followUpSuggestions.isNotEmpty) ...<Widget>[
+              10.height,
+              ...message.followUpSuggestions.map(
+                (String suggestion) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: InkWell(
+                    onTap: () => onSuggestionTap(suggestion),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.deepViolet.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      child: Text(
+                        suggestion,
+                        style: AppStyles.caption(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             if (message.hasActionButton) ...<Widget>[
               10.height,
               InkWell(
@@ -738,11 +819,11 @@ class _NumAiComposer extends StatelessWidget {
     required this.domains,
     required this.activeDomainId,
     required this.canAffordMessage,
+    required this.missingPoints,
     required this.canSend,
     required this.isLoading,
     required this.controller,
     required this.inputHint,
-    required this.noPointsMessage,
     required this.onChanged,
     required this.onSendTap,
     required this.onNoPointsTap,
@@ -753,11 +834,11 @@ class _NumAiComposer extends StatelessWidget {
   final List<_NumAiDomain> domains;
   final String? activeDomainId;
   final bool canAffordMessage;
+  final int missingPoints;
   final bool canSend;
   final bool isLoading;
   final TextEditingController controller;
   final String inputHint;
-  final String noPointsMessage;
   final ValueChanged<String> onChanged;
   final VoidCallback onSendTap;
   final Future<void> Function() onNoPointsTap;
@@ -795,38 +876,9 @@ class _NumAiComposer extends StatelessWidget {
             10.height,
           ],
           if (!canAffordMessage) ...<Widget>[
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              runSpacing: 4,
-              children: <Widget>[
-                Text(
-                  noPointsMessage,
-                  textAlign: TextAlign.center,
-                  style: AppStyles.bodySmall(color: AppColors.error),
-                ),
-                Material(
-                  color: AppColors.transparent,
-                  child: InkWell(
-                    onTap: onNoPointsTap,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      child: Text(
-                        LocaleKey.compatibilityNeedMorePointsCta.tr,
-                        style: AppStyles.bodySmall(
-                          color: AppColors.richGold,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            _NumAiNeedMorePointsCta(
+              missingPoints: missingPoints,
+              onTap: onNoPointsTap,
             ),
           ] else ...<Widget>[
             Row(
@@ -922,6 +974,102 @@ class _NumAiComposer extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NumAiNeedMorePointsCta extends StatefulWidget {
+  const _NumAiNeedMorePointsCta({
+    required this.missingPoints,
+    required this.onTap,
+  });
+
+  final int missingPoints;
+  final Future<void> Function() onTap;
+
+  @override
+  State<_NumAiNeedMorePointsCta> createState() =>
+      _NumAiNeedMorePointsCtaState();
+}
+
+class _NumAiNeedMorePointsCtaState extends State<_NumAiNeedMorePointsCta>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glowController;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int safeMissingPoints = widget.missingPoints <= 0
+        ? 1
+        : widget.missingPoints;
+    final String label = LocaleKey.compatibilityStartNeedMorePointsCta.trParams(
+      <String, String>{'points': '$safeMissingPoints'},
+    );
+
+    return AnimatedBuilder(
+      animation: _glowController,
+      builder: (BuildContext context, Widget? child) {
+        final double glowValue = _glowController.value;
+        return InkWell(
+          onTap: () {
+            widget.onTap();
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  AppColors.energyOrange.withValues(alpha: 0.96),
+                  AppColors.energyRose.withValues(alpha: 0.92),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.energyOrange.withValues(
+                    alpha: 0.28 + (glowValue * 0.32),
+                  ),
+                  blurRadius: 18 + (glowValue * 18),
+                  spreadRadius: 1 + (glowValue * 2),
+                ),
+                BoxShadow(
+                  color: AppColors.energyRose.withValues(
+                    alpha: 0.2 + (glowValue * 0.2),
+                  ),
+                  blurRadius: 24 + (glowValue * 12),
+                ),
+              ],
+            ),
+            child: Text(
+              label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: AppStyles.buttonMedium(
+                color: AppColors.white,
+              ).copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -22,6 +22,8 @@ class AppSessionSnapshot {
     required this.dailyEarnings,
     required this.dailyAdEarnings,
     required this.dailyAdLimit,
+    required this.dailyAngelNumber,
+    required this.dailyAngelRefreshAt,
     required this.lastCheckInAt,
     required this.lastAdRewardAt,
     required this.compareProfiles,
@@ -46,6 +48,8 @@ class AppSessionSnapshot {
       dailyEarnings: 0,
       dailyAdEarnings: 0,
       dailyAdLimit: 50,
+      dailyAngelNumber: null,
+      dailyAngelRefreshAt: null,
       lastCheckInAt: null,
       lastAdRewardAt: null,
       compareProfiles: <ComparisonProfile>[],
@@ -69,6 +73,8 @@ class AppSessionSnapshot {
   final int dailyEarnings;
   final int dailyAdEarnings;
   final int dailyAdLimit;
+  final int? dailyAngelNumber;
+  final DateTime? dailyAngelRefreshAt;
   final DateTime? lastCheckInAt;
   final DateTime? lastAdRewardAt;
   final List<ComparisonProfile> compareProfiles;
@@ -98,6 +104,10 @@ class AppSessionSnapshot {
     int? dailyEarnings,
     int? dailyAdEarnings,
     int? dailyAdLimit,
+    int? dailyAngelNumber,
+    bool clearDailyAngelNumber = false,
+    DateTime? dailyAngelRefreshAt,
+    bool clearDailyAngelRefreshAt = false,
     DateTime? lastCheckInAt,
     bool clearLastCheckInAt = false,
     DateTime? lastAdRewardAt,
@@ -126,6 +136,12 @@ class AppSessionSnapshot {
       dailyEarnings: dailyEarnings ?? this.dailyEarnings,
       dailyAdEarnings: dailyAdEarnings ?? this.dailyAdEarnings,
       dailyAdLimit: dailyAdLimit ?? this.dailyAdLimit,
+      dailyAngelNumber: clearDailyAngelNumber
+          ? null
+          : dailyAngelNumber ?? this.dailyAngelNumber,
+      dailyAngelRefreshAt: clearDailyAngelRefreshAt
+          ? null
+          : dailyAngelRefreshAt ?? this.dailyAngelRefreshAt,
       lastCheckInAt: clearLastCheckInAt
           ? null
           : lastCheckInAt ?? this.lastCheckInAt,
@@ -169,6 +185,8 @@ class AppSessionSnapshot {
       'dailyEarnings': dailyEarnings,
       'dailyAdEarnings': dailyAdEarnings,
       'dailyAdLimit': dailyAdLimit,
+      'dailyAngelNumber': dailyAngelNumber,
+      'dailyAngelRefreshAt': dailyAngelRefreshAt?.toIso8601String(),
       'lastCheckInAt': lastCheckInAt?.toIso8601String(),
       'lastAdRewardAt': lastAdRewardAt?.toIso8601String(),
       'compareProfiles': compareProfiles
@@ -290,6 +308,10 @@ class AppSessionSnapshot {
       dailyEarnings: json['dailyEarnings'] as int? ?? 0,
       dailyAdEarnings: json['dailyAdEarnings'] as int? ?? 0,
       dailyAdLimit: json['dailyAdLimit'] as int? ?? 50,
+      dailyAngelNumber: json['dailyAngelNumber'] as int?,
+      dailyAngelRefreshAt: DateTime.tryParse(
+        json['dailyAngelRefreshAt'] as String? ?? '',
+      ),
       lastCheckInAt: DateTime.tryParse(json['lastCheckInAt'] as String? ?? ''),
       lastAdRewardAt: DateTime.tryParse(
         json['lastAdRewardAt'] as String? ?? '',

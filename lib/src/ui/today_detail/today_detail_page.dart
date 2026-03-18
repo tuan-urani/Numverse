@@ -12,6 +12,7 @@ import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/today_detail/components/today_detail_content.dart';
 import 'package:test/src/ui/widgets/app_detail_sticky_header.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
+import 'package:test/src/utils/app_styles.dart';
 
 class TodayDetailPage extends StatelessWidget {
   const TodayDetailPage({super.key});
@@ -44,7 +45,10 @@ class TodayDetailPage extends StatelessWidget {
             bottom: false,
             child: Column(
               children: <Widget>[
-                AppDetailStickyHeader(title: LocaleKey.todayDetailTitle.tr),
+                AppDetailStickyHeader(
+                  title: LocaleKey.todayDetailTitle.tr,
+                  titleStyle: AppStyles.h4(fontWeight: FontWeight.w700),
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),

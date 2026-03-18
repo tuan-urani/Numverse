@@ -72,6 +72,7 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
           child: _MessageBubble(
             message: message,
             onActionTap: widget.onActionTap,
+            onSuggestionTap: widget.onQuickSuggestionTap,
           ),
         );
       },
@@ -186,10 +187,15 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message, required this.onActionTap});
+  const _MessageBubble({
+    required this.message,
+    required this.onActionTap,
+    required this.onSuggestionTap,
+  });
 
   final NumAiChatMessage message;
   final VoidCallback onActionTap;
+  final ValueChanged<String> onSuggestionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +245,38 @@ class _MessageBubble extends StatelessWidget {
                 color: isUser ? AppColors.midnight : AppColors.textPrimary,
               ),
             ),
+            if (!isUser && message.followUpSuggestions.isNotEmpty) ...<Widget>[
+              10.height,
+              ...message.followUpSuggestions.map(
+                (String suggestion) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: InkWell(
+                    onTap: () => onSuggestionTap(suggestion),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.deepViolet.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      child: Text(
+                        suggestion,
+                        style: AppStyles.caption(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             if (message.hasActionButton) ...<Widget>[
               10.height,
               InkWell(

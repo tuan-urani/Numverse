@@ -32,13 +32,9 @@ class TodayHeader extends StatelessWidget {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: Text(
-                    profileDisplayName.isEmpty
-                        ? '$greeting ✨'
-                        : '$greeting, $profileDisplayName ✨',
-                    style: AppStyles.h2(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: _GreetingHeadline(
+                    greeting: greeting,
+                    profileDisplayName: profileDisplayName,
                   ),
                 ),
                 10.width,
@@ -48,7 +44,6 @@ class TodayHeader extends StatelessWidget {
                 ),
               ],
             ),
-            6.height,
             Text(
               LocaleKey.todaySubtitle.tr,
               style: AppStyles.bodyMedium(color: AppColors.textSecondary),
@@ -99,11 +94,62 @@ class TodayHeader extends StatelessWidget {
     if (firstName.isEmpty) {
       return '';
     }
-    final String prefix = LocaleKey.todayUserPrefix.tr.trim();
-    if (prefix.isEmpty) {
-      return firstName;
+    return firstName.trim();
+  }
+}
+
+class _GreetingHeadline extends StatelessWidget {
+  const _GreetingHeadline({
+    required this.greeting,
+    required this.profileDisplayName,
+  });
+
+  final String greeting;
+  final String profileDisplayName;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = MediaQuery.sizeOf(context).width <= 390;
+    final TextStyle greetingStyle = compact
+        ? AppStyles.h4(fontWeight: FontWeight.w700)
+        : AppStyles.h3(fontWeight: FontWeight.w700);
+    final TextStyle nameStyle = greetingStyle.copyWith(
+      color: AppColors.richGold,
+      fontWeight: FontWeight.w700,
+    );
+
+    if (profileDisplayName.isEmpty) {
+      return Text(
+        '$greeting ✨',
+        style: greetingStyle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
     }
-    return firstName;
+
+    return Row(
+      children: <Widget>[
+        Text(
+          '$greeting, ',
+          style: greetingStyle,
+          maxLines: 1,
+          overflow: TextOverflow.clip,
+          softWrap: false,
+        ),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: <InlineSpan>[
+                TextSpan(text: profileDisplayName, style: nameStyle),
+                TextSpan(text: ' ✨', style: greetingStyle),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
   }
 }
 

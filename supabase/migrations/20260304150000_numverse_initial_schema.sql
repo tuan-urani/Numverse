@@ -37,7 +37,6 @@ create type public.ledger_source_type as enum (
   'numai_message',
   'manual_adjustment'
 );
-create type public.ai_context_type as enum ('general', 'today', 'reading', 'compatibility');
 create type public.generation_kind as enum (
   'snapshot_narrative',
   'daily_reading_narrative',
@@ -376,7 +375,6 @@ create table public.ai_threads (
   owner_user_id uuid not null references auth.users(id) on delete cascade,
   primary_profile_id uuid not null references public.numerology_profiles(id) on delete cascade,
   related_profile_id uuid references public.numerology_profiles(id) on delete set null,
-  context_type public.ai_context_type not null default 'general',
   title text,
   thread_summary text,
   thread_summary_updated_at timestamptz,

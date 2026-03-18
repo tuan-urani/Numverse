@@ -27,6 +27,8 @@ class MainSessionState extends Equatable {
     required this.dailyLimit,
     required this.dailyAdEarnings,
     required this.dailyAdLimit,
+    required this.dailyAngelNumber,
+    required this.dailyAngelRefreshAt,
     required this.lastCheckInAt,
     required this.lastCheckInRewardAwarded,
     required this.lastCheckInEventId,
@@ -58,6 +60,8 @@ class MainSessionState extends Equatable {
       dailyLimit: 100,
       dailyAdEarnings: 0,
       dailyAdLimit: 50,
+      dailyAngelNumber: null,
+      dailyAngelRefreshAt: null,
       lastCheckInAt: null,
       lastCheckInRewardAwarded: 0,
       lastCheckInEventId: 0,
@@ -88,6 +92,8 @@ class MainSessionState extends Equatable {
   final int dailyLimit;
   final int dailyAdEarnings;
   final int dailyAdLimit;
+  final int? dailyAngelNumber;
+  final DateTime? dailyAngelRefreshAt;
   final DateTime? lastCheckInAt;
   final int lastCheckInRewardAwarded;
   final int lastCheckInEventId;
@@ -150,6 +156,10 @@ class MainSessionState extends Equatable {
     int? dailyLimit,
     int? dailyAdEarnings,
     int? dailyAdLimit,
+    int? dailyAngelNumber,
+    bool clearDailyAngelNumber = false,
+    DateTime? dailyAngelRefreshAt,
+    bool clearDailyAngelRefreshAt = false,
     DateTime? lastCheckInAt,
     bool clearLastCheckInAt = false,
     int? lastCheckInRewardAwarded,
@@ -186,6 +196,12 @@ class MainSessionState extends Equatable {
       dailyLimit: dailyLimit ?? this.dailyLimit,
       dailyAdEarnings: dailyAdEarnings ?? this.dailyAdEarnings,
       dailyAdLimit: dailyAdLimit ?? this.dailyAdLimit,
+      dailyAngelNumber: clearDailyAngelNumber
+          ? null
+          : dailyAngelNumber ?? this.dailyAngelNumber,
+      dailyAngelRefreshAt: clearDailyAngelRefreshAt
+          ? null
+          : dailyAngelRefreshAt ?? this.dailyAngelRefreshAt,
       lastCheckInAt: clearLastCheckInAt
           ? null
           : lastCheckInAt ?? this.lastCheckInAt,
@@ -228,6 +244,8 @@ class MainSessionState extends Equatable {
     dailyLimit,
     dailyAdEarnings,
     dailyAdLimit,
+    dailyAngelNumber,
+    dailyAngelRefreshAt,
     lastCheckInAt,
     lastCheckInRewardAwarded,
     lastCheckInEventId,

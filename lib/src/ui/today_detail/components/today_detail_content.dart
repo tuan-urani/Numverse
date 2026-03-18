@@ -14,6 +14,8 @@ class TodayDetailContent extends StatelessWidget {
     super.key,
   });
 
+  static const bool _showSuggestionSection = false;
+
   final int personalDayNumber;
   final NumerologyTodayPersonalNumberContent personalContent;
 
@@ -34,14 +36,16 @@ class TodayDetailContent extends StatelessWidget {
           delay: 80,
           child: _InterpretationCard(content: personalContent),
         ),
+        if (_showSuggestionSection) ...<Widget>[
+          const SizedBox(height: 24),
+          _AnimatedReveal(
+            delay: 160,
+            child: _SuggestionCard(content: personalContent),
+          ),
+        ],
         const SizedBox(height: 24),
         _AnimatedReveal(
-          delay: 160,
-          child: _SuggestionCard(content: personalContent),
-        ),
-        const SizedBox(height: 24),
-        _AnimatedReveal(
-          delay: 220,
+          delay: _showSuggestionSection ? 220 : 160,
           child: _DoAvoidCard(content: personalContent),
         ),
         const SizedBox(height: 12),
@@ -130,18 +134,25 @@ class _PersonalDayCard extends StatelessWidget {
   }
 
   String _resolveTitle() {
+    String normalized(String source) {
+      return source
+          .replaceAll('{number}', '')
+          .replaceAll(RegExp(r'\d+'), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+    }
+
     if (content.dayCardTitle.isNotEmpty) {
-      return content.dayCardTitle.replaceAll('{number}', '$personalDayNumber');
+      final String title = normalized(content.dayCardTitle);
+      if (title.isNotEmpty) {
+        return title;
+      }
     }
-    final String fallback = LocaleKey.todayDetailDayCardTitle.tr;
-    final String replaced = fallback.replaceAll(
-      RegExp(r'\d+'),
-      '$personalDayNumber',
-    );
-    if (replaced != fallback) {
-      return replaced;
+    final String fallback = normalized(LocaleKey.todayDetailDayCardTitle.tr);
+    if (fallback.isNotEmpty) {
+      return fallback;
     }
-    return '$fallback $personalDayNumber';
+    return LocaleKey.todayDetailDayCardTitle.tr;
   }
 
   String _resolveSubtitle() {
@@ -364,9 +375,9 @@ class _DetailCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.5),
+        color: AppColors.card.withValues(alpha: 0.52),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.34)),
       ),
       child: child,
     );

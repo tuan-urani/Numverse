@@ -25,7 +25,7 @@ values
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-pro',
+    'gemini-2.5-flash-lite',
     0.40,
     2500,
     $system$
@@ -125,7 +125,7 @@ Yêu cầu nội dung:
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     0.30,
     900,
     $system$
@@ -235,7 +235,7 @@ Yêu cầu nội dung:
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     0.35,
     1200,
     $system$
@@ -319,7 +319,7 @@ Yêu cầu nội dung:
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     0.35,
     1400,
     $system$
@@ -400,7 +400,7 @@ Yêu cầu nội dung:
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     0.40,
     1200,
     $system$
@@ -477,7 +477,7 @@ Yêu cầu nội dung:
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     0.35,
     1200,
     $system$
@@ -561,7 +561,7 @@ Yêu cầu nội dung:
     'vi-VN',
     'active',
     'gemini',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     0.45,
     700,
     $system$
@@ -582,9 +582,9 @@ Quy tắc bắt buộc:
 Hãy tạo câu trả lời cho tab "NumAI".
 
 Mục tiêu:
-- Trả lời đúng câu hỏi của user dựa trên thread_summary, recent_messages, active_profile, snapshot_facts, user_question, context_type.
+- Trả lời đúng câu hỏi của user dựa trên thread_summary, recent_messages, active_profile, snapshot_facts, user_question.
 - Nếu user hỏi rộng, hãy trả lời gọn trước rồi gợi ý 2-3 câu hỏi tiếp theo.
-- Nếu context_type là today hoặc compatibility nhưng context hiện chưa có dữ liệu chuyên biệt, hãy trả lời dựa trên snapshot_facts và nói theo hướng thận trọng.
+- Nếu context hiện chưa có dữ liệu chuyên biệt, hãy trả lời dựa trên snapshot_facts và nói theo hướng thận trọng.
 
 Yêu cầu nội dung:
 - answer nên súc tích, đúng trọng tâm.
@@ -600,8 +600,7 @@ Yêu cầu nội dung:
     "recent_messages",
     "active_profile",
     "snapshot_facts",
-    "user_question",
-    "context_type"
+    "user_question"
   ],
   "properties": {
     "thread_summary": {
@@ -620,8 +619,7 @@ Yêu cầu nội dung:
     },
     "active_profile": { "type": "object" },
     "snapshot_facts": { "type": "object" },
-    "user_question": { "type": "string" },
-    "context_type": { "type": "string" }
+    "user_question": { "type": "string" }
   }
 }
     $json$::jsonb,

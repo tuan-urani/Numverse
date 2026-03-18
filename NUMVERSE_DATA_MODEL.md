@@ -191,14 +191,7 @@ Các enum này nên được tạo ở Postgres để tránh string rời rạc.
 - `numai_message`
 - `manual_adjustment`
 
-### 4.8. `ai_context_type`
-
-- `general`
-- `today`
-- `reading`
-- `compatibility`
-
-### 4.9. `generation_kind`
+### 4.8. `generation_kind`
 
 - `snapshot_narrative`
 - `daily_reading_narrative`
@@ -208,7 +201,7 @@ Các enum này nên được tạo ở Postgres để tránh string rời rạc.
 - `compatibility_narrative`
 - `numai_reply`
 
-### 4.10. `generation_status`
+### 4.9. `generation_status`
 
 - `queued`
 - `running`
@@ -871,7 +864,6 @@ Mục đích:
 | `owner_user_id` | `uuid` | yes | FK -> `auth.users.id` |
 | `primary_profile_id` | `uuid` | yes | FK -> `public.numerology_profiles.id` |
 | `related_profile_id` | `uuid` | no | Dùng khi hỏi về tương hợp |
-| `context_type` | `ai_context_type` | yes |  |
 | `title` | `text` | no |  |
 | `thread_summary` | `text` | no | Summary ngắn của thread để reuse làm context |
 | `thread_summary_updated_at` | `timestamptz` | no |  |
@@ -915,7 +907,6 @@ Mục đích:
   - `active_profile`
   - `snapshot_facts`
   - `user_question`
-  - `context_type`
 - `daily_facts` và `compatibility_facts` chưa được bơm động theo intent ở giai đoạn hiện tại.
 
 ## 6.21. `public.content_templates`
@@ -1023,7 +1014,6 @@ MVP context payload:
 - `active_profile`
 - `snapshot_facts`
 - `user_question`
-- `context_type`
 
 MVP exclusions:
 - chưa inject `daily_facts`

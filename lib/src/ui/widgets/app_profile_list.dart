@@ -11,6 +11,7 @@ class AppProfileList extends StatelessWidget {
     required this.currentProfileId,
     required this.onSelectProfile,
     super.key,
+    this.onEditProfile,
     this.onDeleteProfile,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
@@ -20,6 +21,7 @@ class AppProfileList extends StatelessWidget {
   final List<UserProfile> profiles;
   final String? currentProfileId;
   final ValueChanged<String> onSelectProfile;
+  final ValueChanged<String>? onEditProfile;
   final ValueChanged<String>? onDeleteProfile;
   final EdgeInsetsGeometry padding;
   final bool shrinkWrap;
@@ -40,13 +42,15 @@ class AppProfileList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         final UserProfile profile = profiles[index];
         final bool isActive = profile.id == currentProfileId;
-        final bool canDelete =
-            onDeleteProfile != null && !isActive && profiles.length > 1;
+        final bool canEdit = onEditProfile != null;
+        final bool canDelete = onDeleteProfile != null;
         return _AppProfileRowCard(
           profile: profile,
           isActive: isActive,
+          canEdit: canEdit,
           canDelete: canDelete,
           onSelect: () => onSelectProfile(profile.id),
+          onEdit: canEdit ? () => onEditProfile?.call(profile.id) : null,
           onDelete: canDelete ? () => onDeleteProfile?.call(profile.id) : null,
         );
       },
@@ -58,15 +62,19 @@ class _AppProfileRowCard extends StatelessWidget {
   const _AppProfileRowCard({
     required this.profile,
     required this.isActive,
+    required this.canEdit,
     required this.canDelete,
     required this.onSelect,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final UserProfile profile;
   final bool isActive;
+  final bool canEdit;
   final bool canDelete;
   final VoidCallback onSelect;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
@@ -147,20 +155,6 @@ class _AppProfileRowCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (isActive)
-                          Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.richGold.withValues(alpha: 0.2),
-                            ),
-                            child: const Icon(
-                              Icons.check_rounded,
-                              size: 14,
-                              color: AppColors.richGold,
-                            ),
-                          ),
                       ],
                     ),
                     2.height,
@@ -171,19 +165,38 @@ class _AppProfileRowCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (canDelete) ...<Widget>[
+              if (canEdit || canDelete) ...<Widget>[
                 8.width,
-                InkWell(
-                  onTap: onDelete,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.delete_outline_rounded,
-                      size: 18,
-                      color: AppColors.textMuted.withValues(alpha: 0.95),
-                    ),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (canEdit)
+                      InkWell(
+                        onTap: onEdit,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: AppColors.textMuted.withValues(alpha: 0.95),
+                          ),
+                        ),
+                      ),
+                    if (canDelete)
+                      InkWell(
+                        onTap: onDelete,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: AppColors.textMuted.withValues(alpha: 0.95),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ],

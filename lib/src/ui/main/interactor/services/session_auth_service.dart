@@ -42,6 +42,8 @@ class SessionAuthService {
       dailyEarnings: state.dailyEarnings,
       dailyAdEarnings: state.dailyAdEarnings,
       dailyAdLimit: state.dailyAdLimit,
+      dailyAngelNumber: state.dailyAngelNumber,
+      dailyAngelRefreshAt: state.dailyAngelRefreshAt,
       lastCheckInAt: state.lastCheckInAt,
       lastAdRewardAt: state.lastAdRewardAt,
       compareProfiles: state.compareProfiles,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
@@ -14,6 +16,7 @@ import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/utils/app_colors.dart';
+import 'package:test/src/utils/app_dimensions.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
 import 'package:test/src/utils/tab_navigation_helper.dart';
@@ -45,7 +48,9 @@ class TodayPersonalContent extends StatelessWidget {
         final int luckyNumber =
             snapshot?.valueOf(ProfileTimeLifeSnapshot.luckyNumberMetric) ??
             NumerologyHelper.luckyNumber();
-        final String currentTime = _formatTime(DateTime.now());
+        final int angelNumber =
+            state.dailyAngelNumber ?? _angelNumberFromTime(DateTime.now());
+        final String currentTime = _formatAngelNumber(angelNumber);
 
         return Column(
           children: <Widget>[
@@ -168,10 +173,19 @@ class TodayPersonalContent extends StatelessWidget {
     await TabNavigationHelper.navigateFromMain(route);
   }
 
-  String _formatTime(DateTime now) {
-    final String hour = now.hour.toString().padLeft(2, '0');
-    final String minute = now.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+  int _angelNumberFromTime(DateTime now) {
+    return (now.hour * 100) + now.minute;
+  }
+
+  String _formatAngelNumber(int value) {
+    final int hour = value ~/ 100;
+    final int minute = value % 100;
+    final String hourText = hour.toString().padLeft(2, '0');
+    final String minuteText = minute.toString().padLeft(2, '0');
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return '00:00';
+    }
+    return '$hourText:$minuteText';
   }
 
   int _resolvePersonalDayNumber(MainSessionState state) {
@@ -1318,170 +1332,354 @@ class _PersonalHeroCard extends StatelessWidget {
 
     return AppMysticalCard(
       borderColor: AppColors.richGold.withValues(alpha: 0.32),
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      padding: EdgeInsets.zero,
       child: Stack(
         children: <Widget>[
-          Positioned(
-            top: -56,
-            right: -36,
-            child: _FloatingOrb(
-              size: 160,
-              alpha: 0.2,
-              durationMs: 4200,
-              startValue: 0,
-              color: AppColors.richGold,
-            ),
-          ),
-          Positioned(
-            bottom: -58,
-            left: -24,
-            child: _FloatingOrb(
-              size: 128,
-              alpha: 0.16,
-              durationMs: 4700,
-              startValue: 0.55,
-              color: AppColors.energyViolet,
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  const Icon(
-                    Icons.auto_awesome,
-                    color: AppColors.richGold,
-                    size: 20,
-                  ),
-                  8.width,
-                  Text(
-                    cardTitle,
-                    style: AppStyles.h5(
-                      fontWeight: FontWeight.w600,
-                    ).copyWith(fontSize: 18, height: 1.3),
-                  ),
-                ],
-              ),
-              12.height,
-              Center(
-                child: Column(
+          const Positioned.fill(child: _PersonalHeroCosmicBackground()),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
                   children: <Widget>[
-                    SizedBox(
-                      width: 118,
-                      height: 118,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: <Widget>[
-                          const _HeroPulseAura(),
-                          Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: <Color>[
-                                  AppColors.richGold.withValues(alpha: 0.3),
-                                  AppColors.energyViolet.withValues(alpha: 0.2),
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: AppColors.richGold,
+                      size: 20,
+                    ),
+                    8.width,
+                    Text(
+                      cardTitle,
+                      style: AppStyles.h5(
+                        fontWeight: FontWeight.w600,
+                      ).copyWith(fontSize: 18, height: 1.3),
+                    ),
+                  ],
+                ),
+                12.height,
+                Center(
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 118,
+                        height: 118,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: <Widget>[
+                            const _HeroPulseAura(),
+                            Container(
+                              width: 96,
+                              height: 96,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: <Color>[
+                                    AppColors.richGold.withValues(alpha: 0.3),
+                                    AppColors.energyViolet.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                  ],
+                                ),
+                                border: Border.all(
+                                  color: AppColors.richGold.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  width: 2,
+                                ),
+                                boxShadow: <BoxShadow>[
+                                  BoxShadow(
+                                    color: AppColors.richGold.withValues(
+                                      alpha: 0.28,
+                                    ),
+                                    blurRadius: 22,
+                                    spreadRadius: 1,
+                                  ),
                                 ],
                               ),
-                              border: Border.all(
-                                color: AppColors.richGold.withValues(
-                                  alpha: 0.5,
-                                ),
-                                width: 2,
-                              ),
-                              boxShadow: <BoxShadow>[
-                                BoxShadow(
-                                  color: AppColors.richGold.withValues(
-                                    alpha: 0.28,
+                              child: Center(
+                                child: AppGlowText(
+                                  text: displayNumber,
+                                  style: AppStyles.numberLarge().copyWith(
+                                    fontSize: 60,
+                                    height: 1,
                                   ),
-                                  blurRadius: 22,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: AppGlowText(
-                                text: displayNumber,
-                                style: AppStyles.numberLarge().copyWith(
-                                  fontSize: 60,
-                                  height: 1,
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                      8.height,
+                      Text(
+                        rhythmText,
+                        textAlign: TextAlign.center,
+                        style: AppStyles.bodyMedium(
+                          color: AppColors.richGold,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                12.height,
+                Stack(
+                  children: <Widget>[
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 1,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: <Color>[
+                              AppColors.richGold,
+                              AppColors.richGold.withValues(alpha: 0.5),
+                              AppColors.transparent,
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                    8.height,
-                    Text(
-                      rhythmText,
-                      textAlign: TextAlign.center,
-                      style: AppStyles.bodyMedium(
-                        color: AppColors.richGold,
-                        fontWeight: FontWeight.w600,
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 12,
+                        top: 2,
+                        bottom: 2,
+                      ),
+                      child: Text(
+                        '"$quoteText"',
+                        style: AppStyles.bodyMedium(
+                          color: AppColors.textPrimary.withValues(alpha: 0.9),
+                        ).copyWith(fontStyle: FontStyle.italic, height: 1.52),
                       ),
                     ),
                   ],
                 ),
-              ),
-              12.height,
-              Stack(
-                children: <Widget>[
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 1,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(999),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: <Color>[
-                            AppColors.richGold,
-                            AppColors.richGold.withValues(alpha: 0.5),
-                            AppColors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, top: 2, bottom: 2),
-                    child: Text(
-                      '"$quoteText"',
-                      style: AppStyles.bodyMedium(
-                        color: AppColors.textPrimary.withValues(alpha: 0.9),
-                      ).copyWith(fontStyle: FontStyle.italic, height: 1.52),
+                if (isGuest) ...<Widget>[
+                  12.height,
+                  Text(
+                    LocaleKey.todayPersonalGuestHint.tr,
+                    style: AppStyles.bodySmall(
+                      color: AppColors.textSecondary.withValues(alpha: 0.96),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
-              ),
-              if (isGuest) ...<Widget>[
                 12.height,
-                Text(
-                  LocaleKey.todayPersonalGuestHint.tr,
-                  style: AppStyles.bodySmall(
-                    color: AppColors.textSecondary.withValues(alpha: 0.96),
-                    fontWeight: FontWeight.w500,
-                  ),
+                _PrimaryGlowButton(
+                  label: ctaLabel,
+                  icon: isGuest ? Icons.lock_rounded : Icons.auto_awesome,
+                  onTap: onTap,
                 ),
               ],
-              12.height,
-              _PrimaryGlowButton(
-                label: ctaLabel,
-                icon: isGuest ? Icons.lock_rounded : Icons.auto_awesome,
-                onTap: onTap,
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _PersonalHeroCosmicBackground extends StatelessWidget {
+  const _PersonalHeroCosmicBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: <Color>[
+                      AppColors.energyViolet.withValues(alpha: 0.14),
+                      AppColors.deepViolet.withValues(alpha: 0.08),
+                      AppColors.midnight.withValues(alpha: 0.02),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Positioned.fill(child: _AnimatedPersonalHeroConstellation()),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConstellationLine {
+  const _ConstellationLine(this.from, this.to);
+
+  final Offset from;
+  final Offset to;
+}
+
+class _AnimatedPersonalHeroConstellation extends StatefulWidget {
+  const _AnimatedPersonalHeroConstellation();
+
+  @override
+  State<_AnimatedPersonalHeroConstellation> createState() =>
+      _AnimatedPersonalHeroConstellationState();
+}
+
+class _AnimatedPersonalHeroConstellationState
+    extends State<_AnimatedPersonalHeroConstellation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 5600),
+    )..repeat();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (BuildContext context, Widget? child) {
+        return CustomPaint(
+          painter: _PersonalHeroConstellationPainter(
+            progress: _controller.value,
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+}
+
+class _PersonalHeroConstellationPainter extends CustomPainter {
+  const _PersonalHeroConstellationPainter({required this.progress});
+
+  final double progress;
+
+  static const List<Offset> _stars = <Offset>[
+    Offset(0.08, 0.12),
+    Offset(0.17, 0.2),
+    Offset(0.27, 0.14),
+    Offset(0.36, 0.22),
+    Offset(0.6, 0.1),
+    Offset(0.72, 0.18),
+    Offset(0.84, 0.12),
+    Offset(0.92, 0.24),
+    Offset(0.16, 0.46),
+    Offset(0.24, 0.38),
+    Offset(0.78, 0.42),
+    Offset(0.88, 0.36),
+    Offset(0.14, 0.7),
+    Offset(0.32, 0.76),
+    Offset(0.68, 0.72),
+    Offset(0.82, 0.84),
+  ];
+
+  static const List<_ConstellationLine> _lines = <_ConstellationLine>[
+    _ConstellationLine(Offset(0.08, 0.12), Offset(0.17, 0.2)),
+    _ConstellationLine(Offset(0.17, 0.2), Offset(0.27, 0.14)),
+    _ConstellationLine(Offset(0.27, 0.14), Offset(0.36, 0.22)),
+    _ConstellationLine(Offset(0.6, 0.1), Offset(0.72, 0.18)),
+    _ConstellationLine(Offset(0.72, 0.18), Offset(0.84, 0.12)),
+    _ConstellationLine(Offset(0.84, 0.12), Offset(0.92, 0.24)),
+    _ConstellationLine(Offset(0.14, 0.7), Offset(0.32, 0.76)),
+    _ConstellationLine(Offset(0.68, 0.72), Offset(0.82, 0.84)),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double phase = progress * (2 * math.pi);
+
+    for (int i = 0; i < _lines.length; i++) {
+      final _ConstellationLine line = _lines[i];
+      final double linePulse =
+          0.45 + (0.55 * (0.5 + (0.5 * math.sin(phase + (i * 0.8)))));
+      final Paint linePaint = Paint()
+        ..color = AppColors.richGold.withValues(alpha: 0.08 + (0.1 * linePulse))
+        ..strokeWidth = 1
+        ..style = PaintingStyle.stroke;
+      canvas.drawLine(
+        Offset(size.width * line.from.dx, size.height * line.from.dy),
+        Offset(size.width * line.to.dx, size.height * line.to.dy),
+        linePaint,
+      );
+    }
+
+    final Paint starPaint = Paint()..style = PaintingStyle.fill;
+    for (int i = 0; i < _stars.length; i++) {
+      final Offset star = _stars[i];
+      final bool isAnchor = i % 4 == 0;
+      final double twinkle =
+          0.4 + (0.6 * (0.5 + (0.5 * math.sin(phase + (i * 0.65)))));
+      final double alpha = isAnchor
+          ? (0.26 + (0.34 * twinkle)).clamp(0, 1)
+          : (0.1 + (0.22 * twinkle)).clamp(0, 1);
+      starPaint.color = (isAnchor ? AppColors.richGold : AppColors.white)
+          .withValues(alpha: alpha);
+      final double radius = isAnchor
+          ? 1.6 + (0.5 * twinkle)
+          : 1.1 + (0.25 * twinkle);
+      canvas.drawCircle(
+        Offset(size.width * star.dx, size.height * star.dy),
+        radius,
+        starPaint,
+      );
+    }
+
+    final Offset center = Offset(size.width * 0.5, size.height * 0.32);
+    final Paint arcPaint = Paint()
+      ..color = AppColors.richGold.withValues(
+        alpha: (0.11 + (0.08 * (0.5 + (0.5 * math.sin(phase))))).clamp(0, 1),
+      )
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    final double arcShift = 0.16 * math.sin(phase * 0.75);
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: size.width * 0.35),
+      3.4 + arcShift,
+      2.7,
+      false,
+      arcPaint,
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: size.width * 0.42),
+      3.7 - (arcShift * 0.8),
+      2.2,
+      false,
+      arcPaint
+        ..color = AppColors.energyViolet.withValues(
+          alpha: (0.1 + (0.08 * (0.5 + (0.5 * math.sin(phase + 1.2))))).clamp(
+            0,
+            1,
+          ),
+        ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PersonalHeroConstellationPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
 
@@ -1994,65 +2192,6 @@ class _PrimaryGlowButtonState extends State<_PrimaryGlowButton>
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-}
-
-class _FloatingOrb extends StatefulWidget {
-  const _FloatingOrb({
-    required this.size,
-    required this.alpha,
-    this.durationMs = 4200,
-    this.startValue = 0,
-    this.color = AppColors.richGold,
-  });
-
-  final double size;
-  final double alpha;
-  final int durationMs;
-  final double startValue;
-  final Color color;
-
-  @override
-  State<_FloatingOrb> createState() => _FloatingOrbState();
-}
-
-class _FloatingOrbState extends State<_FloatingOrb>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: widget.durationMs),
-      value: widget.startValue.clamp(0.0, 1.0),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (BuildContext context, Widget? child) {
-        final double dy = -9 + (_controller.value * 18);
-        return Transform.translate(offset: Offset(0, dy), child: child);
-      },
-      child: Container(
-        width: widget.size,
-        height: widget.size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: widget.color.withValues(alpha: widget.alpha),
         ),
       ),
     );

@@ -385,6 +385,8 @@ class LocaleKey {
       PagesLocaleKey.compatibilityNeedMorePoints;
   static const String compatibilityNeedMorePointsCta =
       PagesLocaleKey.compatibilityNeedMorePointsCta;
+  static const String compatibilityStartNeedMorePointsCta =
+      PagesLocaleKey.compatibilityStartNeedMorePointsCta;
   static const String compatibilityHistoryTitle =
       PagesLocaleKey.compatibilityHistoryTitle;
   static const String compatibilityHistorySubtitle =
@@ -657,6 +659,18 @@ class LocaleKey {
       PagesLocaleKey.profileManageProfilesAddHint;
   static const String profileManageProfilesDeleteConfirm =
       PagesLocaleKey.profileManageProfilesDeleteConfirm;
+  static const String profileManageProfilesDeleteLastTitle =
+      PagesLocaleKey.profileManageProfilesDeleteLastTitle;
+  static const String profileManageProfilesDeleteLastConfirm =
+      PagesLocaleKey.profileManageProfilesDeleteLastConfirm;
+  static const String profileManageProfilesEditTitle =
+      PagesLocaleKey.profileManageProfilesEditTitle;
+  static const String profileManageProfilesEditSubtitle =
+      PagesLocaleKey.profileManageProfilesEditSubtitle;
+  static const String profileManageProfilesEditConfirmTitle =
+      PagesLocaleKey.profileManageProfilesEditConfirmTitle;
+  static const String profileManageProfilesEditConfirmBody =
+      PagesLocaleKey.profileManageProfilesEditConfirmBody;
   static const String profileAuthDialogTitle =
       PagesLocaleKey.profileAuthDialogTitle;
   static const String profileAuthDialogSubtitle =

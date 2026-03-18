@@ -549,10 +549,25 @@ export async function resolvePrimaryProfile(
     if (error) {
       throw new HttpError(500, "profile_lookup_failed", error);
     }
-    if (!data) {
+    if (data) {
+      return data as Record<string, unknown>;
+    }
+
+    const { data: byClientId, error: byClientIdError } = await admin
+      .from("numerology_profiles")
+      .select("*")
+      .eq("owner_user_id", ownerUserId)
+      .eq("client_profile_id", profileId)
+      .is("archived_at", null)
+      .maybeSingle();
+
+    if (byClientIdError) {
+      throw new HttpError(500, "profile_lookup_failed", byClientIdError);
+    }
+    if (!byClientId) {
       throw new HttpError(404, "profile_not_found");
     }
-    return data as Record<string, unknown>;
+    return byClientId as Record<string, unknown>;
   }
 
   const { data: primary, error: primaryError } = await admin

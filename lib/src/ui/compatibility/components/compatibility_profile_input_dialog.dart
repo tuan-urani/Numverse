@@ -10,16 +10,34 @@ class CompatibilityProfileInputDialog extends StatefulWidget {
   const CompatibilityProfileInputDialog({
     required this.onSubmit,
     this.title,
+    this.subtitle,
+    this.submitLabel,
+    this.initialName,
+    this.initialBirthDate,
+    this.note,
+    this.onBeforeSubmit,
     super.key,
   });
 
   final Future<void> Function(String name, DateTime birthDate) onSubmit;
+  final Future<bool> Function(BuildContext context)? onBeforeSubmit;
   final String? title;
+  final String? subtitle;
+  final String? submitLabel;
+  final String? initialName;
+  final DateTime? initialBirthDate;
+  final String? note;
 
   static Future<void> show(
     BuildContext context, {
     required Future<void> Function(String name, DateTime birthDate) onSubmit,
     String? title,
+    String? subtitle,
+    String? submitLabel,
+    String? initialName,
+    DateTime? initialBirthDate,
+    String? note,
+    Future<bool> Function(BuildContext context)? onBeforeSubmit,
   }) {
     return showDialog<void>(
       context: context,
@@ -28,6 +46,12 @@ class CompatibilityProfileInputDialog extends StatefulWidget {
         return CompatibilityProfileInputDialog(
           onSubmit: onSubmit,
           title: title,
+          subtitle: subtitle,
+          submitLabel: submitLabel,
+          initialName: initialName,
+          initialBirthDate: initialBirthDate,
+          note: note,
+          onBeforeSubmit: onBeforeSubmit,
         );
       },
     );
@@ -49,8 +73,12 @@ class _CompatibilityProfileInputDialogState
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
+    _nameController = TextEditingController(text: widget.initialName ?? '');
     _birthDateController = TextEditingController();
+    _birthDate = widget.initialBirthDate;
+    if (_birthDate != null) {
+      _birthDateController.text = _formatBirthDate(_birthDate!);
+    }
   }
 
   @override
@@ -62,6 +90,7 @@ class _CompatibilityProfileInputDialogState
 
   @override
   Widget build(BuildContext context) {
+    final String noteText = widget.note ?? LocaleKey.compatibilityUnlockNote.tr;
     return Dialog(
       backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -113,7 +142,7 @@ class _CompatibilityProfileInputDialogState
               ),
               8.height,
               Text(
-                LocaleKey.compatibilityUnlockSubtitle.tr,
+                widget.subtitle ?? LocaleKey.compatibilityUnlockSubtitle.tr,
                 style: AppStyles.bodySmall(color: AppColors.textSecondary),
               ),
               14.height,
@@ -193,29 +222,32 @@ class _CompatibilityProfileInputDialogState
                             const Icon(Icons.auto_awesome, size: 16),
                             8.width,
                             Text(
-                              LocaleKey.compatibilityUnlockAction.tr,
+                              widget.submitLabel ??
+                                  LocaleKey.compatibilityUnlockAction.tr,
                               style: AppStyles.buttonMedium(),
                             ),
                           ],
                         ),
                 ),
               ),
-              12.height,
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.richGold.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.richGold.withValues(alpha: 0.26),
+              if (noteText.isNotEmpty) ...<Widget>[
+                12.height,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.richGold.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.richGold.withValues(alpha: 0.26),
+                    ),
+                  ),
+                  child: Text(
+                    noteText,
+                    style: AppStyles.caption(color: AppColors.textSecondary),
                   ),
                 ),
-                child: Text(
-                  LocaleKey.compatibilityUnlockNote.tr,
-                  style: AppStyles.caption(color: AppColors.textSecondary),
-                ),
-              ),
+              ],
             ],
           ),
         ),
@@ -238,6 +270,13 @@ class _CompatibilityProfileInputDialogState
         _errorText = LocaleKey.compatibilityUnlockInvalid.tr;
       });
       return;
+    }
+
+    if (widget.onBeforeSubmit != null) {
+      final bool canContinue = await widget.onBeforeSubmit!.call(context);
+      if (!mounted || !canContinue) {
+        return;
+      }
     }
 
     setState(() {

@@ -12,6 +12,8 @@ class AppShared {
       'numverse_supabase_access_token';
   static const String _keySupabaseRefreshToken =
       'numverse_supabase_refresh_token';
+  static const String _keyNumAiGuestHistoryPrefix =
+      'numverse_numai_guest_history_';
 
   final SharedPreferences _prefs;
 
@@ -108,11 +110,32 @@ class AppShared {
     await _prefs.remove(_keySupabaseRefreshToken);
   }
 
+  String? getNumAiGuestHistory(String userKey) {
+    return _prefs.getString(_numAiGuestHistoryKey(userKey));
+  }
+
+  Future<void> setNumAiGuestHistory({
+    required String userKey,
+    required String value,
+  }) async {
+    await _prefs.setString(_numAiGuestHistoryKey(userKey), value);
+  }
+
+  Future<void> clearNumAiGuestHistory(String userKey) async {
+    await _prefs.remove(_numAiGuestHistoryKey(userKey));
+  }
+
   Future<void> clearAll() async {
     await _prefs.clear();
   }
 
   String _normalizeLocaleCode(String localeCode) {
     return localeCode.trim().toLowerCase();
+  }
+
+  String _numAiGuestHistoryKey(String userKey) {
+    final String normalized = userKey.trim().toLowerCase();
+    final String safeKey = normalized.isEmpty ? 'local' : normalized;
+    return '$_keyNumAiGuestHistoryPrefix$safeKey';
   }
 }

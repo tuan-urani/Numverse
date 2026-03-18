@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
@@ -106,6 +107,20 @@ class ProfileManageBottomSheet extends StatelessWidget {
                               }
                               Navigator.of(context).pop();
                             },
+                            onEditProfile: (String profileId) async {
+                              await _handleEditProfile(
+                                context,
+                                state: state,
+                                profileId: profileId,
+                              );
+                            },
+                            onDeleteProfile: (String profileId) async {
+                              await _handleDeleteProfile(
+                                context,
+                                state: state,
+                                profileId: profileId,
+                              );
+                            },
                             padding: const EdgeInsets.only(bottom: 8),
                           ),
                         )
@@ -155,5 +170,141 @@ class ProfileManageBottomSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleDeleteProfile(
+    BuildContext context, {
+    required MainSessionState state,
+    required String profileId,
+  }) async {
+    final UserProfile? profile = _findProfileById(state.profiles, profileId);
+    if (profile == null) {
+      return;
+    }
+    final bool isLastProfile = state.profiles.length == 1;
+    final bool confirmed = await _showDeleteConfirmDialog(
+      context,
+      isLastProfile: isLastProfile,
+    );
+    if (!context.mounted || !confirmed) {
+      return;
+    }
+    await sessionBloc.removeProfile(profile.id);
+  }
+
+  Future<void> _handleEditProfile(
+    BuildContext context, {
+    required MainSessionState state,
+    required String profileId,
+  }) async {
+    final UserProfile? profile = _findProfileById(state.profiles, profileId);
+    if (profile == null) {
+      return;
+    }
+    await CompatibilityProfileInputDialog.show(
+      context,
+      title: LocaleKey.profileManageProfilesEditTitle.tr,
+      subtitle: LocaleKey.profileManageProfilesEditSubtitle.tr,
+      submitLabel: LocaleKey.commonSave.tr,
+      initialName: profile.name,
+      initialBirthDate: profile.birthDate,
+      note: '',
+      onBeforeSubmit: _showEditConfirmDialog,
+      onSubmit: (String name, DateTime birthDate) async {
+        await sessionBloc.updateProfile(
+          profileId: profile.id,
+          name: name,
+          birthDate: birthDate,
+        );
+      },
+    );
+  }
+
+  UserProfile? _findProfileById(List<UserProfile> profiles, String profileId) {
+    for (final UserProfile profile in profiles) {
+      if (profile.id == profileId) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _showDeleteConfirmDialog(
+    BuildContext context, {
+    required bool isLastProfile,
+  }) async {
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.card,
+          title: Text(
+            isLastProfile
+                ? LocaleKey.profileManageProfilesDeleteLastTitle.tr
+                : LocaleKey.commonDelete.tr,
+            style: AppStyles.h5(fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            isLastProfile
+                ? LocaleKey.profileManageProfilesDeleteLastConfirm.tr
+                : LocaleKey.profileManageProfilesDeleteConfirm.tr,
+            style: AppStyles.bodyMedium(color: AppColors.textSecondary),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                LocaleKey.commonCancel.tr,
+                style: AppStyles.bodyMedium(color: AppColors.textMuted),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                LocaleKey.commonDelete.tr,
+                style: AppStyles.bodyMedium(color: AppColors.error),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  Future<bool> _showEditConfirmDialog(BuildContext context) async {
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.card,
+          title: Text(
+            LocaleKey.profileManageProfilesEditConfirmTitle.tr,
+            style: AppStyles.h5(fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            LocaleKey.profileManageProfilesEditConfirmBody.tr,
+            style: AppStyles.bodyMedium(color: AppColors.textSecondary),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                LocaleKey.commonCancel.tr,
+                style: AppStyles.bodyMedium(color: AppColors.textMuted),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                LocaleKey.commonConfirm.tr,
+                style: AppStyles.bodyMedium(color: AppColors.richGold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
   }
 }

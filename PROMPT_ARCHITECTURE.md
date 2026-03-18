@@ -690,8 +690,7 @@ Lấy từ:
     "matrix_aspects": {},
     "life_cycles": {}
   },
-  "user_question": "string",
-  "context_type": "general"
+  "user_question": "string"
 }
 ```
 
@@ -700,7 +699,6 @@ Lấy từ:
 - Chưa inject `daily_facts`.
 - Chưa inject `compatibility_facts`.
 - Chưa dùng `intent detection`.
-- `context_type` hiện tại chỉ đóng vai trò `hint`.
 
 ### 8.6. Prompt objective
 
@@ -800,7 +798,6 @@ Mỗi prompt trước khi đưa `active` nên check:
    - `active_profile`
    - `snapshot_facts`
    - `user_question`
-   - `context_type`
 6. `daily_facts` và `compatibility_facts` để phase sau.
 
 ## 13. Next Step Gợi ý

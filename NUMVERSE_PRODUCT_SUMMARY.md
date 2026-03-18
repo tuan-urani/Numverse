@@ -153,7 +153,7 @@ Nguyên tắc hiện tại:
 - Nếu là `Free User`, mỗi lượt chat sẽ cần tiêu hao một lượng `Soul Point` nhất định.
 - Nếu là `PRO User`, có thể chat thuận tiện hơn mà không phải mở lẻ từng lượt bằng `Soul Point`.
 - Ở giai đoạn hiện tại, `NumAI` dùng một `context payload` cố định cho mọi request chatbot.
-- Payload MVP hiện tại gồm: `thread_summary`, `recent_messages`, `active_profile`, `snapshot_facts`, `user_question`, `context_type`.
+- Payload MVP hiện tại gồm: `thread_summary`, `recent_messages`, `active_profile`, `snapshot_facts`, `user_question`.
 - Chưa dùng cơ chế `intent detection` để tự động bơm thêm `daily_facts` hoặc `compatibility_facts`.
 - Prompt cho các chức năng AI được lưu ở database theo mô hình `versioned prompt templates`, và backend sẽ lấy `active prompt version` để gọi Gemini.
 

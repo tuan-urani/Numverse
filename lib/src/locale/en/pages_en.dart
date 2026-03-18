@@ -37,6 +37,8 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.compatibilityNeedMorePoints:
       'You need @points more Soul Points to compare',
   PagesLocaleKey.compatibilityNeedMorePointsCta: 'Get more now',
+  PagesLocaleKey.compatibilityStartNeedMorePointsCta:
+      'Need @points more points to compare. Earn more',
   PagesLocaleKey.compatibilityHistoryTitle: 'Comparison history',
   PagesLocaleKey.compatibilityHistorySubtitle:
       'Tap an item to view again without spending points.',
@@ -236,13 +238,24 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileGuestAuthTitle: 'Sign up / Sign in to back up',
   PagesLocaleKey.profileGuestAuthSubtitle:
       'Sync your profile to cloud so your data stays safe across devices.',
-  PagesLocaleKey.profileManageProfilesTitle: 'Manage profiles',
+  PagesLocaleKey.profileManageProfilesTitle: 'Manage users',
   PagesLocaleKey.profileManageProfilesSubtitle:
       'Select the active profile, add a new one, or remove unused profiles.',
   PagesLocaleKey.profileManageProfilesAddHint:
       'You can keep multiple profiles for yourself and people you care about.',
   PagesLocaleKey.profileManageProfilesDeleteConfirm:
       'Are you sure you want to delete this profile?',
+  PagesLocaleKey.profileManageProfilesDeleteLastTitle:
+      'Delete your last profile?',
+  PagesLocaleKey.profileManageProfilesDeleteLastConfirm:
+      'This is your last profile. After deleting it, personal readings and NumAI chat history tied to this profile will be removed.',
+  PagesLocaleKey.profileManageProfilesEditTitle: 'Edit profile',
+  PagesLocaleKey.profileManageProfilesEditSubtitle:
+      'Changing name or birth date will refresh numerology data for this profile.',
+  PagesLocaleKey.profileManageProfilesEditConfirmTitle:
+      'Confirm profile update?',
+  PagesLocaleKey.profileManageProfilesEditConfirmBody:
+      'The app will create a new profile and remove the current one. Do you want to continue?',
   PagesLocaleKey.profileAuthDialogTitle: 'Back up your data',
   PagesLocaleKey.profileAuthDialogSubtitle:
       'Create an account or sign in to back up and restore your data',

@@ -63,6 +63,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       _onAdRewardStatusRefreshRequested,
     );
     on<MainSessionSoulPointsDeducted>(_onSoulPointsDeducted);
+    on<MainSessionSoulPointsSynced>(_onSoulPointsSynced);
     on<MainSessionCheckedIn>(_onCheckedIn);
     on<MainSessionCheckInCelebrationConsumed>(_onCheckInCelebrationConsumed);
     on<MainSessionInteractionTracked>(_onInteractionTracked);
@@ -146,6 +147,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
             cloudSnapshot: cloudSnapshot,
             fallbackHistory: effectiveSnapshot.compatibilityHistory,
             fallbackCloudUserId: effectiveSnapshot.cloudUserId,
+            fallbackDailyAngelNumber: effectiveSnapshot.dailyAngelNumber,
+            fallbackDailyAngelRefreshAt: effectiveSnapshot.dailyAngelRefreshAt,
           );
         } catch (error, stackTrace) {
           developer.log(
@@ -177,11 +180,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           lifeBasedByProfileId: effectiveSnapshot.lifeBasedByProfileId,
           timeLifeByProfileId: effectiveSnapshot.timeLifeByProfileId,
           currentProfile: currentProfile,
+          clearCurrentProfile: currentProfile == null,
           soulPoints: effectiveSnapshot.soulPoints,
           currentStreak: effectiveSnapshot.currentStreak,
           dailyEarnings: effectiveSnapshot.dailyEarnings,
           dailyAdEarnings: effectiveSnapshot.dailyAdEarnings,
           dailyAdLimit: effectiveSnapshot.dailyAdLimit,
+          dailyAngelNumber: effectiveSnapshot.dailyAngelNumber,
+          dailyAngelRefreshAt: effectiveSnapshot.dailyAngelRefreshAt,
           lastCheckInAt: effectiveSnapshot.lastCheckInAt,
           lastAdRewardAt: effectiveSnapshot.lastAdRewardAt,
           compareProfiles: effectiveSnapshot.compareProfiles,
@@ -277,6 +283,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               cloudSnapshot: cloudSnapshot,
               fallbackHistory: state.compatibilityHistory,
               fallbackCloudUserId: state.cloudUserId,
+              fallbackDailyAngelNumber: state.dailyAngelNumber,
+              fallbackDailyAngelRefreshAt: state.dailyAngelRefreshAt,
             );
         await _applySnapshotToState(
           mergedCloudSnapshot.copyWith(
@@ -324,6 +332,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               cloudSnapshot: cloudSnapshot,
               fallbackHistory: localSnapshotBeforeAuth.compatibilityHistory,
               fallbackCloudUserId: localSnapshotBeforeAuth.cloudUserId,
+              fallbackDailyAngelNumber:
+                  localSnapshotBeforeAuth.dailyAngelNumber,
+              fallbackDailyAngelRefreshAt:
+                  localSnapshotBeforeAuth.dailyAngelRefreshAt,
             );
         await _applySnapshotToState(
           mergedCloudSnapshot,
@@ -407,6 +419,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               cloudSnapshot: cloudSnapshot,
               fallbackHistory: localSnapshotBeforeAuth.compatibilityHistory,
               fallbackCloudUserId: localSnapshotBeforeAuth.cloudUserId,
+              fallbackDailyAngelNumber:
+                  localSnapshotBeforeAuth.dailyAngelNumber,
+              fallbackDailyAngelRefreshAt:
+                  localSnapshotBeforeAuth.dailyAngelRefreshAt,
             );
         await _applySnapshotToState(
           mergedCloudSnapshot,
@@ -545,40 +561,59 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
-  /// Xử lý cập nhật profile, làm mới snapshot cũ để tránh dữ liệu stale.
+  /// Xử lý cập nhật profile theo chiến lược tạo mới và bỏ profile cũ.
   Future<void> _onProfileUpdated(
     MainSessionProfileUpdated event,
     Emitter<MainSessionState> emit,
   ) async {
-    // Sửa profile, xóa snapshot cũ của profile này rồi tính lại để tránh stale data.
+    // Tạo profile mới với id mới, thay profile cũ trong session rồi sync cloud.
     try {
-      final List<UserProfile> profiles = _profileService.updateProfile(
+      final UserProfile? existingProfile = _profileService.findProfileById(
         state.profiles,
-        profileId: event.profileId,
+        event.profileId,
+      );
+      if (existingProfile == null) {
+        _completeVoid(event.completer);
+        return;
+      }
+
+      final UserProfile newProfile = _profileService.createProfile(
         name: event.name,
         birthDate: event.birthDate,
       );
+      final List<UserProfile> profiles = _profileService.replaceProfile(
+        state.profiles,
+        oldProfileId: event.profileId,
+        newProfile: newProfile,
+      );
+      final String? nextCurrentProfileId =
+          state.currentProfile?.id == event.profileId
+          ? newProfile.id
+          : state.currentProfile?.id;
       final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
         profiles,
-        state.currentProfile?.id,
+        nextCurrentProfileId,
       );
       final Map<String, ProfileLifeBasedSnapshot> nextLifeBasedByProfileId =
           Map<String, ProfileLifeBasedSnapshot>.from(state.lifeBasedByProfileId)
-            ..remove(event.profileId);
+            ..remove(event.profileId)
+            ..remove(newProfile.id);
       final Map<String, ProfileTimeLifeSnapshot> nextTimeLifeByProfileId =
           Map<String, ProfileTimeLifeSnapshot>.from(state.timeLifeByProfileId)
-            ..remove(event.profileId);
+            ..remove(event.profileId)
+            ..remove(newProfile.id);
       emit(
         state.copyWith(
           profiles: profiles,
           currentProfile: currentProfile,
+          clearCurrentProfile: currentProfile == null,
           lifeBasedByProfileId: nextLifeBasedByProfileId,
           timeLifeByProfileId: nextTimeLifeByProfileId,
         ),
       );
       await _persistSnapshot(syncCloud: true);
 
-      if (currentProfile?.id == event.profileId) {
+      if (currentProfile?.id == newProfile.id) {
         await _ensureLifeBasedForCurrentProfile(emit, force: true);
         await _refreshTimeLifeForCurrentProfile(emit, force: true);
       }
@@ -626,6 +661,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           lifeBasedByProfileId: lifeBasedByProfileId,
           timeLifeByProfileId: timeLifeByProfileId,
           currentProfile: currentProfile,
+          clearCurrentProfile: currentProfile == null,
         ),
       );
       await _persistSnapshot(syncCloud: true);
@@ -970,6 +1006,15 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     return completer.future;
   }
 
+  /// API public đồng bộ số dư soul points authoritative từ backend.
+  Future<void> syncSoulPointsFromCloud(int soulPoints) async {
+    final Completer<void> completer = Completer<void>();
+    add(
+      MainSessionSoulPointsSynced(soulPoints: soulPoints, completer: completer),
+    );
+    await completer.future;
+  }
+
   /// Xử lý trừ điểm soul points với kiểm tra đủ điểm trước khi trừ.
   Future<void> _onSoulPointsDeducted(
     MainSessionSoulPointsDeducted event,
@@ -1009,6 +1054,20 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         stackTrace: stackTrace,
       );
       _completeBool(event.completer, false);
+    }
+  }
+
+  Future<void> _onSoulPointsSynced(
+    MainSessionSoulPointsSynced event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    try {
+      final int nextSoulPoints = event.soulPoints < 0 ? 0 : event.soulPoints;
+      emit(state.copyWith(soulPoints: nextSoulPoints));
+      await _persistSnapshot();
+      _completeVoid(event.completer);
+    } catch (error, stackTrace) {
+      _completeError(event.completer, error, stackTrace);
     }
   }
 
@@ -1312,6 +1371,12 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     bool force = false,
   }) async {
     // Tính toán time-based metrics, cập nhật map snapshot và persist nếu có thay đổi.
+    bool didMutateState = _refreshDailyAngelCacheIfNeeded(
+      emit,
+      now: now,
+      force: force,
+    );
+
     final TimeLifeRefreshResult? refreshResult = _metricsService
         .refreshTimeLifeForCurrentProfile(
           profile: state.currentProfile,
@@ -1320,15 +1385,53 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           now: now,
           force: force,
         );
-    if (refreshResult == null) {
+    if (refreshResult != null) {
+      final Map<String, ProfileTimeLifeSnapshot> nextTimeLifeByProfileId =
+          Map<String, ProfileTimeLifeSnapshot>.from(state.timeLifeByProfileId)
+            ..[refreshResult.profileId] = refreshResult.snapshot;
+      emit(state.copyWith(timeLifeByProfileId: nextTimeLifeByProfileId));
+      didMutateState = true;
+    }
+
+    if (!didMutateState) {
       return;
     }
 
-    final Map<String, ProfileTimeLifeSnapshot> nextTimeLifeByProfileId =
-        Map<String, ProfileTimeLifeSnapshot>.from(state.timeLifeByProfileId)
-          ..[refreshResult.profileId] = refreshResult.snapshot;
-    emit(state.copyWith(timeLifeByProfileId: nextTimeLifeByProfileId));
     await _persistSnapshot();
+  }
+
+  bool _refreshDailyAngelCacheIfNeeded(
+    Emitter<MainSessionState> emit, {
+    DateTime? now,
+    bool force = false,
+  }) {
+    final DateTime currentTime = now ?? DateTime.now();
+    final DateTime? refreshAt = state.dailyAngelRefreshAt;
+    final bool shouldRefresh =
+        force ||
+        state.dailyAngelNumber == null ||
+        refreshAt == null ||
+        !currentTime.isBefore(refreshAt);
+
+    if (!shouldRefresh) {
+      return false;
+    }
+
+    emit(
+      state.copyWith(
+        dailyAngelNumber: _angelNumberFromTime(currentTime),
+        dailyAngelRefreshAt: DateTime(
+          currentTime.year,
+          currentTime.month,
+          currentTime.day + 1,
+        ),
+      ),
+    );
+    return true;
+  }
+
+  int _angelNumberFromTime(DateTime now) {
+    return (now.hour * 100) + now.minute;
   }
 
   /// Đảm bảo current profile có đầy đủ snapshot life-based.
@@ -1375,6 +1478,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       dailyEarnings: state.dailyEarnings,
       dailyAdEarnings: state.dailyAdEarnings,
       dailyAdLimit: state.dailyAdLimit,
+      dailyAngelNumber: state.dailyAngelNumber,
+      dailyAngelRefreshAt: state.dailyAngelRefreshAt,
       lastCheckInAt: state.lastCheckInAt,
       lastAdRewardAt: state.lastAdRewardAt,
       compareProfiles: state.compareProfiles,
@@ -1427,11 +1532,14 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         lifeBasedByProfileId: snapshot.lifeBasedByProfileId,
         timeLifeByProfileId: snapshot.timeLifeByProfileId,
         currentProfile: currentProfile,
+        clearCurrentProfile: currentProfile == null,
         soulPoints: snapshot.soulPoints,
         currentStreak: snapshot.currentStreak,
         dailyEarnings: snapshot.dailyEarnings,
         dailyAdEarnings: snapshot.dailyAdEarnings,
         dailyAdLimit: snapshot.dailyAdLimit,
+        dailyAngelNumber: snapshot.dailyAngelNumber,
+        dailyAngelRefreshAt: snapshot.dailyAngelRefreshAt,
         lastCheckInAt: snapshot.lastCheckInAt,
         lastAdRewardAt: snapshot.lastAdRewardAt,
         compareProfiles: snapshot.compareProfiles,
@@ -1440,6 +1548,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         clearErrorMessage: true,
       ),
     );
+    _refreshDailyAngelCacheIfNeeded(emit);
     await _persistSnapshot();
     if (recomputeMetrics) {
       await _ensureLifeBasedForCurrentProfile(
@@ -1569,25 +1678,37 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     required AppSessionSnapshot cloudSnapshot,
     required List<CompatibilityHistoryItem> fallbackHistory,
     String? fallbackCloudUserId,
+    int? fallbackDailyAngelNumber,
+    DateTime? fallbackDailyAngelRefreshAt,
   }) {
-    if (cloudSnapshot.compatibilityHistory.isNotEmpty ||
-        fallbackHistory.isEmpty) {
-      return cloudSnapshot;
-    }
-
+    List<CompatibilityHistoryItem> resolvedHistory =
+        cloudSnapshot.compatibilityHistory;
     final String cloudUserId = (cloudSnapshot.cloudUserId ?? '').trim();
     final String fallbackUserId = (fallbackCloudUserId ?? '').trim();
-    if (cloudUserId.isNotEmpty &&
-        fallbackUserId.isNotEmpty &&
-        cloudUserId != fallbackUserId) {
-      return cloudSnapshot;
-    }
+    final bool canMergeFallbackHistory =
+        fallbackHistory.isNotEmpty &&
+        (cloudUserId.isEmpty ||
+            fallbackUserId.isEmpty ||
+            cloudUserId == fallbackUserId);
 
-    return cloudSnapshot.copyWith(
-      compatibilityHistory: _mergeCompatibilityHistory(
+    if (cloudSnapshot.compatibilityHistory.isEmpty && canMergeFallbackHistory) {
+      resolvedHistory = _mergeCompatibilityHistory(
         cloudSnapshot.compatibilityHistory,
         fallbackHistory,
-      ),
+      );
+    }
+
+    final int? resolvedDailyAngelNumber =
+        cloudSnapshot.dailyAngelNumber ?? fallbackDailyAngelNumber;
+    final DateTime? resolvedDailyAngelRefreshAt =
+        cloudSnapshot.dailyAngelRefreshAt ?? fallbackDailyAngelRefreshAt;
+
+    return cloudSnapshot.copyWith(
+      compatibilityHistory: resolvedHistory,
+      dailyAngelNumber: resolvedDailyAngelNumber,
+      clearDailyAngelNumber: resolvedDailyAngelNumber == null,
+      dailyAngelRefreshAt: resolvedDailyAngelRefreshAt,
+      clearDailyAngelRefreshAt: resolvedDailyAngelRefreshAt == null,
     );
   }
 

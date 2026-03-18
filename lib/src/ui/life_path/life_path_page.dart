@@ -53,11 +53,7 @@ class LifePathPage extends StatelessWidget {
                       LifePathHeader(onBackTap: () => _onBack(context)),
                       Expanded(
                         child: SingleChildScrollView(
-                          child: LifePathContent(
-                            state: state,
-                            onTogglePinnacles: bloc.togglePinnacles,
-                            onToggleChallenges: bloc.toggleChallenges,
-                          ),
+                          child: LifePathContent(state: state),
                         ),
                       ),
                     ],

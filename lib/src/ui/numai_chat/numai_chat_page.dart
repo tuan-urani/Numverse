@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
+import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
@@ -26,6 +28,7 @@ class NumAiChatPage extends StatefulWidget {
 
 class _NumAiChatPageState extends State<NumAiChatPage> {
   late final TextEditingController _controller;
+  String? _lastHydratedContextKey;
 
   @override
   void initState() {
@@ -63,7 +66,12 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
     final MainSessionBloc sessionCubit = Get.find<MainSessionBloc>();
     final NumAiChatBloc bloc = Get.isRegistered<NumAiChatBloc>()
         ? Get.find<NumAiChatBloc>()
-        : Get.put<NumAiChatBloc>(NumAiChatBloc());
+        : Get.put<NumAiChatBloc>(
+            NumAiChatBloc(
+              cloudAccountRepository: Get.find<ICloudAccountRepository>(),
+              appSessionRepository: Get.find<IAppSessionRepository>(),
+            ),
+          );
 
     if (sessionCubit.state.viewState == AppViewStateStatus.loading) {
       sessionCubit.initialize();
@@ -81,6 +89,7 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
               success: BlocBuilder<NumAiChatBloc, NumAiChatState>(
                 bloc: bloc,
                 builder: (BuildContext context, NumAiChatState state) {
+                  _maybeHydrateHistory(sessionState, bloc);
                   return Column(
                     children: <Widget>[
                       NumAiChatHeader(
@@ -139,6 +148,30 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
     );
   }
 
+  void _maybeHydrateHistory(MainSessionState sessionState, NumAiChatBloc bloc) {
+    final String profileId = (sessionState.currentProfile?.id ?? '').trim();
+    final String guestKey = (sessionState.cloudUserId ?? '').trim();
+    final String contextKey = profileId.isNotEmpty
+        ? 'profile:$profileId'
+        : 'guest:${guestKey.isEmpty ? 'local' : guestKey}';
+    if (_lastHydratedContextKey == contextKey) {
+      return;
+    }
+
+    _lastHydratedContextKey = contextKey;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      bloc.loadCloudHistory(
+        hasCloudSession: sessionState.hasCloudSession,
+        profileId: profileId.isEmpty ? null : profileId,
+        cloudUserId: sessionState.cloudUserId,
+        forceRefresh: true,
+      );
+    });
+  }
+
   Future<void> _onSendTap({
     required NumAiChatBloc bloc,
     required MainSessionBloc sessionCubit,
@@ -157,21 +190,29 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       return;
     }
 
+    _controller.clear();
+    setState(() {});
+
     final bool sent = await bloc.sendMessage(
       rawMessage: text,
       hasProfile: sessionState.currentProfile != null,
+      hasCloudSession: sessionState.hasCloudSession,
+      profileId: sessionState.currentProfile?.id,
+      cloudUserId: sessionState.cloudUserId,
+      locale: null,
       deductSoulPoints: (int amount) => sessionCubit.deductSoulPoints(
         amount,
         sourceType: 'numai_message',
         metadata: const <String, dynamic>{'screen': 'numai_chat'},
       ),
+      syncSoulPoints: sessionCubit.syncSoulPointsFromCloud,
     );
-    if (!mounted || !sent) {
+    if (!mounted) {
       return;
     }
-
-    _controller.clear();
-    setState(() {});
+    if (!sent) {
+      return;
+    }
   }
 
   Future<void> _onActionTap(

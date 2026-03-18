@@ -2521,7 +2521,6 @@ export async function handleSendNumaiMessage(
     thread_id?: string;
     primary_profile_id?: string;
     related_profile_id?: string;
-    context_type?: string;
     locale?: string;
     message_text?: string;
   }>(req);
@@ -2547,7 +2546,6 @@ export async function handleSendNumaiMessage(
         owner_user_id: user.id,
         primary_profile_id: primaryProfile.id,
         related_profile_id: relatedProfileId,
-        context_type: body.context_type ?? "general",
         title: messageText.slice(0, 48),
         last_message_at: nowIso(),
       })
@@ -2597,9 +2595,6 @@ export async function handleSendNumaiMessage(
       message_text: messageText,
       context_snapshot_id: snapshot.id,
       soul_point_cost: hasPro ? 0 : NUMAI_SOUL_POINT_COST,
-      metadata_json: {
-        context_type: thread.context_type,
-      },
     })
     .select("*")
     .single();
@@ -2669,7 +2664,6 @@ export async function handleSendNumaiMessage(
       life_cycles: snapshot.life_cycles_json,
     },
     user_question: messageText,
-    context_type: thread.context_type,
   };
 
   const generationRun = await createGenerationRun(admin, {
@@ -2815,4 +2809,3 @@ async function routeRequest(req: Request): Promise<unknown> {
 }
 
 Deno.serve(serveHandler(routeRequest));
-

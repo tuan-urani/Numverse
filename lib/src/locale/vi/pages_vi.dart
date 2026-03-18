@@ -37,6 +37,8 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.compatibilityNeedMorePoints:
       'Cần thêm @points Soul Points để so sánh.',
   PagesLocaleKey.compatibilityNeedMorePointsCta: 'Nhận thêm',
+  PagesLocaleKey.compatibilityStartNeedMorePointsCta:
+      'Cần thêm @points point để so sánh. Kiếm thêm',
   PagesLocaleKey.compatibilityHistoryTitle: 'Lịch sử tương hợp',
   PagesLocaleKey.compatibilityHistorySubtitle:
       'Nhấn vào từng mục để xem lại mà không tốn thêm điểm.',
@@ -232,13 +234,23 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileGuestAuthTitle: 'Đăng ký / Đăng nhập để sao lưu',
   PagesLocaleKey.profileGuestAuthSubtitle:
       'Đồng bộ hồ sơ của bạn lên cloud để không bị mất dữ liệu khi đổi thiết bị.',
-  PagesLocaleKey.profileManageProfilesTitle: 'Quản lý profile',
+  PagesLocaleKey.profileManageProfilesTitle: 'Quản lý hồ sơ',
   PagesLocaleKey.profileManageProfilesSubtitle:
       'Chọn profile đang xem, thêm mới hoặc xoá profile không dùng.',
   PagesLocaleKey.profileManageProfilesAddHint:
       'Bạn có thể tạo nhiều profile để xem cho bản thân và người thân.',
   PagesLocaleKey.profileManageProfilesDeleteConfirm:
       'Bạn có chắc muốn xoá profile này?',
+  PagesLocaleKey.profileManageProfilesDeleteLastTitle: 'Xóa profile cuối cùng?',
+  PagesLocaleKey.profileManageProfilesDeleteLastConfirm:
+      'Đây là profile cuối cùng. Sau khi xóa, các luận giải cá nhân và lịch sử chat NumAI gắn với profile này sẽ bị mất.',
+  PagesLocaleKey.profileManageProfilesEditTitle: 'Chỉnh sửa profile',
+  PagesLocaleKey.profileManageProfilesEditSubtitle:
+      'Khi đổi tên hoặc ngày sinh, dữ liệu thần số học của profile này sẽ được cập nhật lại.',
+  PagesLocaleKey.profileManageProfilesEditConfirmTitle:
+      'Xác nhận cập nhật profile?',
+  PagesLocaleKey.profileManageProfilesEditConfirmBody:
+      'Thay đổi hồ sơ có thể làm thay đổi toàn bộ các chỉ số và hành trình thần số học của bạn. Bạn có muốn tiếp tục không?',
   PagesLocaleKey.profileAuthDialogTitle: 'Sao lưu dữ liệu của bạn',
   PagesLocaleKey.profileAuthDialogSubtitle:
       'Tạo tài khoản hoặc đăng nhập để sao lưu và khôi phục dữ liệu',
