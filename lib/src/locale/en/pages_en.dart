@@ -90,6 +90,7 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.comparisonAdviceTitle: 'Advice',
   PagesLocaleKey.comparisonQuote:
       '"Every relationship is a chance to learn and grow"',
+  PagesLocaleKey.comparisonAspectInsightsTitle: 'Insights by core numbers',
   PagesLocaleKey.comparisonStatusExcellent: 'Highly compatible',
   PagesLocaleKey.comparisonStatusGood: 'Good match',
   PagesLocaleKey.comparisonStatusModerate: 'Moderate match',
@@ -157,6 +158,8 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.numaiStartChatDisabled: 'Not enough Soul Points',
   PagesLocaleKey.numaiNotEnoughStart:
       'You need at least 3 SP to chat. Check in from the Today tab.',
+  PagesLocaleKey.numaiStartNeedMorePointsCta:
+      'Need @points more points to continue. Earn more',
   PagesLocaleKey.numaiChatTitle: 'NumAI chat',
   PagesLocaleKey.numaiChatSubtitle: 'Numerology assistant',
   PagesLocaleKey.numaiChatEmptyTitle: 'Hello! I am NumAI',
@@ -624,7 +627,7 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.yearDetailLessonThreeTitle: 'Balance ambition',
   PagesLocaleKey.yearDetailLessonThreeBody:
       'Do not let power and material goals erase human values',
-  PagesLocaleKey.yearDetailFocusAreaTitle: 'Focus areas',
+  PagesLocaleKey.yearDetailFocusAreaTitle: 'Direction & action',
   PagesLocaleKey.yearDetailFocusCareerTitle: 'Career',
   PagesLocaleKey.yearDetailFocusCareerBody:
       'Advance, lead, and build strong credibility',

@@ -57,9 +57,7 @@ export class HttpError extends Error {
 export const ENGINE_VERSION = Deno.env.get("NUMEROLOGY_ENGINE_VERSION") ?? "v1";
 export const DEFAULT_LOCALE = "vi-VN";
 export const DEFAULT_TIMEZONE = "Asia/Ho_Chi_Minh";
-export const NUMAI_SOUL_POINT_COST = Number(
-  Deno.env.get("NUMAI_SOUL_POINT_COST") ?? "10",
-);
+export const NUMAI_SOUL_POINT_COST = 3;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

@@ -12,6 +12,7 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_bloc.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
+import 'package:test/src/ui/numai_chat/components/numai_typewriter_text.dart';
 import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
@@ -133,13 +134,14 @@ class _NumAiPageState extends State<NumAiPage> {
                           child: _NumAiMessagesPanel(
                             messages: chatState.messages,
                             isLoading: chatState.isLoading,
+                            typingMessageId: chatState.typingMessageId,
                             emptyHint: emptyHint,
                             scrollController: _scrollController,
                             onActionTap: _onProfileActionTap,
                             onSuggestionTap: (String suggestion) {
                               _sendMessage(messageText: suggestion);
                             },
-                            showFollowupSuggestions: !isChatBlank,
+                            showFollowupSuggestions: false,
                             followupDomains: _visibleDomainSuggestions,
                             onFollowupTap: (_NumAiDomain domain) {
                               _sendMessage(
@@ -480,6 +482,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
   const _NumAiMessagesPanel({
     required this.messages,
     required this.isLoading,
+    required this.typingMessageId,
     required this.emptyHint,
     required this.scrollController,
     required this.onActionTap,
@@ -491,6 +494,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
 
   final List<NumAiChatMessage> messages;
   final bool isLoading;
+  final String? typingMessageId;
   final String emptyHint;
   final ScrollController scrollController;
   final Future<void> Function() onActionTap;
@@ -543,6 +547,9 @@ class _NumAiMessagesPanel extends StatelessWidget {
                 child: _NumAiMessageBubble(
                   message: messages[index],
                   maxWidth: bubbleMaxWidth,
+                  shouldAnimate:
+                      messages[index].role == NumAiChatMessageRole.assistant &&
+                      messages[index].id == typingMessageId,
                   onActionTap: onActionTap,
                   onSuggestionTap: onSuggestionTap,
                 ),
@@ -613,22 +620,60 @@ class _NumAiMessagesPanel extends StatelessWidget {
   }
 }
 
-class _NumAiMessageBubble extends StatelessWidget {
+class _NumAiMessageBubble extends StatefulWidget {
   const _NumAiMessageBubble({
     required this.message,
     required this.maxWidth,
+    required this.shouldAnimate,
     required this.onActionTap,
     required this.onSuggestionTap,
   });
 
   final NumAiChatMessage message;
   final double maxWidth;
+  final bool shouldAnimate;
   final Future<void> Function() onActionTap;
   final ValueChanged<String> onSuggestionTap;
 
   @override
+  State<_NumAiMessageBubble> createState() => _NumAiMessageBubbleState();
+}
+
+class _NumAiMessageBubbleState extends State<_NumAiMessageBubble> {
+  late bool _typingCompleted;
+
+  @override
+  void initState() {
+    super.initState();
+    _typingCompleted = !widget.shouldAnimate;
+  }
+
+  @override
+  void didUpdateWidget(covariant _NumAiMessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.message.id != widget.message.id) {
+      _typingCompleted = !widget.shouldAnimate;
+      return;
+    }
+    if (!widget.shouldAnimate) {
+      _typingCompleted = true;
+    }
+  }
+
+  void _onTypewriterCompleted() {
+    if (_typingCompleted || !mounted) {
+      return;
+    }
+    setState(() {
+      _typingCompleted = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final NumAiChatMessage message = widget.message;
     final bool isUser = message.role == NumAiChatMessageRole.user;
+    final bool isAnimating = widget.shouldAnimate && !_typingCompleted;
     final TextStyle baseStyle = AppStyles.bodySmall(
       color: isUser ? AppColors.midnight : AppColors.textPrimary,
     ).copyWith(height: 1.45);
@@ -636,7 +681,7 @@ class _NumAiMessageBubble extends StatelessWidget {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: maxWidth),
+        constraints: BoxConstraints(maxWidth: widget.maxWidth),
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
         decoration: BoxDecoration(
           gradient: isUser
@@ -681,16 +726,23 @@ class _NumAiMessageBubble extends StatelessWidget {
               ),
               6.height,
             ],
-            Text.rich(
-              TextSpan(children: _buildBoldSpans(message.content, baseStyle)),
+            NumAiTypewriterText(
+              key: ValueKey<String>('message-${message.id}'),
+              text: message.content,
+              baseStyle: baseStyle,
+              animate: isAnimating,
+              spansBuilder: _buildBoldSpans,
+              onCompleted: _onTypewriterCompleted,
             ),
-            if (!isUser && message.followUpSuggestions.isNotEmpty) ...<Widget>[
+            if (!isUser &&
+                message.followUpSuggestions.isNotEmpty &&
+                !isAnimating) ...<Widget>[
               10.height,
               ...message.followUpSuggestions.map(
                 (String suggestion) => Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: InkWell(
-                    onTap: () => onSuggestionTap(suggestion),
+                    onTap: () => widget.onSuggestionTap(suggestion),
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
                       width: double.infinity,
@@ -719,7 +771,7 @@ class _NumAiMessageBubble extends StatelessWidget {
             if (message.hasActionButton) ...<Widget>[
               10.height,
               InkWell(
-                onTap: onActionTap,
+                onTap: widget.onActionTap,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   width: double.infinity,
@@ -1016,7 +1068,7 @@ class _NumAiNeedMorePointsCtaState extends State<_NumAiNeedMorePointsCta>
     final int safeMissingPoints = widget.missingPoints <= 0
         ? 1
         : widget.missingPoints;
-    final String label = LocaleKey.compatibilityStartNeedMorePointsCta.trParams(
+    final String label = LocaleKey.numaiStartNeedMorePointsCta.trParams(
       <String, String>{'points': '$safeMissingPoints'},
     );
 

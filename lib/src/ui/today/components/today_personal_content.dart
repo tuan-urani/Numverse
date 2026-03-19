@@ -1475,7 +1475,7 @@ class _PersonalHeroCard extends StatelessWidget {
                 12.height,
                 _PrimaryGlowButton(
                   label: ctaLabel,
-                  icon: isGuest ? Icons.lock_rounded : Icons.auto_awesome,
+                  icon: isGuest ? null : Icons.auto_awesome,
                   onTap: onTap,
                 ),
               ],
@@ -1504,9 +1504,9 @@ class _PersonalHeroCosmicBackground extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: <Color>[
-                      AppColors.energyViolet.withValues(alpha: 0.14),
-                      AppColors.deepViolet.withValues(alpha: 0.08),
-                      AppColors.midnight.withValues(alpha: 0.02),
+                      AppColors.energyViolet.withValues(alpha: 0.2),
+                      AppColors.deepViolet.withValues(alpha: 0.12),
+                      AppColors.midnight.withValues(alpha: 0.04),
                     ],
                   ),
                 ),
@@ -1545,7 +1545,7 @@ class _AnimatedPersonalHeroConstellationState
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 5600),
+      duration: const Duration(milliseconds: 4200),
     )..repeat();
   }
 
@@ -1614,7 +1614,9 @@ class _PersonalHeroConstellationPainter extends CustomPainter {
       final double linePulse =
           0.45 + (0.55 * (0.5 + (0.5 * math.sin(phase + (i * 0.8)))));
       final Paint linePaint = Paint()
-        ..color = AppColors.richGold.withValues(alpha: 0.08 + (0.1 * linePulse))
+        ..color = AppColors.richGold.withValues(
+          alpha: 0.12 + (0.12 * linePulse),
+        )
         ..strokeWidth = 1
         ..style = PaintingStyle.stroke;
       canvas.drawLine(
@@ -1631,8 +1633,8 @@ class _PersonalHeroConstellationPainter extends CustomPainter {
       final double twinkle =
           0.4 + (0.6 * (0.5 + (0.5 * math.sin(phase + (i * 0.65)))));
       final double alpha = isAnchor
-          ? (0.26 + (0.34 * twinkle)).clamp(0, 1)
-          : (0.1 + (0.22 * twinkle)).clamp(0, 1);
+          ? (0.34 + (0.4 * twinkle)).clamp(0, 1)
+          : (0.16 + (0.3 * twinkle)).clamp(0, 1);
       starPaint.color = (isAnchor ? AppColors.richGold : AppColors.white)
           .withValues(alpha: alpha);
       final double radius = isAnchor
@@ -1648,7 +1650,7 @@ class _PersonalHeroConstellationPainter extends CustomPainter {
     final Offset center = Offset(size.width * 0.5, size.height * 0.32);
     final Paint arcPaint = Paint()
       ..color = AppColors.richGold.withValues(
-        alpha: (0.11 + (0.08 * (0.5 + (0.5 * math.sin(phase))))).clamp(0, 1),
+        alpha: (0.16 + (0.1 * (0.5 + (0.5 * math.sin(phase))))).clamp(0, 1),
       )
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
@@ -1669,7 +1671,7 @@ class _PersonalHeroConstellationPainter extends CustomPainter {
       false,
       arcPaint
         ..color = AppColors.energyViolet.withValues(
-          alpha: (0.1 + (0.08 * (0.5 + (0.5 * math.sin(phase + 1.2))))).clamp(
+          alpha: (0.14 + (0.1 * (0.5 + (0.5 * math.sin(phase + 1.2))))).clamp(
             0,
             1,
           ),
@@ -2103,7 +2105,7 @@ class _PrimaryGlowButton extends StatefulWidget {
   });
 
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final VoidCallback onTap;
 
   @override
@@ -2181,8 +2183,10 @@ class _PrimaryGlowButtonState extends State<_PrimaryGlowButton>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(widget.icon, size: 16, color: AppColors.midnight),
-              8.width,
+              if (widget.icon != null) ...<Widget>[
+                Icon(widget.icon, size: 16, color: AppColors.midnight),
+                8.width,
+              ],
               Text(
                 widget.label,
                 style: AppStyles.buttonLarge(

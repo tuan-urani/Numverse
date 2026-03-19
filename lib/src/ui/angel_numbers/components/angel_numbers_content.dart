@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -35,6 +37,7 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
   bool _isIntroExpanded = false;
 
   static const double _actionHeaderVerticalPadding = 16;
+  static const bool _showPopularNumbers = false;
 
   @override
   void initState() {
@@ -113,6 +116,7 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
                     numbers: widget.state.popularNumbers,
                     onQuickSearchTap: widget.onQuickSearchTap,
                     showInputError: widget.state.showInputError,
+                    showPopularNumbers: _showPopularNumbers,
                   ),
                 ),
               ),
@@ -174,7 +178,29 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
 
     final TextScaler scaler = MediaQuery.textScalerOf(context);
     final double titleHeight = scaler.scale(16 * 1.3);
-    final double searchCardHeight = cardVerticalPadding + titleHeight + 10 + 46;
+    final double helperMaxWidth = (contentWidth - cardVerticalPadding).clamp(
+      0,
+      double.infinity,
+    );
+    final TextStyle helperStyle = AppStyles.caption(
+      color: AppColors.textMuted,
+      fontWeight: FontWeight.w500,
+    );
+    final double ruleHeight = _measureSearchHelperTextHeight(
+      context,
+      text: LocaleKey.angelNumbersInputRule.tr,
+      maxWidth: helperMaxWidth,
+      style: helperStyle,
+    );
+    final double errorHeight = _measureSearchHelperTextHeight(
+      context,
+      text: LocaleKey.angelNumbersInputError.tr,
+      maxWidth: helperMaxWidth,
+      style: helperStyle,
+    );
+    final double helperTextHeight = math.max(ruleHeight, errorHeight);
+    final double searchCardHeight =
+        cardVerticalPadding + titleHeight + 10 + 46 + 8 + helperTextHeight;
 
     const double chipSpacing = 8;
     const double chipHeight = 34;
@@ -197,11 +223,30 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
         cardVerticalPadding + titleHeight + 10 + chipsHeight;
 
     const double safetyBuffer = 10;
+    if (!_showPopularNumbers) {
+      return searchCardHeight + sliverVerticalPadding + safetyBuffer;
+    }
+
     return searchCardHeight +
         12 +
         popularCardHeight +
         sliverVerticalPadding +
         safetyBuffer;
+  }
+
+  double _measureSearchHelperTextHeight(
+    BuildContext context, {
+    required String text,
+    required double maxWidth,
+    required TextStyle style,
+  }) {
+    final TextPainter painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: null,
+    )..layout(maxWidth: maxWidth);
+    return painter.size.height;
   }
 
   void _toggleIntroExpanded() {
@@ -316,6 +361,7 @@ class _ActionPanel extends StatelessWidget {
     required this.numbers,
     required this.onQuickSearchTap,
     required this.showInputError,
+    required this.showPopularNumbers,
   });
 
   final TextEditingController controller;
@@ -324,26 +370,29 @@ class _ActionPanel extends StatelessWidget {
   final List<String> numbers;
   final ValueChanged<String> onQuickSearchTap;
   final bool showInputError;
+  final bool showPopularNumbers;
 
   @override
   Widget build(BuildContext context) {
     return _SoftCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _SearchCard(
-              controller: controller,
-              onChanged: onChanged,
-              onSearchTap: onSearchTap,
-              showInputError: showInputError,
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _SearchCard(
+            controller: controller,
+            onChanged: onChanged,
+            onSearchTap: onSearchTap,
+            showInputError: showInputError,
+          ),
+          if (showPopularNumbers) ...<Widget>[
             12.height,
             _PopularNumbersCard(
               numbers: numbers,
               onQuickSearchTap: onQuickSearchTap,
             ),
           ],
-        ),
+        ],
+      ),
     );
   }
 }
@@ -583,40 +632,29 @@ class _ResultSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        AppMysticalCard(
-          borderColor: AppColors.richGold.withValues(alpha: 0.4),
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                top: -42,
-                right: -30,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.richGold.withValues(alpha: 0.16),
-                  ),
+        SizedBox(
+          width: double.infinity,
+          child: AppMysticalCard(
+            borderColor: AppColors.richGold.withValues(alpha: 0.4),
+            child: Column(
+              children: <Widget>[
+                _NumberOrb(number: displayNumber),
+                12.height,
+                Text(
+                  result.title,
+                  textAlign: TextAlign.center,
+                  style: AppStyles.titleLarge(fontWeight: FontWeight.w700),
                 ),
-              ),
-              Column(
-                children: <Widget>[
-                  _NumberOrb(number: displayNumber),
-                  12.height,
-                  Text(
-                    result.title,
-                    textAlign: TextAlign.center,
-                    style: AppStyles.titleLarge(fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         if (result.coreMeanings.isNotEmpty) ...<Widget>[
           12.height,
           _SoftCard(
+            highlighted: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -645,6 +683,7 @@ class _ResultSection extends StatelessWidget {
         if (result.universeMessages.isNotEmpty) ...<Widget>[
           12.height,
           _SoftCard(
+            highlighted: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -672,6 +711,7 @@ class _ResultSection extends StatelessWidget {
         ],
         12.height,
         _SoftCard(
+          highlighted: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -821,9 +861,22 @@ class _NumberOrbState extends State<_NumberOrb>
                   ],
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  widget.number,
-                  style: AppStyles.numberLarge().copyWith(fontSize: fontSize),
+                child: SizedBox(
+                  width: 70,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.number,
+                      maxLines: 1,
+                      softWrap: false,
+                      textAlign: TextAlign.center,
+                      style: AppStyles.numberLarge().copyWith(
+                        fontSize: fontSize,
+                        height: 1,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -895,9 +948,10 @@ class _TipsCard extends StatelessWidget {
 }
 
 class _SoftCard extends StatelessWidget {
-  const _SoftCard({required this.child});
+  const _SoftCard({required this.child, this.highlighted = false});
 
   final Widget child;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -905,7 +959,12 @@ class _SoftCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        border: Border.all(
+          color: highlighted
+              ? AppColors.richGold.withValues(alpha: 0.58)
+              : AppColors.border.withValues(alpha: 0.7),
+          width: highlighted ? 1.35 : 1,
+        ),
       ),
       child: Padding(padding: const EdgeInsets.all(16), child: child),
     );

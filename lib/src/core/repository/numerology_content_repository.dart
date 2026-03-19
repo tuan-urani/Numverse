@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 
+import 'package:test/src/core/model/compatibility_aspect.dart';
 import 'package:test/src/core/model/numerology_content_models.dart';
 import 'package:test/src/core/model/numerology_reading_models.dart';
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
@@ -260,8 +262,13 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
       NumerologyReadingData.mission;
   static const BirthChartDataSet _fallbackBirthdayMatrixContent =
       NumerologyReadingData.birthChart;
-  static const BirthChartDataSet _fallbackNameMatrixContent =
-      NumerologyReadingData.birthChart;
+  static final BirthChartDataSet _fallbackNameMatrixContent = BirthChartDataSet(
+    numbers: NumerologyReadingData.birthChart.numbers,
+    physicalAxis: NumerologyReadingData.birthChart.physicalAxis,
+    mentalAxis: NumerologyReadingData.birthChart.mentalAxis,
+    emotionalAxis: NumerologyReadingData.birthChart.emotionalAxis,
+    arrows: NumerologyReadingData.nameChartArrows,
+  );
   static final Map<int, LifeCycleContent> _fallbackLifePinnacleContent =
       NumerologyReadingData.pinnacles;
   static final Map<int, LifeCycleContent> _fallbackLifeChallengeContent =
@@ -543,6 +550,32 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
       final bool isNotModified = response['not_modified'] == true;
       if (isNotModified) {
         if (cachedEnvelope != null) {
+          final String remoteChecksum = (response['checksum'] as String? ?? '')
+              .trim();
+          final String cachedChecksum = cachedEnvelope.checksum.trim();
+          final bool shouldForceRefresh =
+              remoteChecksum.isNotEmpty && remoteChecksum != cachedChecksum;
+          if (shouldForceRefresh) {
+            final Map<String, dynamic>? forcedResponse =
+                await _fetchLedgerFromServer(localeCode: languageCode);
+            final bool forcedNotModified =
+                forcedResponse?['not_modified'] == true;
+            final ({
+              String version,
+              String checksum,
+              Map<String, dynamic> ledger,
+            })?
+            forcedEnvelope = forcedResponse == null || forcedNotModified
+                ? null
+                : _parseRemoteEnvelope(forcedResponse);
+            if (forcedEnvelope != null) {
+              await _persistAndApplyLedgerEnvelope(
+                languageCode: languageCode,
+                envelope: forcedEnvelope,
+              );
+              continue;
+            }
+          }
           _applyLedgerPayload(
             languageCode: languageCode,
             ledger: cachedEnvelope.ledger,
@@ -557,22 +590,30 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
         continue;
       }
 
-      final String encoded = jsonEncode(<String, dynamic>{
-        'version': remoteEnvelope.version,
-        'checksum': remoteEnvelope.checksum,
-        'ledger': remoteEnvelope.ledger,
-      });
-      await _appShared.setNumerologyLedgerTemp(
-        localeCode: languageCode,
-        value: encoded,
-      );
-      await _appShared.activateNumerologyLedgerTemp(languageCode);
-
-      _applyLedgerPayload(
+      await _persistAndApplyLedgerEnvelope(
         languageCode: languageCode,
-        ledger: remoteEnvelope.ledger,
+        envelope: remoteEnvelope,
       );
     }
+  }
+
+  Future<void> _persistAndApplyLedgerEnvelope({
+    required String languageCode,
+    required ({String version, String checksum, Map<String, dynamic> ledger})
+    envelope,
+  }) async {
+    final String encoded = jsonEncode(<String, dynamic>{
+      'version': envelope.version,
+      'checksum': envelope.checksum,
+      'ledger': envelope.ledger,
+    });
+    await _appShared.setNumerologyLedgerTemp(
+      localeCode: languageCode,
+      value: encoded,
+    );
+    await _appShared.activateNumerologyLedgerTemp(languageCode);
+
+    _applyLedgerPayload(languageCode: languageCode, ledger: envelope.ledger);
   }
 
   Future<Map<String, dynamic>?> _fetchLedgerFromServer({
@@ -804,7 +845,7 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     if (nameMatrixRaw != null && nameMatrixRaw.isNotEmpty) {
       final BirthChartDataSet? dataSet = _parseMatrixDataSet(nameMatrixRaw);
       if (dataSet != null) {
-        _nameMatrixByLanguage[languageCode] = dataSet;
+        _nameMatrixByLanguage[languageCode] = _ensureNameMatrixArrows(dataSet);
       }
     }
 
@@ -1076,9 +1117,11 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
   BirthChartDataSet getNameMatrixContent({required String languageCode}) {
     _refreshDynamicVariantsIfNeeded();
     final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
-    return _nameMatrixByLanguage[normalizedLanguageCode] ??
+    final BirthChartDataSet dataSet =
+        _nameMatrixByLanguage[normalizedLanguageCode] ??
         _nameMatrixByLanguage[_fallbackLanguageCode] ??
         _fallbackNameMatrixContent;
+    return _ensureNameMatrixArrows(dataSet);
   }
 
   @override
@@ -1127,12 +1170,94 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     required String languageCode,
   }) {
     _refreshDynamicVariantsIfNeeded();
+    final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
+    final Map<String, NumerologyCompatibilityContent>? ledgerMap =
+        _compatibilityByLanguage[normalizedLanguageCode] ??
+        _compatibilityByLanguage[_fallbackLanguageCode];
+    final bool hasLedgerCompatibility =
+        ledgerMap != null && ledgerMap.isNotEmpty;
     final Map<String, NumerologyCompatibilityContent> map =
-        _resolveCompatibilityMap(languageCode);
+        hasLedgerCompatibility ? ledgerMap : _fallbackCompatibilityByBand;
     final String band = _resolveCompatibilityBand(overallScore);
-    return map[band] ??
-        _fallbackCompatibilityByBand[band] ??
+    final NumerologyCompatibilityContent? ledgerBandContent = ledgerMap?[band];
+    final NumerologyCompatibilityContent? bandFallbackContent =
+        _fallbackCompatibilityByBand[band];
+    final NumerologyCompatibilityContent resolved =
+        map[band] ?? bandFallbackContent ?? _fallbackCompatibilityExcellent;
+    final String source = switch ((hasLedgerCompatibility, ledgerBandContent)) {
+      (true, NumerologyCompatibilityContent _) => 'ledger.overall_band',
+      (_, _) when bandFallbackContent != null => 'static.overall_band_fallback',
+      _ => 'static.excellent_fallback',
+    };
+    _logCompatibilityResolution(
+      mode: 'overall',
+      languageCode: normalizedLanguageCode,
+      score: overallScore,
+      band: band,
+      selectedKey: band,
+      source: source,
+      hasLedgerCompatibility: hasLedgerCompatibility,
+    );
+    return resolved;
+  }
+
+  @override
+  NumerologyCompatibilityContent getCompatibilityAspectContent({
+    required CompatibilityAspect aspect,
+    required int score,
+    required String languageCode,
+  }) {
+    _refreshDynamicVariantsIfNeeded();
+    final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
+    final Map<String, NumerologyCompatibilityContent>? ledgerMap =
+        _compatibilityByLanguage[normalizedLanguageCode] ??
+        _compatibilityByLanguage[_fallbackLanguageCode];
+    final bool hasLedgerCompatibility =
+        ledgerMap != null && ledgerMap.isNotEmpty;
+    final Map<String, NumerologyCompatibilityContent> map =
+        hasLedgerCompatibility ? ledgerMap : _fallbackCompatibilityByBand;
+    final String band = _resolveCompatibilityBand(score);
+    final String aspectBandKey = '${aspect.storageKey}.$band';
+    final NumerologyCompatibilityContent? aspectContent = map[aspectBandKey];
+    final NumerologyCompatibilityContent? overallBandContent = map[band];
+    final NumerologyCompatibilityContent? staticBandContent =
+        _fallbackCompatibilityByBand[band];
+    final NumerologyCompatibilityContent resolved =
+        aspectContent ??
+        overallBandContent ??
+        staticBandContent ??
         _fallbackCompatibilityExcellent;
+
+    late final String selectedKey;
+    late final String source;
+    if (aspectContent != null) {
+      selectedKey = aspectBandKey;
+      source = hasLedgerCompatibility
+          ? 'ledger.aspect_band'
+          : 'static.aspect_band';
+    } else if (overallBandContent != null) {
+      selectedKey = band;
+      source = hasLedgerCompatibility
+          ? 'ledger.overall_band_fallback'
+          : 'static.overall_band_fallback';
+    } else if (staticBandContent != null) {
+      selectedKey = band;
+      source = 'static.overall_band_fallback';
+    } else {
+      selectedKey = 'excellent';
+      source = 'static.excellent_fallback';
+    }
+
+    _logCompatibilityResolution(
+      mode: 'aspect.${aspect.storageKey}',
+      languageCode: normalizedLanguageCode,
+      score: score,
+      band: band,
+      selectedKey: selectedKey,
+      source: source,
+      hasLedgerCompatibility: hasLedgerCompatibility,
+    );
+    return resolved;
   }
 
   Map<int, NumerologyUniversalDayContent> _resolveUniversalDayMap(
@@ -1288,17 +1413,6 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
         _lifeChallengeByLanguage[_fallbackLanguageCode] ??
         const <int, LifeCycleContent>{};
     return map.isNotEmpty ? map : _fallbackLifeChallengeContent;
-  }
-
-  Map<String, NumerologyCompatibilityContent> _resolveCompatibilityMap(
-    String languageCode,
-  ) {
-    final String normalizedLanguageCode = _normalizeLanguageCode(languageCode);
-    final Map<String, NumerologyCompatibilityContent> map =
-        _compatibilityByLanguage[normalizedLanguageCode] ??
-        _compatibilityByLanguage[_fallbackLanguageCode] ??
-        const <String, NumerologyCompatibilityContent>{};
-    return map.isNotEmpty ? map : _fallbackCompatibilityByBand;
   }
 
   String _resolveCompatibilityBand(int overallScore) {
@@ -1565,7 +1679,10 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
       languageCode: languageCode,
       fileName: 'name_matrix.json',
     );
-    return data ?? _fallbackNameMatrixContent;
+    if (data == null) {
+      return _fallbackNameMatrixContent;
+    }
+    return _ensureNameMatrixArrows(data);
   }
 
   Future<BirthChartDataSet?> _loadMatrixDataSet({
@@ -2009,6 +2126,19 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     }
   }
 
+  BirthChartDataSet _ensureNameMatrixArrows(BirthChartDataSet dataSet) {
+    if (dataSet.arrows.isNotEmpty) {
+      return dataSet;
+    }
+    return BirthChartDataSet(
+      numbers: dataSet.numbers,
+      physicalAxis: dataSet.physicalAxis,
+      mentalAxis: dataSet.mentalAxis,
+      emotionalAxis: dataSet.emotionalAxis,
+      arrows: NumerologyReadingData.nameChartArrows,
+    );
+  }
+
   Map<int, LifeCycleContent> _parseLifeCycleEntries(Map<String, dynamic> map) {
     final Map<int, LifeCycleContent> result = <int, LifeCycleContent>{};
     for (final MapEntry<String, dynamic> entry in map.entries) {
@@ -2131,4 +2261,23 @@ class AssetNumerologyContentRepository implements INumerologyContentRepository {
     return const <String, dynamic>{};
   }
 
+  void _logCompatibilityResolution({
+    required String mode,
+    required String languageCode,
+    required int score,
+    required String band,
+    required String selectedKey,
+    required String source,
+    required bool hasLedgerCompatibility,
+  }) {
+    assert(() {
+      developer.log(
+        'Compatibility content resolve: '
+        'mode=$mode locale=$languageCode score=$score band=$band '
+        'selected_key=$selectedKey source=$source ledger=$hasLedgerCompatibility',
+        name: 'AssetNumerologyContentRepository',
+      );
+      return true;
+    }());
+  }
 }

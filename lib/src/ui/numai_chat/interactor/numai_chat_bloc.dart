@@ -31,6 +31,10 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
 
   static const int messageCost = 3;
   static const int _maxGuestLocalMessages = 80;
+  static const String _technicalFallbackMessage =
+      'Oops, hệ thống đang gặp trục trặc nhỏ khi xử lý dữ liệu. Bạn thử lại ngay nhé.';
+  static const String _outOfScopeFallbackMessage =
+      'Mình chỉ hỗ trợ về thần số học.\nBạn có thể hỏi về con số, năm cá nhân hoặc ý nghĩa cuộc đời.';
   final ICloudAccountRepository _cloudAccountRepository;
   final IAppSessionRepository _appSessionRepository;
 
@@ -99,6 +103,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       state.copyWith(
         isLoading: true,
         showInsufficientPointsWarning: false,
+        clearTypingMessageId: true,
         messages: shouldClearForContextChange
             ? const <NumAiChatMessage>[]
             : state.messages,
@@ -120,6 +125,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
             isLoading: false,
             clearThreadId: true,
             clearActiveProfileId: true,
+            clearTypingMessageId: true,
           ),
         );
       } catch (_) {
@@ -128,6 +134,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
             isLoading: false,
             clearThreadId: true,
             clearActiveProfileId: true,
+            clearTypingMessageId: true,
           ),
         );
       }
@@ -135,7 +142,13 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     }
 
     if (!event.hasCloudSession || !_cloudAccountRepository.isConfigured) {
-      emit(state.copyWith(isLoading: false, activeProfileId: profileId));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          activeProfileId: profileId,
+          clearTypingMessageId: true,
+        ),
+      );
       return;
     }
 
@@ -156,10 +169,17 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           isLoading: false,
           threadId: result.threadId.isEmpty ? null : result.threadId,
           activeProfileId: profileId,
+          clearTypingMessageId: true,
         ),
       );
     } catch (_) {
-      emit(state.copyWith(isLoading: false, activeProfileId: profileId));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          activeProfileId: profileId,
+          clearTypingMessageId: true,
+        ),
+      );
     }
   }
 
@@ -231,6 +251,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         activeProfileId: profileId.isEmpty ? null : profileId,
         clearThreadId: profileId.isEmpty,
         clearActiveProfileId: profileId.isEmpty,
+        clearTypingMessageId: true,
       ),
     );
 
@@ -241,8 +262,9 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     final NumAiChatMessage assistantMessage = NumAiChatMessage(
       id: '${replyAt.microsecondsSinceEpoch}-assistant',
       role: NumAiChatMessageRole.assistant,
-      content: _generateMockResponse(message),
+      content: _technicalFallbackMessage,
       timestamp: replyAt,
+      fallbackReason: 'technical_error',
     );
 
     emit(
@@ -253,6 +275,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         activeProfileId: profileId.isEmpty ? null : profileId,
         clearThreadId: profileId.isEmpty,
         clearActiveProfileId: profileId.isEmpty,
+        typingMessageId: assistantMessage.id,
       ),
     );
     if (profileId.isEmpty) {
@@ -290,6 +313,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         showInsufficientPointsWarning: false,
         clearThreadId: true,
         clearActiveProfileId: true,
+        clearTypingMessageId: true,
       ),
     );
 
@@ -319,6 +343,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         content: result.assistantText,
         timestamp: assistantSentAt,
         followUpSuggestions: result.suggestions,
+        fallbackReason: result.fallbackReason,
       );
       final List<NumAiChatMessage> allMessages = <NumAiChatMessage>[
         ...nextMessages,
@@ -332,6 +357,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           clearPendingProfileQuestion: true,
           clearThreadId: true,
           clearActiveProfileId: true,
+          typingMessageId: assistantMessage.id,
         ),
       );
       try {
@@ -361,11 +387,13 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       }
 
       final DateTime now = DateTime.now();
+      final String fallbackReason = _resolveFallbackReason(errorCode);
       final NumAiChatMessage assistantFallback = NumAiChatMessage(
         id: '${now.microsecondsSinceEpoch}-assistant-fallback',
         role: NumAiChatMessageRole.assistant,
-        content: _generateMockResponse(message),
+        content: _resolveFallbackMessage(errorCode),
         timestamp: now,
+        fallbackReason: fallbackReason,
       );
       final List<NumAiChatMessage> fallbackMessages = <NumAiChatMessage>[
         ...nextMessages,
@@ -378,6 +406,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           clearPendingProfileQuestion: true,
           clearThreadId: true,
           clearActiveProfileId: true,
+          typingMessageId: assistantFallback.id,
         ),
       );
       try {
@@ -418,6 +447,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         isLoading: true,
         showInsufficientPointsWarning: false,
         activeProfileId: profileId,
+        clearTypingMessageId: true,
       ),
     );
 
@@ -435,6 +465,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         content: result.assistantText,
         timestamp: assistantSentAt,
         followUpSuggestions: result.suggestions,
+        fallbackReason: result.fallbackReason,
       );
       emit(
         state.copyWith(
@@ -443,6 +474,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           clearPendingProfileQuestion: true,
           threadId: result.threadId.isEmpty ? null : result.threadId,
           activeProfileId: profileId,
+          typingMessageId: assistantMessage.id,
         ),
       );
       try {
@@ -470,8 +502,9 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         final NumAiChatMessage assistantMessage = NumAiChatMessage(
           id: '${now.microsecondsSinceEpoch}-assistant-fallback',
           role: NumAiChatMessageRole.assistant,
-          content: _generateMockResponse(message),
+          content: _technicalFallbackMessage,
           timestamp: now,
+          fallbackReason: 'technical_error',
         );
         emit(
           state.copyWith(
@@ -483,37 +516,32 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
             isLoading: false,
             clearPendingProfileQuestion: true,
             activeProfileId: profileId,
+            typingMessageId: assistantMessage.id,
           ),
         );
         _completeBool(event.completer, true);
         return;
       }
 
-      try {
-        final history = await _cloudAccountRepository.fetchNumAiThreadMessages(
-          profileId: profileId,
-          threadId: threadIdForProfile,
-        );
-        emit(
-          state.copyWith(
-            messages: _sortMessagesByTimestamp(
-              history.messages.map(_toChatMessageFromCloud),
-            ),
-            isLoading: false,
-            threadId: history.threadId.isEmpty ? null : history.threadId,
-            activeProfileId: profileId,
-          ),
-        );
-      } catch (_) {
-        emit(
-          state.copyWith(
-            messages: previousMessages,
-            isLoading: false,
-            activeProfileId: profileId,
-          ),
-        );
-      }
-      _completeBool(event.completer, false);
+      final DateTime now = DateTime.now();
+      final String fallbackReason = _resolveFallbackReason(errorCode);
+      final NumAiChatMessage assistantFallback = NumAiChatMessage(
+        id: '${now.microsecondsSinceEpoch}-assistant-fallback',
+        role: NumAiChatMessageRole.assistant,
+        content: _resolveFallbackMessage(errorCode),
+        timestamp: now,
+        fallbackReason: fallbackReason,
+      );
+      emit(
+        state.copyWith(
+          messages: <NumAiChatMessage>[...nextMessages, assistantFallback],
+          isLoading: false,
+          clearPendingProfileQuestion: true,
+          activeProfileId: profileId,
+          typingMessageId: assistantFallback.id,
+        ),
+      );
+      _completeBool(event.completer, true);
     }
   }
 
@@ -585,14 +613,16 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     final NumAiChatMessage response = NumAiChatMessage(
       id: '${now.microsecondsSinceEpoch}-assistant-profile',
       role: NumAiChatMessageRole.assistant,
-      content: _generateMockResponse(pendingQuestion),
+      content: _technicalFallbackMessage,
       timestamp: now,
+      fallbackReason: 'technical_error',
     );
 
     emit(
       state.copyWith(
         messages: <NumAiChatMessage>[...state.messages, response],
         clearPendingProfileQuestion: true,
+        typingMessageId: response.id,
       ),
     );
   }
@@ -634,6 +664,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       content: item.messageText,
       timestamp: item.createdAt,
       followUpSuggestions: item.followUpSuggestions,
+      fallbackReason: item.fallbackReason,
     );
   }
 
@@ -746,71 +777,17 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     ].join(':');
   }
 
-  String _generateMockResponse(String question) {
-    final String lowerQuestion = question.toLowerCase();
-
-    if (lowerQuestion.contains('số vũ trụ')) {
-      return 'Số vũ trụ hôm nay là 7.\n\n'
-          'Ý nghĩa:\n'
-          'Ngày hôm nay mang năng lượng của sự tĩnh lặng, nội tâm và trí tuệ. '
-          'Đây là thời điểm tốt để suy ngẫm, học hỏi và dành thời gian một mình '
-          'để nạp năng lượng.\n\n'
-          'Hãy tránh quyết định quá vội và tin vào trực giác của bạn.';
+  String _resolveFallbackReason(String errorCode) {
+    if (errorCode == 'numai_out_of_scope' || errorCode == 'out_of_scope') {
+      return 'out_of_scope';
     }
+    return 'technical_error';
+  }
 
-    if (lowerQuestion.contains('số thiên thần')) {
-      return 'Số thiên thần là những chuỗi số lặp lại xuất hiện như thông điệp.\n\n'
-          'Ví dụ phổ biến:\n'
-          '111: Cơ hội mới\n'
-          '222: Cân bằng\n'
-          '333: Được hỗ trợ\n'
-          '444: Nền tảng ổn định\n'
-          '555: Biến đổi mạnh\n\n'
-          'Bạn có thể xem thêm trong tab Hôm nay.';
+  String _resolveFallbackMessage(String errorCode) {
+    if (_resolveFallbackReason(errorCode) == 'out_of_scope') {
+      return _outOfScopeFallbackMessage;
     }
-
-    if (RegExp(
-      'ý nghĩa (của )?số \\d',
-      caseSensitive: false,
-    ).hasMatch(lowerQuestion)) {
-      final RegExpMatch? match = RegExp('\\d+').firstMatch(lowerQuestion);
-      final String number = match?.group(0) ?? '1';
-      return 'Số $number mang một tần số năng lượng riêng trong thần số học.\n\n'
-          'Bạn có thể tra cứu sâu hơn trong Thư viện con số để xem điểm mạnh, '
-          'thử thách và cách ứng dụng vào đời sống thực tế.';
-    }
-
-    if (lowerQuestion.contains('tóm tắt') ||
-        lowerQuestion.contains('người thế nào')) {
-      return 'Từ hồ sơ của bạn, tôi thấy bạn có nội tâm sâu, trực giác tốt và '
-          'xu hướng tìm ý nghĩa trong mọi trải nghiệm.\n\n'
-          'Bạn mạnh ở khả năng quan sát, tư duy chiến lược và kết nối cảm xúc '
-          'khi làm việc hoặc trong mối quan hệ gần gũi.';
-    }
-
-    if (lowerQuestion.contains('hôm nay') &&
-        (lowerQuestion.contains('tôi') || lowerQuestion.contains('mình'))) {
-      return 'Hôm nay bạn nên ưu tiên sự linh hoạt và chủ động.\n\n'
-          'Nên làm:\n'
-          '• Mở rộng kết nối\n'
-          '• Thử một cách tiếp cận mới\n'
-          '• Dành thời gian rà soát cảm xúc trước khi quyết định lớn\n\n'
-          'Nên tránh:\n'
-          '• Cố kiểm soát mọi thứ theo khuôn cũ\n'
-          '• Trì hoãn các cơ hội nhỏ nhưng có tiềm năng.';
-    }
-
-    if (lowerQuestion.contains('tương hợp') ||
-        lowerQuestion.contains('hợp ở đâu')) {
-      return 'Để phân tích tương hợp chính xác, tôi cần thông tin của người bạn '
-          'muốn so sánh (tên + ngày sinh).\n\n'
-          'Sau đó tôi có thể trả về: mức độ hòa hợp cốt lõi, giao tiếp, cảm xúc '
-          'và gợi ý hành động cho hai bên.';
-    }
-
-    return 'Đây là một câu hỏi thú vị trong thần số học.\n\n'
-        'Dựa trên ngữ cảnh hiện tại, câu hỏi này liên quan đến định hướng '
-        'phát triển cá nhân và cách bạn cân bằng cảm xúc với hành động.\n\n'
-        'Bạn có muốn mình đi sâu vào một khía cạnh cụ thể hơn không?';
+    return _technicalFallbackMessage;
   }
 }

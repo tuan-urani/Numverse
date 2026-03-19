@@ -65,35 +65,34 @@ class ProfileHeader extends StatelessWidget {
             style: AppStyles.bodyMedium(color: AppColors.textSecondary),
           )
         else
-          Wrap(
-            spacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: <Widget>[
-              Text(
-                subtitle,
-                style: AppStyles.bodyMedium(color: AppColors.textSecondary),
-              ),
-              Material(
-                color: AppColors.transparent,
-                child: InkWell(
-                  onTap: onTapSubtitleAction,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 1,
-                    ),
-                    child: Text(
-                      subtitleActionLabel!,
-                      style: AppStyles.bodyMedium(
-                        color: AppColors.richGold,
-                        fontWeight: FontWeight.w700,
+          Material(
+            color: AppColors.transparent,
+            child: InkWell(
+              onTap: onTapSubtitleAction,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                child: Text.rich(
+                  TextSpan(
+                    children: <InlineSpan>[
+                      TextSpan(
+                        text: '$subtitle ',
+                        style: AppStyles.bodyMedium(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
+                      TextSpan(
+                        text: subtitleActionLabel!,
+                        style: AppStyles.bodyMedium(
+                          color: AppColors.richGold,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
       ],
     );

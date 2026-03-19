@@ -20,12 +20,6 @@ class LuckyNumberContent extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
       child: Column(
         children: <Widget>[
-          Text(
-            state.formattedDate,
-            textAlign: TextAlign.center,
-            style: AppStyles.bodyMedium(color: AppColors.textMuted),
-          ),
-          16.height,
           _LuckyDisplayCard(state: state),
           12.height,
           _MeaningCard(state: state),
@@ -33,15 +27,6 @@ class LuckyNumberContent extends StatelessWidget {
           _UsageCard(howToUse: state.howToUse),
           12.height,
           _SituationsCard(situations: state.situations),
-          16.height,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(
-              LocaleKey.luckyNumberNote.tr,
-              textAlign: TextAlign.center,
-              style: AppStyles.caption(color: AppColors.textMuted),
-            ),
-          ),
           12.height,
         ],
       ),
@@ -79,30 +64,6 @@ class _LuckyDisplayCardState extends State<_LuckyDisplayCard>
       borderColor: AppColors.richGold.withValues(alpha: 0.4),
       child: Stack(
         children: <Widget>[
-          Positioned(
-            top: -40,
-            right: -40,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.richGold.withValues(alpha: 0.16),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -40,
-            left: -40,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.violetAccent.withValues(alpha: 0.24),
-              ),
-            ),
-          ),
           AnimatedBuilder(
             animation: _controller,
             builder: (BuildContext context, Widget? child) {
@@ -388,9 +349,19 @@ class _SoftCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.56),
+        color: AppColors.card.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        border: Border.all(
+          color: AppColors.richGold.withValues(alpha: 0.42),
+          width: 1.1,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.richGold.withValues(alpha: 0.08),
+            blurRadius: 12,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Padding(padding: const EdgeInsets.all(16), child: child),
     );

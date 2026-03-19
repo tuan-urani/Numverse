@@ -576,6 +576,7 @@ Quy tắc bắt buộc:
 - Không trở thành therapist, bác sĩ, luật sư, hay cố vấn tài chính.
 - Không khẳng định tuyệt đối.
 - Trả lời ngắn, rõ, bám đúng câu hỏi hiện tại.
+- Nếu câu hỏi nằm ngoài thần số học, đặt is_out_of_scope=true.
 - Trả về JSON hợp lệ.
     $system$,
     $task$
@@ -590,6 +591,7 @@ Yêu cầu nội dung:
 - answer nên súc tích, đúng trọng tâm.
 - referenced_sections nên chỉ ra vùng facts đã dùng, ví dụ: core_numbers.life_path, matrix_aspects.physical_axis.
 - follow_up_suggestions nên là các câu hỏi tiếp theo thực sự hữu ích.
+- is_out_of_scope là cờ boolean để báo câu hỏi ngoài phạm vi thần số học.
 - Chỉ trả về JSON hợp lệ.
     $task$,
     $json$
@@ -626,7 +628,7 @@ Yêu cầu nội dung:
     $json$
 {
   "type": "object",
-  "required": ["answer", "referenced_sections", "follow_up_suggestions"],
+  "required": ["answer", "referenced_sections", "follow_up_suggestions", "is_out_of_scope"],
   "properties": {
     "answer": { "type": "string" },
     "referenced_sections": {
@@ -636,7 +638,8 @@ Yêu cầu nội dung:
     "follow_up_suggestions": {
       "type": "array",
       "items": { "type": "string" }
-    }
+    },
+    "is_out_of_scope": { "type": "boolean" }
   }
 }
     $json$::jsonb,

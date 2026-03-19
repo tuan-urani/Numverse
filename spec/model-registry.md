@@ -24,6 +24,12 @@
 - **Purpose**: Represents a persisted compatibility result item (pair identity + computed scores) for history listing and view-only reopening of past comparison results.
 - **Source**: Computed on compare action in app, then persisted local snapshot and optionally synchronized to Supabase RPC.
 
+## CompatibilityAspect
+- **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/compatibility_aspect.dart`
+- **Type**: UI/Domain enum
+- **Purpose**: Defines canonical aspect keys (`life_path`, `expression`, `soul`, `personality`) for per-aspect compatibility content lookup.
+- **Source**: App domain constants used by content repository and comparison-result flow.
+
 ## Numerology Reading Models
 - **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/numerology_reading_models.dart`
 - **Type**: UI/Domain model
@@ -37,6 +43,7 @@
 - **Notes**:
   - `number_library` entries include `title`, `description`, `keywords`, and `symbolism` for the Number Library detail UI.
   - Ledger content now also serves life-based reading modules via types: `life_path_number`, `expression_number`, `soul_urge_number`, `mission_number`, `birthday_matrix`, `name_matrix`, `life_pinnacle`, `life_challenge`.
+  - `compatibility_content` supports both overall band keys (`excellent/good/moderate/effort`) and aspect-band keys (`life_path.good`, `expression.excellent`, ...).
 - **Source**: Local static JSON assets under `/Users/uranidev/Documents/Numverse/assets/numerology/`.
 
 ## ProfileTimeLifeSnapshot

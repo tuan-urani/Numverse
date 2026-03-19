@@ -12,9 +12,7 @@ var HttpError = class extends Error {
 var ENGINE_VERSION = Deno.env.get("NUMEROLOGY_ENGINE_VERSION") ?? "v1";
 var DEFAULT_LOCALE = "vi-VN";
 var DEFAULT_TIMEZONE = "Asia/Ho_Chi_Minh";
-var NUMAI_SOUL_POINT_COST = Number(
-  Deno.env.get("NUMAI_SOUL_POINT_COST") ?? "10"
-);
+var NUMAI_SOUL_POINT_COST = 3;
 var corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

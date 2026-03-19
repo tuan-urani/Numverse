@@ -27,16 +27,18 @@ class MonthDetailContent extends StatelessWidget {
         _AnimatedReveal(
           delay: 0,
           child: _MonthHeroCard(
-            periodLabel: periodLabel,
             personalMonthNumber: personalMonthNumber,
             keyword: content.keyword,
-            heroTitle: content.heroTitle,
           ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
           delay: 80,
-          child: _MonthFocusCard(focus: content.focus, steps: content.steps),
+          child: _MonthFocusCard(
+            focus: content.focus,
+            steps: content.steps,
+            showFocusSteps: false,
+          ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
@@ -79,22 +81,16 @@ class _AnimatedReveal extends StatelessWidget {
 
 class _MonthHeroCard extends StatelessWidget {
   const _MonthHeroCard({
-    required this.periodLabel,
     required this.personalMonthNumber,
     required this.keyword,
-    required this.heroTitle,
   });
 
-  final String periodLabel;
   final int personalMonthNumber;
   final String keyword;
-  final String heroTitle;
 
   @override
   Widget build(BuildContext context) {
-    final String resolvedHeroTitle = heroTitle.isEmpty
-        ? '${LocaleKey.todayMonthValueLabel.tr} $personalMonthNumber'
-        : heroTitle;
+    final String resolvedHeroTitle = LocaleKey.todayMonthValueLabel.tr;
     final String resolvedKeyword = keyword.isEmpty
         ? LocaleKey.todayMonthKeyword.tr
         : keyword;
@@ -125,14 +121,6 @@ class _MonthHeroCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  periodLabel,
-                  style: AppStyles.caption(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w500,
-                  ).copyWith(letterSpacing: 1.1),
-                ),
-                8.height,
-                Text(
                   resolvedHeroTitle,
                   style: AppStyles.h2(fontWeight: FontWeight.w700),
                 ),
@@ -156,10 +144,15 @@ class _MonthHeroCard extends StatelessWidget {
 }
 
 class _MonthFocusCard extends StatelessWidget {
-  const _MonthFocusCard({required this.focus, required this.steps});
+  const _MonthFocusCard({
+    required this.focus,
+    required this.steps,
+    this.showFocusSteps = false,
+  });
 
   final List<String> focus;
   final List<NumerologyPersonalMonthStep> steps;
+  final bool showFocusSteps;
 
   @override
   Widget build(BuildContext context) {
@@ -213,14 +206,16 @@ class _MonthFocusCard extends StatelessWidget {
               ),
             ),
           ],
-          14.height,
-          for (int index = 0; index < stepValues.length; index++) ...<Widget>[
-            if (index > 0) 10.height,
-            _StepTile(
-              index: index + 1,
-              title: stepValues[index].title,
-              body: stepValues[index].body,
-            ),
+          if (showFocusSteps) ...<Widget>[
+            14.height,
+            for (int index = 0; index < stepValues.length; index++) ...<Widget>[
+              if (index > 0) 10.height,
+              _StepTile(
+                index: index + 1,
+                title: stepValues[index].title,
+                body: stepValues[index].body,
+              ),
+            ],
           ],
         ],
       ),
@@ -342,9 +337,24 @@ class _BaseCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.5),
+        color: AppColors.card.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.richGold.withValues(alpha: 0.34),
+          width: 1.1,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.richGold.withValues(alpha: 0.12),
+            blurRadius: 16,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: AppColors.deepViolet.withValues(alpha: 0.18),
+            blurRadius: 18,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: child,
     );

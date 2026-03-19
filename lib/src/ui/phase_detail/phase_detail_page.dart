@@ -220,25 +220,30 @@ class _StageHeroCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  args.title,
+                  'Giai đoạn ${args.stageTitle}',
                   style: AppStyles.h4(fontWeight: FontWeight.w600),
                 ),
                 2.height,
-                Text(
-                  args.periodLabel,
-                  style: AppStyles.caption(color: AppColors.textMuted),
+                Row(
+                  children: <Widget>[
+                    Text(
+                      args.periodLabel,
+                      style: AppStyles.caption(color: AppColors.textMuted),
+                    ),
+                    8.width,
+                    _StatusChip(meta: statusMeta),
+                  ],
                 ),
               ],
             ),
           ),
-          _StatusChip(meta: statusMeta),
         ],
       ),
     );
   }
 }
 
-class _StageSectionCard extends StatelessWidget {
+class _StageSectionCard extends StatefulWidget {
   const _StageSectionCard({
     required this.title,
     required this.icon,
@@ -252,94 +257,164 @@ class _StageSectionCard extends StatelessWidget {
   final PhaseDetailArgs args;
 
   @override
+  State<_StageSectionCard> createState() => _StageSectionCardState();
+}
+
+class _StageSectionCardState extends State<_StageSectionCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final bool challenge = args.type == PhaseDetailType.challenge;
-    final _StatusMeta statusMeta = _statusMeta(
-      args.status,
-      challenge: challenge,
-    );
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: AppColors.mysticalCardGradient(),
+    final bool challenge = widget.args.type == PhaseDetailType.challenge;
+    final String headline = widget.args.theme.trim().isNotEmpty
+        ? widget.args.theme
+        : (challenge
+              ? 'Thử thách ${widget.args.index + 1} · Số ${widget.args.number}'
+              : 'Cuộc đời ${widget.args.index + 1} · Số ${widget.args.number}');
+    final String collapsedHint = challenge
+        ? 'Chạm để xem nội dung chi tiết · Số thử thách ${widget.args.number}'
+        : 'Chạm để xem nội dung chi tiết · Số cuộc đời ${widget.args.number}';
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.34)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, size: 18, color: color),
-              8.width,
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppStyles.h5(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              _StatusChip(meta: statusMeta),
-            ],
+        onTap: () => setState(() => _expanded = !_expanded),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: AppColors.mysticalCardGradient(),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: widget.color.withValues(alpha: 0.34)),
           ),
-          10.height,
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              _NumberOrb(number: args.number, color: color),
-              12.width,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
                   children: <Widget>[
-                    Text(
-                      args.title,
-                      style: AppStyles.h5(fontWeight: FontWeight.w600),
-                    ),
-                    2.height,
-                    Text(
-                      args.period,
-                      style: AppStyles.caption(color: AppColors.textMuted),
-                    ),
-                    if (args.theme.isNotEmpty) ...<Widget>[
-                      2.height,
-                      Text(
-                        args.theme,
-                        style: AppStyles.bodySmall(
-                          color: color,
+                    Icon(widget.icon, size: 18, color: widget.color),
+                    8.width,
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: AppStyles.h5(
+                          color: widget.color,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
+                    ),
+                    Icon(
+                      _expanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
                   ],
                 ),
               ),
+              AnimatedCrossFade(
+                firstChild: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: widget.color.withValues(alpha: 0.08),
+                      border: Border.all(
+                        color: widget.color.withValues(alpha: 0.24),
+                      ),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.touch_app_rounded,
+                          size: 16,
+                          color: widget.color.withValues(alpha: 0.9),
+                        ),
+                        8.width,
+                        Expanded(
+                          child: Text(
+                            collapsedHint,
+                            style: AppStyles.bodySmall(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                secondChild: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          _NumberOrb(
+                            number: widget.args.number,
+                            color: widget.color,
+                          ),
+                          12.width,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  headline,
+                                  style: AppStyles.h5(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      10.height,
+                      _DetailTextCard(
+                        title: 'Mô tả',
+                        icon: Icons.insights_rounded,
+                        body: widget.args.description,
+                        color: AppColors.richGold,
+                      ),
+                      8.height,
+                      _DetailTextCard(
+                        title: widget.args.opportunitiesTitle,
+                        icon: Icons.auto_graph_rounded,
+                        body: widget.args.opportunities,
+                        color: challenge
+                            ? AppColors.warning
+                            : AppColors.energyEmerald,
+                      ),
+                      8.height,
+                      _DetailTextCard(
+                        title: 'Lời khuyên',
+                        icon: Icons.lightbulb_rounded,
+                        body: widget.args.advice,
+                        color: AppColors.energyPurple,
+                      ),
+                    ],
+                  ),
+                ),
+                crossFadeState: _expanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 220),
+                sizeCurve: Curves.easeOutCubic,
+              ),
             ],
           ),
-          10.height,
-          _DetailTextCard(
-            title: 'Mô tả',
-            icon: Icons.insights_rounded,
-            body: args.description,
-            color: AppColors.richGold,
-          ),
-          8.height,
-          _DetailTextCard(
-            title: args.opportunitiesTitle,
-            icon: Icons.auto_graph_rounded,
-            body: args.opportunities,
-            color: challenge ? AppColors.warning : AppColors.energyEmerald,
-          ),
-          8.height,
-          _DetailTextCard(
-            title: 'Lời khuyên',
-            icon: Icons.lightbulb_rounded,
-            body: args.advice,
-            color: AppColors.energyPurple,
-          ),
-        ],
+        ),
       ),
     );
   }

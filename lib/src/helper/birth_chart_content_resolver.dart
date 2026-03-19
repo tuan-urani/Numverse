@@ -36,8 +36,7 @@ class BirthChartResolvedContent extends Equatable {
   final List<ResolvedArrowInsight> activeArrows;
   final List<ResolvedArrowInsight> inactiveArrows;
 
-  bool get hasArrowInsights =>
-      activeArrows.isNotEmpty || inactiveArrows.isNotEmpty;
+  bool get hasArrowInsights => activeArrows.isNotEmpty;
 
   @override
   List<Object?> get props => <Object?>[
@@ -60,6 +59,7 @@ class BirthChartContentResolver {
     'success',
     'spirituality',
   ];
+  static const Set<String> _concernArrowKeys = <String>{'frustration'};
 
   static BirthChartResolvedContent resolve({
     required BirthChartGrid chart,
@@ -135,7 +135,10 @@ class BirthChartContentResolver {
         numbers: meaning.numbers.isEmpty ? pattern.numbers : meaning.numbers,
         active: pattern.present,
       );
-      if (pattern.present) {
+      if (_shouldPlaceInActiveGroup(
+        key: key,
+        patternPresent: pattern.present,
+      )) {
         activeArrows.add(insight);
       } else {
         inactiveArrows.add(insight);
@@ -166,7 +169,10 @@ class BirthChartContentResolver {
         numbers: meaning.numbers.isEmpty ? pattern.numbers : meaning.numbers,
         active: pattern.present,
       );
-      if (pattern.present) {
+      if (_shouldPlaceInActiveGroup(
+        key: key,
+        patternPresent: pattern.present,
+      )) {
         activeArrows.add(insight);
       } else {
         inactiveArrows.add(insight);
@@ -287,6 +293,16 @@ class BirthChartContentResolver {
       'success': arrows.success,
       'spirituality': arrows.spirituality,
     };
+  }
+
+  static bool _shouldPlaceInActiveGroup({
+    required String key,
+    required bool patternPresent,
+  }) {
+    if (_concernArrowKeys.contains(key)) {
+      return !patternPresent;
+    }
+    return patternPresent;
   }
 
   static String _formatArrowTitle(String key) {

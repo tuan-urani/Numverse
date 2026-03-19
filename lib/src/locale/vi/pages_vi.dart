@@ -88,6 +88,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.comparisonAdviceTitle: 'Lời khuyên',
   PagesLocaleKey.comparisonQuote:
       '"Mỗi mối quan hệ là cơ hội để học hỏi và phát triển"',
+  PagesLocaleKey.comparisonAspectInsightsTitle: 'Phân tích chi tiết',
   PagesLocaleKey.comparisonStatusExcellent: 'Rất hợp',
   PagesLocaleKey.comparisonStatusGood: 'Hợp tốt',
   PagesLocaleKey.comparisonStatusModerate: 'Tương hợp',
@@ -154,6 +155,8 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.numaiStartChatDisabled: 'Không đủ Soul Points',
   PagesLocaleKey.numaiNotEnoughStart:
       'Bạn cần ít nhất 3 SP để chat. Hãy check-in ở tab Hôm nay!',
+  PagesLocaleKey.numaiStartNeedMorePointsCta:
+      'Cần thêm @points point để tiếp tục. Kiếm thêm',
   PagesLocaleKey.numaiChatTitle: 'NumAI Chat',
   PagesLocaleKey.numaiChatSubtitle: 'Trợ lý thần số học',
   PagesLocaleKey.numaiChatEmptyTitle: 'Xin chào! Tôi là NumAI',
@@ -182,7 +185,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.numaiDomainLoveLabel: 'Tình yêu',
   PagesLocaleKey.numaiDomainCyclesLabel: 'Chu kỳ cuộc đời',
   PagesLocaleKey.numaiDomainPersonalityFeatured:
-      'Bạn là người có tính cách như thế nào?',
+      'Tôi là người có tính cách như thế nào?',
   PagesLocaleKey.numaiDomainCareerFeatured:
       'Công việc nào thực sự phù hợp với tôi?',
   PagesLocaleKey.numaiDomainLoveFeatured:
@@ -198,7 +201,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileTitle: 'Tôi',
   PagesLocaleKey.profileSubtitle: 'Hồ sơ năng lượng của bạn',
   PagesLocaleKey.profileSubtitleUnbacked:
-      'Hồ sơ năng lượng của bạn chưa được sao lưu.',
+      'Bạn không muốn mất dữ liệu của mình? Hãy tạo tài khoản để sao lưu hồ sơ an toàn.',
   PagesLocaleKey.profileMyInfo: 'Hồ sơ của tôi',
   PagesLocaleKey.profileSavedProfiles: 'Hồ sơ đã lưu',
   PagesLocaleKey.profileSubscription: 'Gói dịch vụ',
@@ -230,7 +233,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileSoulPointsActionBuyPointBody:
       'Đi tới màn Subscription để nạp point.',
   PagesLocaleKey.profileGuestWarning: 'Dữ liệu của bạn chưa được sao lưu.',
-  PagesLocaleKey.profileGuestAuthAction: 'Sao lưu ngay',
+  PagesLocaleKey.profileGuestAuthAction: 'Tạo ngay',
   PagesLocaleKey.profileGuestAuthTitle: 'Đăng ký / Đăng nhập để sao lưu',
   PagesLocaleKey.profileGuestAuthSubtitle:
       'Đồng bộ hồ sơ của bạn lên cloud để không bị mất dữ liệu khi đổi thiết bị.',
@@ -619,7 +622,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.yearDetailLessonThreeTitle: 'Cân bằng tham vọng',
   PagesLocaleKey.yearDetailLessonThreeBody:
       'Không để quyền lực và vật chất làm mất đi giá trị con người',
-  PagesLocaleKey.yearDetailFocusAreaTitle: 'Các lĩnh vực tập trung',
+  PagesLocaleKey.yearDetailFocusAreaTitle: 'Định hướng & Hành động',
   PagesLocaleKey.yearDetailFocusCareerTitle: 'Sự nghiệp',
   PagesLocaleKey.yearDetailFocusCareerBody:
       'Thăng tiến, đảm nhận vai trò lãnh đạo, xây dựng uy tín',

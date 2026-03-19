@@ -466,6 +466,8 @@ class LocaleKey {
   static const String comparisonAdviceTitle =
       PagesLocaleKey.comparisonAdviceTitle;
   static const String comparisonQuote = PagesLocaleKey.comparisonQuote;
+  static const String comparisonAspectInsightsTitle =
+      PagesLocaleKey.comparisonAspectInsightsTitle;
   static const String comparisonStatusExcellent =
       PagesLocaleKey.comparisonStatusExcellent;
   static const String comparisonStatusGood =
@@ -543,6 +545,8 @@ class LocaleKey {
   static const String numaiStartChatDisabled =
       PagesLocaleKey.numaiStartChatDisabled;
   static const String numaiNotEnoughStart = PagesLocaleKey.numaiNotEnoughStart;
+  static const String numaiStartNeedMorePointsCta =
+      PagesLocaleKey.numaiStartNeedMorePointsCta;
   static const String numaiChatTitle = PagesLocaleKey.numaiChatTitle;
   static const String numaiChatSubtitle = PagesLocaleKey.numaiChatSubtitle;
   static const String numaiChatEmptyTitle = PagesLocaleKey.numaiChatEmptyTitle;

@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:test/src/core/model/compatibility_aspect.dart';
 import 'package:test/src/core/model/numerology_reading_models.dart';
 import 'package:test/src/core/repository/numerology_content_repository.dart';
 import 'package:test/src/helper/birth_chart_content_resolver.dart';
@@ -130,6 +131,12 @@ void main() {
                 'advice': <String>['good advice'],
                 'quote': 'good quote',
               },
+              'life_path.good': <String, dynamic>{
+                'strengths': <String>['life path good strength'],
+                'challenges': <String>['life path good challenge'],
+                'advice': <String>['life path good advice'],
+                'quote': 'life path good quote',
+              },
               'moderate': <String, dynamic>{
                 'strengths': <String>['moderate strength'],
                 'challenges': <String>['moderate challenge'],
@@ -196,12 +203,30 @@ void main() {
         overallScore: 75,
         languageCode: 'vi',
       );
+      final lifePathAspect = repository.getCompatibilityAspectContent(
+        aspect: CompatibilityAspect.lifePath,
+        score: 75,
+        languageCode: 'vi',
+      );
+      final expressionAspect = repository.getCompatibilityAspectContent(
+        aspect: CompatibilityAspect.expression,
+        score: 75,
+        languageCode: 'vi',
+      );
+      final soulAspectFallbackStatic = repository.getCompatibilityAspectContent(
+        aspect: CompatibilityAspect.soul,
+        score: 35,
+        languageCode: 'vi',
+      );
 
       expect(universal.title, expectedTitle);
       expect(lifePath.title, 'Life Path 7 remote');
       expect(pinnacle.theme, 'Pinnacle 1 remote');
       expect(challenge.theme, 'Challenge 0 remote');
       expect(compatibility.quote, 'good quote');
+      expect(lifePathAspect.quote, 'life path good quote');
+      expect(expressionAspect.quote, 'good quote');
+      expect(soulAspectFallbackStatic.quote, isNotEmpty);
 
       final String? rawLedger = appShared.getNumerologyLedgerActive('vi');
       expect(rawLedger, isNotNull);
@@ -210,6 +235,164 @@ void main() {
       final Map<String, dynamic> envelope = decoded as Map<String, dynamic>;
       expect(envelope['version'], '1.0.2');
       expect((envelope['checksum'] as String?)?.isNotEmpty ?? false, true);
+    },
+  );
+
+  test(
+    'mobile ledger sync force refreshes when checksum changed on same version',
+    () async {
+      final String cachedEnvelope = jsonEncode(<String, dynamic>{
+        'version': '1.0.9',
+        'checksum': 'cached_checksum',
+        'ledger': <String, dynamic>{
+          'compatibility_content': <String, dynamic>{
+            'excellent': <String, dynamic>{
+              'strengths': <String>['cached excellent strength'],
+              'challenges': <String>['cached excellent challenge'],
+              'advice': <String>['cached excellent advice'],
+              'quote': 'cached excellent quote',
+            },
+            'good': <String, dynamic>{
+              'strengths': <String>['cached good strength'],
+              'challenges': <String>['cached good challenge'],
+              'advice': <String>['cached good advice'],
+              'quote': 'cached good quote',
+            },
+            'moderate': <String, dynamic>{
+              'strengths': <String>['cached moderate strength'],
+              'challenges': <String>['cached moderate challenge'],
+              'advice': <String>['cached moderate advice'],
+              'quote': 'cached moderate quote',
+            },
+            'effort': <String, dynamic>{
+              'strengths': <String>['cached effort strength'],
+              'challenges': <String>['cached effort challenge'],
+              'advice': <String>['cached effort advice'],
+              'quote': 'cached effort quote',
+            },
+          },
+        },
+      });
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'numverse_ledger_active_vi': cachedEnvelope,
+      });
+      final SharedPreferences preferences =
+          await SharedPreferences.getInstance();
+      final AppShared appShared = AppShared(preferences);
+
+      final Dio dio = Dio();
+      dio.httpClientAdapter = _QueueHttpClientAdapter(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'not_modified': true,
+          'version': '1.0.9',
+          'checksum': 'remote_checksum',
+        },
+        <String, dynamic>{
+          'not_modified': false,
+          'version': '1.0.9',
+          'checksum': 'remote_checksum',
+          'locale': 'vi',
+          'ledger': <String, dynamic>{
+            'compatibility_content': <String, dynamic>{
+              'excellent': <String, dynamic>{
+                'strengths': <String>['remote excellent strength'],
+                'challenges': <String>['remote excellent challenge'],
+                'advice': <String>['remote excellent advice'],
+                'quote': 'remote excellent quote',
+              },
+              'good': <String, dynamic>{
+                'strengths': <String>['remote good strength'],
+                'challenges': <String>['remote good challenge'],
+                'advice': <String>['remote good advice'],
+                'quote': 'remote good quote',
+              },
+              'moderate': <String, dynamic>{
+                'strengths': <String>['remote moderate strength'],
+                'challenges': <String>['remote moderate challenge'],
+                'advice': <String>['remote moderate advice'],
+                'quote': 'remote moderate quote',
+              },
+              'effort': <String, dynamic>{
+                'strengths': <String>['remote effort strength'],
+                'challenges': <String>['remote effort challenge'],
+                'advice': <String>['remote effort advice'],
+                'quote': 'remote effort quote',
+              },
+              'personality.excellent': <String, dynamic>{
+                'strengths': <String>['remote personality strength'],
+                'challenges': <String>['remote personality challenge'],
+                'advice': <String>['remote personality advice'],
+                'quote': 'remote personality quote',
+              },
+            },
+          },
+        },
+        <String, dynamic>{
+          'not_modified': false,
+          'version': '1.0.9',
+          'checksum': 'remote_checksum_en',
+          'locale': 'en',
+          'ledger': <String, dynamic>{},
+        },
+      ]);
+
+      final AssetNumerologyContentRepository repository =
+          AssetNumerologyContentRepository(
+            appShared: appShared,
+            assetBundle: _MemoryAssetBundle(),
+            dio: dio,
+            supabaseConfig: const AppSupabaseConfig(
+              baseUrl: 'https://oeghmguqrmynbbhnjxfx.supabase.co',
+              anonKey: 'test_anon_key',
+            ),
+          );
+
+      await repository.warmUp();
+
+      final personalityAspect = repository.getCompatibilityAspectContent(
+        aspect: CompatibilityAspect.personality,
+        score: 95,
+        languageCode: 'vi',
+      );
+      expect(personalityAspect.quote, 'remote personality quote');
+
+      final String? rawLedger = appShared.getNumerologyLedgerActive('vi');
+      expect(rawLedger, isNotNull);
+      final Map<String, dynamic> envelope =
+          jsonDecode(rawLedger!) as Map<String, dynamic>;
+      expect(envelope['checksum'], 'remote_checksum');
+      expect(
+        ((envelope['ledger'] as Map<String, dynamic>)['compatibility_content']
+                as Map<String, dynamic>)
+            .containsKey('personality.excellent'),
+        true,
+      );
+    },
+  );
+
+  test(
+    'compatibility aspect content falls back to static local defaults',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final SharedPreferences preferences =
+          await SharedPreferences.getInstance();
+      final AppShared appShared = AppShared(preferences);
+      final AssetNumerologyContentRepository repository =
+          AssetNumerologyContentRepository(
+            appShared: appShared,
+            assetBundle: _MemoryAssetBundle(),
+            dio: Dio(),
+            supabaseConfig: const AppSupabaseConfig(baseUrl: '', anonKey: ''),
+          );
+
+      final compatibility = repository.getCompatibilityAspectContent(
+        aspect: CompatibilityAspect.personality,
+        score: 82,
+        languageCode: 'vi',
+      );
+
+      expect(compatibility.strengths, isNotEmpty);
+      expect(compatibility.quote, isNotEmpty);
     },
   );
 

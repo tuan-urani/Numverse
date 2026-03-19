@@ -35,6 +35,8 @@ class CoreNumbersContent extends StatelessWidget {
 class _LoadedContent extends StatelessWidget {
   const _LoadedContent({required this.state, super.key});
 
+  static const bool _showSummarySection = false;
+
   final CoreNumbersState state;
 
   @override
@@ -83,8 +85,10 @@ class _LoadedContent extends StatelessWidget {
       children: <Widget>[
         _IntroCard(),
         12.height,
-        _SummaryCard(state: state),
-        12.height,
+        if (_showSummarySection) ...<Widget>[
+          _SummaryCard(state: state),
+          12.height,
+        ],
         for (final _CoreNumberCardData card in cards) ...<Widget>[
           _CoreNumberCard(data: card),
           12.height,
@@ -268,137 +272,215 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _CoreNumberCard extends StatelessWidget {
+class _CoreNumberCard extends StatefulWidget {
   const _CoreNumberCard({required this.data});
 
   final _CoreNumberCardData data;
 
   @override
+  State<_CoreNumberCard> createState() => _CoreNumberCardState();
+}
+
+class _CoreNumberCardState extends State<_CoreNumberCard> {
+  bool _isExpanded = false;
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final _CoreNumberCardData data = widget.data;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.55),
+        color: AppColors.card.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+        border: Border.all(
+          color: AppColors.richGold.withValues(alpha: 0.36),
+          width: 1.2,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.richGold.withValues(alpha: 0.12),
+            blurRadius: 16,
+            spreadRadius: 0.5,
+          ),
+          BoxShadow(
+            color: AppColors.violetAccent.withValues(alpha: 0.08),
+            blurRadius: 20,
+            spreadRadius: 0.5,
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: _toggleExpanded,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Stack(
-                  alignment: Alignment.center,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.richGold.withValues(alpha: 0.14),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Container(
+                          width: 66,
+                          height: 66,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.richGold.withValues(alpha: 0.14),
+                          ),
+                        ),
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: <Color>[
+                                AppColors.richGold.withValues(alpha: 0.35),
+                                AppColors.violetAccent.withValues(alpha: 0.22),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: AppColors.richGold.withValues(alpha: 0.45),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${data.number}',
+                              style: AppStyles.numberMedium(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    12.width,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Icon(
+                                data.icon,
+                                size: 16,
+                                color: AppColors.richGold,
+                              ),
+                              6.width,
+                              Expanded(
+                                child: Text(
+                                  data.title,
+                                  style: AppStyles.h4(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          3.height,
+                          Text(
+                            data.subtitle,
+                            style: AppStyles.caption(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: <Color>[
-                            AppColors.richGold.withValues(alpha: 0.35),
-                            AppColors.violetAccent.withValues(alpha: 0.22),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: AppColors.richGold.withValues(alpha: 0.45),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${data.number}',
-                          style: AppStyles.numberMedium(),
-                        ),
+                    8.width,
+                    AnimatedRotation(
+                      turns: _isExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.richGold,
+                        size: 22,
                       ),
                     ),
                   ],
                 ),
-                12.width,
-                Expanded(
-                  child: Column(
+                12.height,
+                Text(
+                  data.intro,
+                  style: AppStyles.bodySmall(color: AppColors.textSecondary),
+                ),
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Icon(data.icon, size: 16, color: AppColors.richGold),
-                          6.width,
-                          Text(
-                            data.title,
-                            style: AppStyles.h4(fontWeight: FontWeight.w600),
+                      10.height,
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppColors.richGold.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.richGold.withValues(alpha: 0.2),
                           ),
-                        ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            data.content.interpretation,
+                            style: AppStyles.bodySmall(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
                       ),
-                      3.height,
-                      Text(
-                        data.subtitle,
-                        style: AppStyles.caption(color: AppColors.textMuted),
+                      10.height,
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: data.content.keywords.map((String keyword) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              color: AppColors.richGold.withValues(alpha: 0.12),
+                              border: Border.all(
+                                color: AppColors.richGold.withValues(
+                                  alpha: 0.25,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              keyword,
+                              style: AppStyles.caption(
+                                color: AppColors.richGold,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
+                  crossFadeState: _isExpanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 220),
+                  firstCurve: Curves.easeOutCubic,
+                  secondCurve: Curves.easeOutCubic,
+                  sizeCurve: Curves.easeInOutCubic,
+                  alignment: Alignment.topCenter,
                 ),
               ],
             ),
-            12.height,
-            Text(
-              data.intro,
-              style: AppStyles.bodySmall(color: AppColors.textSecondary),
-            ),
-            10.height,
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.richGold.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.richGold.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  data.content.interpretation,
-                  style: AppStyles.bodySmall(color: AppColors.textSecondary),
-                ),
-              ),
-            ),
-            10.height,
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: data.content.keywords.map((String keyword) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    color: AppColors.richGold.withValues(alpha: 0.12),
-                    border: Border.all(
-                      color: AppColors.richGold.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Text(
-                    keyword,
-                    style: AppStyles.caption(
-                      color: AppColors.richGold,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
+          ),
         ),
       ),
     );

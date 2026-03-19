@@ -14,52 +14,6 @@ class ComparisonResultContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<_AspectData> aspects = <_AspectData>[
-      _AspectData(
-        title: LocaleKey.comparisonAspectCoreTitle.tr,
-        score: state.coreScore,
-        icon: Icons.auto_awesome_rounded,
-        description: LocaleKey.comparisonAspectCoreDescription.trParams(
-          <String, String>{
-            'a': '${state.selfLifePath}',
-            'b': '${state.targetLifePath}',
-          },
-        ),
-      ),
-      _AspectData(
-        title: LocaleKey.comparisonAspectCommunicationTitle.tr,
-        score: state.communicationScore,
-        icon: Icons.trending_up_rounded,
-        description: LocaleKey.comparisonAspectCommunicationDescription
-            .trParams(<String, String>{
-              'a': '${state.selfExpression}',
-              'b': '${state.targetExpression}',
-            }),
-      ),
-      _AspectData(
-        title: LocaleKey.comparisonAspectSoulTitle.tr,
-        score: state.soulScore,
-        icon: Icons.favorite_rounded,
-        description: LocaleKey.comparisonAspectSoulDescription.trParams(
-          <String, String>{
-            'a': '${state.selfSoul}',
-            'b': '${state.targetSoul}',
-          },
-        ),
-      ),
-      _AspectData(
-        title: LocaleKey.comparisonAspectPersonalityTitle.tr,
-        score: state.personalityScore,
-        icon: Icons.lightbulb_outline_rounded,
-        description: LocaleKey.comparisonAspectPersonalityDescription.trParams(
-          <String, String>{
-            'a': '${state.selfPersonality}',
-            'b': '${state.targetPersonality}',
-          },
-        ),
-      ),
-    ];
-
     final List<String> strengths = state.strengths.isNotEmpty
         ? state.strengths
         : <String>[
@@ -83,6 +37,32 @@ class ComparisonResultContent extends StatelessWidget {
             LocaleKey.comparisonAdviceThree.tr,
             LocaleKey.comparisonAdviceFour.tr,
           ];
+    final List<_AspectInsightData> aspectInsights = <_AspectInsightData>[
+      _AspectInsightData(
+        title: LocaleKey.comparisonAspectCoreTitle.tr,
+        score: state.coreScore,
+        icon: Icons.auto_awesome_rounded,
+        content: state.lifePathInsight,
+      ),
+      _AspectInsightData(
+        title: LocaleKey.comparisonAspectCommunicationTitle.tr,
+        score: state.expressionScore,
+        icon: Icons.mic_rounded,
+        content: state.expressionInsight,
+      ),
+      _AspectInsightData(
+        title: LocaleKey.comparisonAspectSoulTitle.tr,
+        score: state.soulScore,
+        icon: Icons.favorite_rounded,
+        content: state.soulInsight,
+      ),
+      _AspectInsightData(
+        title: LocaleKey.comparisonAspectPersonalityTitle.tr,
+        score: state.personalityScore,
+        icon: Icons.lightbulb_outline_rounded,
+        content: state.personalityInsight,
+      ),
+    ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
@@ -93,15 +73,16 @@ class ComparisonResultContent extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              LocaleKey.comparisonDetailTitle.tr,
+              LocaleKey.comparisonAspectInsightsTitle.tr,
               style: AppStyles.h4(fontWeight: FontWeight.w600),
             ),
           ),
           10.height,
-          for (final _AspectData aspect in aspects) ...<Widget>[
-            _AspectCard(aspect: aspect),
+          for (final _AspectInsightData insight in aspectInsights) ...<Widget>[
+            _AspectInsightCard(data: insight),
             10.height,
           ],
+          6.height,
           _ListCard(
             title: LocaleKey.comparisonStrengthTitle.tr,
             icon: Icons.trending_up_rounded,
@@ -253,7 +234,7 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
                     child: _PersonBadge(
                       number: widget.state.targetLifePath,
                       name: widget.state.targetName,
-                      subtitle: _relationLabel(widget.state.targetRelation),
+                      subtitle: widget.state.targetDate,
                     ),
                   ),
                 ],
@@ -281,19 +262,6 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
   String _lastName(String value) {
     final List<String> parts = value.trim().split(RegExp(r'\s+'));
     return parts.isEmpty ? value : parts.last;
-  }
-
-  String _relationLabel(String relationKey) {
-    return switch (relationKey) {
-      'lover' => LocaleKey.compatibilityRelationLover.tr,
-      'spouse' => LocaleKey.compatibilityRelationSpouse.tr,
-      'friend' => LocaleKey.compatibilityRelationFriend.tr,
-      'coworker' => LocaleKey.compatibilityRelationCoworker.tr,
-      'mother' => LocaleKey.compatibilityRelationMother.tr,
-      'father' => LocaleKey.compatibilityRelationFather.tr,
-      'sibling' => LocaleKey.compatibilityRelationSibling.tr,
-      _ => LocaleKey.compatibilityRelationOther.tr,
-    };
   }
 
   @override
@@ -350,82 +318,6 @@ class _PersonBadge extends StatelessWidget {
           style: AppStyles.caption(color: AppColors.textMuted),
         ),
       ],
-    );
-  }
-}
-
-class _AspectCard extends StatelessWidget {
-  const _AspectCard({required this.aspect});
-
-  final _AspectData aspect;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color scoreColor = switch (aspect.score) {
-      >= 80 => AppColors.richGold,
-      >= 60 => AppColors.warning,
-      _ => AppColors.textMuted,
-    };
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: AppColors.richGold.withValues(alpha: 0.2),
-                ),
-                child: Icon(aspect.icon, size: 18, color: AppColors.richGold),
-              ),
-              10.width,
-              Expanded(
-                child: Text(
-                  aspect.title,
-                  style: AppStyles.h5(fontWeight: FontWeight.w600),
-                ),
-              ),
-              Text(
-                '${aspect.score}',
-                style: AppStyles.h3(
-                  color: scoreColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              3.width,
-              Text('%', style: AppStyles.caption(color: AppColors.textMuted)),
-            ],
-          ),
-          10.height,
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: aspect.score / 100,
-              minHeight: 7,
-              backgroundColor: AppColors.background.withValues(alpha: 0.35),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.richGold,
-              ),
-            ),
-          ),
-          10.height,
-          Text(
-            aspect.description,
-            style: AppStyles.bodySmall(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -552,16 +444,132 @@ class _QuoteCard extends StatelessWidget {
   }
 }
 
-class _AspectData {
-  const _AspectData({
+class _AspectInsightData {
+  const _AspectInsightData({
     required this.title,
     required this.score,
     required this.icon,
-    required this.description,
+    required this.content,
   });
 
   final String title;
   final int score;
   final IconData icon;
-  final String description;
+  final ComparisonAspectInsight content;
+}
+
+class _AspectInsightCard extends StatefulWidget {
+  const _AspectInsightCard({required this.data});
+
+  final _AspectInsightData data;
+
+  @override
+  State<_AspectInsightCard> createState() => _AspectInsightCardState();
+}
+
+class _AspectInsightCardState extends State<_AspectInsightCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final _AspectInsightData data = widget.data;
+    final Color scoreColor = switch (data.score) {
+      >= 80 => AppColors.richGold,
+      >= 60 => AppColors.warning,
+      _ => AppColors.textMuted,
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.richGold.withValues(alpha: 0.2),
+                  ),
+                  child: Icon(data.icon, size: 18, color: AppColors.richGold),
+                ),
+                10.width,
+                Expanded(
+                  child: Text(
+                    data.title,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Text(
+                  '${data.score}',
+                  style: AppStyles.h4(
+                    color: scoreColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                3.width,
+                Text('%', style: AppStyles.caption(color: AppColors.textMuted)),
+                6.width,
+                AnimatedRotation(
+                  turns: _isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: Icon(
+                    Icons.expand_more_rounded,
+                    size: 20,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (Widget child, Animation<double> animation) =>
+                SizeTransition(
+                  sizeFactor: animation,
+                  axisAlignment: -1,
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+            child: _isExpanded
+                ? Padding(
+                    key: ValueKey<String>('expanded-${data.title}'),
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          data.content.quote.isNotEmpty
+                              ? data.content.quote
+                              : LocaleKey.comparisonQuote.tr,
+                          style: AppStyles.bodyMedium(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ).copyWith(height: 1.45),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey<String>('collapsed')),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -348,6 +348,82 @@ class NumerologyReadingData {
     ),
   );
 
+  static const Map<String, ChartArrowMeaning> nameChartArrows =
+      <String, ChartArrowMeaning>{
+        'determination': ChartArrowMeaning(
+          key: 'determination',
+          title: 'Quyết tâm',
+          presentDescription:
+              'Tên của bạn tạo cảm giác bền bỉ và theo đuổi mục tiêu đến cùng.',
+          missingDescription:
+              'Khi biểu đạt mục tiêu, hãy chốt rõ mốc thời gian và tiêu chí hoàn thành.',
+          numbers: <int>[3, 5, 7],
+        ),
+        'planning': ChartArrowMeaning(
+          key: 'planning',
+          title: 'Kế hoạch',
+          presentDescription:
+              'Bạn có xu hướng trình bày ý tưởng có cấu trúc và lộ trình rõ ràng.',
+          missingDescription:
+              'Nên chia ý tưởng thành 3 phần: mục tiêu, bước làm, thời hạn.',
+          numbers: <int>[1, 2, 3],
+        ),
+        'willpower': ChartArrowMeaning(
+          key: 'willpower',
+          title: 'Ý chí',
+          presentDescription:
+              'Cách bạn thể hiện cho thấy nội lực tốt và tinh thần cam kết ổn định.',
+          missingDescription:
+              'Giữ nhịp bằng thói quen nhỏ lặp lại mỗi ngày để tăng độ kiên định.',
+          numbers: <int>[4, 5, 6],
+        ),
+        'activity': ChartArrowMeaning(
+          key: 'activity',
+          title: 'Năng động',
+          presentDescription:
+              'Năng lượng tên cho thấy bạn chủ động bắt đầu và xoay chuyển nhanh.',
+          missingDescription:
+              'Hãy ưu tiên hành động đầu tiên trong 24 giờ thay vì chờ hoàn hảo.',
+          numbers: <int>[1, 5, 9],
+        ),
+        'sensitivity': ChartArrowMeaning(
+          key: 'sensitivity',
+          title: 'Nhạy cảm',
+          presentDescription:
+              'Bạn dễ bắt nhịp cảm xúc người đối diện và phản hồi tinh tế.',
+          missingDescription:
+              'Tăng chất lượng lắng nghe bằng cách nhắc lại ý chính trước khi phản hồi.',
+          numbers: <int>[3, 6, 9],
+        ),
+        'frustration': ChartArrowMeaning(
+          key: 'frustration',
+          title: 'Bồn chồn',
+          presentDescription:
+              'Năng lượng bồn chồn có thể tăng khi áp lực cao, cần quản trị nhịp nghỉ.',
+          missingDescription:
+              'Bạn giữ nhịp khá ổn và ít bị cuốn vào trạng thái nôn nóng.',
+          numbers: <int>[4, 5, 6],
+        ),
+        'success': ChartArrowMeaning(
+          key: 'success',
+          title: 'Thành tựu',
+          presentDescription:
+              'Tổ hợp này hỗ trợ tư duy kết quả và khả năng đi đường dài.',
+          missingDescription:
+              'Kết hợp kỷ luật và theo dõi tiến độ tuần để cải thiện hiệu quả.',
+          numbers: <int>[7, 8, 9],
+        ),
+        'spirituality': ChartArrowMeaning(
+          key: 'spirituality',
+          title: 'Tâm thức',
+          presentDescription:
+              'Bạn có khả năng kết nối trực giác với hành động thực tế.',
+          missingDescription:
+              'Dành thời gian tĩnh để làm rõ giá trị cốt lõi trước các quyết định lớn.',
+          numbers: <int>[1, 5, 9],
+        ),
+      };
+
   static const Map<int, LifeCycleContent> pinnacles = <int, LifeCycleContent>{
     1: LifeCycleContent(
       theme: 'Độc lập & Khởi đầu',

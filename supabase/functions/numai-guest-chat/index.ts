@@ -20,12 +20,22 @@ class HttpError extends Error {
 }
 
 const DEFAULT_LOCALE = "vi-VN";
-const NUMAI_SOUL_POINT_COST = Number(
-  Deno.env.get("NUMAI_SOUL_POINT_COST") ?? "10",
-);
+const NUMAI_SOUL_POINT_COST = 3;
 const DEFAULT_GUEST_MODEL = Deno.env.get("NUMAI_GUEST_MODEL") ??
   "gemini-2.5-flash-lite";
 const NUMAI_RECENT_MESSAGES_LIMIT = 4;
+const NUMAI_TECHNICAL_FALLBACK_MESSAGE =
+  "Oops, hệ thống đang gặp trục trặc nhỏ khi xử lý dữ liệu. Bạn thử lại ngay nhé.";
+const NUMAI_OUT_OF_SCOPE_FALLBACK_MESSAGE =
+  "Mình chỉ hỗ trợ về thần số học.\nBạn có thể hỏi về con số, năm cá nhân hoặc ý nghĩa cuộc đời.";
+const NUMAI_TECHNICAL_ERROR_CODES = new Set<string>([
+  "gemini_provider_error",
+  "gemini_empty_output",
+  "invalid_json_output",
+  "invalid_numai_output",
+  "numai_empty_answer",
+  "missing_env_gemini_api_key",
+]);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,21 +111,41 @@ function stripCodeFences(text: string): string {
     .trim();
 }
 
-function recoverAnswerFromInvalidJson(rawText: string): string {
-  const answerMatch = rawText.match(/"answer"\s*:\s*"([\s\S]*)/);
-  if (answerMatch && answerMatch[1]) {
-    return answerMatch[1]
-      .replace(/\\n/g, "\n")
-      .replace(/\\"/g, '"')
-      .replace(/\s*[,}]\s*$/, "")
-      .trim();
+function isTruthyFlag(value: unknown): boolean {
+  if (value === true) {
+    return true;
   }
 
-  return rawText
-    .replace(/^\{+/, "")
-    .replace(/\}+$/, "")
-    .replace(/^"+|"+$/g, "")
-    .trim();
+  if (typeof value === "string") {
+    return value.trim().toLowerCase() === "true";
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  return false;
+}
+
+function resolveErrorCode(error: unknown): string {
+  if (error instanceof HttpError) {
+    return error.message.trim();
+  }
+  if (error instanceof Error) {
+    return error.message.trim();
+  }
+  return "unknown_error";
+}
+
+function isNumAiTechnicalError(error: unknown): boolean {
+  const code = resolveErrorCode(error);
+  if (NUMAI_TECHNICAL_ERROR_CODES.has(code)) {
+    return true;
+  }
+  if (error instanceof HttpError) {
+    return false;
+  }
+  return error instanceof Error;
 }
 
 function fallbackFollowUpSuggestions(locale: string): string[] {
@@ -446,8 +476,8 @@ async function callGuestGeminiJson(
     ? "Bạn là NumAI assistant cho user chưa tạo profile. Trả lời ngắn gọn, hữu ích, thực tế, không phán xét, không hứa hẹn cực đoan. Luôn trả về JSON hợp lệ."
     : "You are NumAI assistant for users without a profile. Be concise, useful, practical, and non-judgmental. Always return valid JSON.";
   const taskPrompt = locale.toLowerCase().startsWith("vi")
-    ? 'Trả về JSON với shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[]\n}\n\nYêu cầu:\n- answer tập trung trả lời đúng câu hỏi hiện tại.\n- suggestions phải có đúng 3 gợi ý câu hỏi tiếp theo.\n- referenced_sections ghi các phần đã dùng, ví dụ: recent_messages, user_question.\n- Không bao markdown, không dùng ```.'
-    : 'Return JSON with shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[]\n}\n\nRequirements:\n- answer focuses on the user\'s latest question.\n- suggestions must include exactly 3 follow-up questions.\n- referenced_sections can include recent_messages and user_question.\n- No markdown wrapper, no ```.';
+    ? 'Trả về JSON với shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean\n}\n\nYêu cầu:\n- answer tập trung trả lời đúng câu hỏi hiện tại.\n- suggestions phải có đúng 3 gợi ý câu hỏi tiếp theo.\n- referenced_sections ghi các phần đã dùng, ví dụ: recent_messages, user_question.\n- is_out_of_scope = true nếu câu hỏi nằm ngoài thần số học; ngược lại là false.\n- Không bao markdown, không dùng ```.'
+    : 'Return JSON with shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean\n}\n\nRequirements:\n- answer focuses on the user\'s latest question.\n- suggestions must include exactly 3 follow-up questions.\n- referenced_sections can include recent_messages and user_question.\n- is_out_of_scope must be true when the question is outside numerology; otherwise false.\n- No markdown wrapper, no ```.';
 
   const renderedPrompt = [
     "[Task Prompt]",
@@ -508,22 +538,10 @@ async function callGuestGeminiJson(
       rawTextOutput: textOutput,
     };
   } catch (error) {
-    const fallbackAnswer = recoverAnswerFromInvalidJson(textOutput);
-    if (!fallbackAnswer) {
-      if (error instanceof HttpError) {
-        throw error;
-      }
-      throw new HttpError(502, "invalid_json_output", { textOutput });
+    if (error instanceof HttpError) {
+      throw error;
     }
-
-    return {
-      parsedOutput: {
-        answer: fallbackAnswer,
-        referenced_sections: [],
-        suggestions: [],
-      },
-      rawTextOutput: textOutput,
-    };
+    throw new HttpError(502, "invalid_json_output", { textOutput });
   }
 }
 
@@ -570,40 +588,89 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
     );
     charged = true;
 
-    const geminiResult = await callGuestGeminiJson(
-      messageText,
-      locale,
-      recentMessages,
-    );
-    const output = ensureObject(
-      geminiResult.parsedOutput,
-      "invalid_numai_output",
-    );
-    const answer = String(output.answer ?? "").trim();
-    if (!answer) {
-      throw new HttpError(502, "numai_empty_answer");
+    let answer = "";
+    let suggestions: string[] = [];
+    let fallbackReason: "technical_error" | "out_of_scope" | null = null;
+    let originalErrorCode: string | null = null;
+    let rawOutput: string | null = null;
+
+    try {
+      const geminiResult = await callGuestGeminiJson(
+        messageText,
+        locale,
+        recentMessages,
+      );
+      rawOutput = geminiResult.rawTextOutput;
+      const output = ensureObject(
+        geminiResult.parsedOutput,
+        "invalid_numai_output",
+      );
+      if (isTruthyFlag(output.is_out_of_scope)) {
+        fallbackReason = "out_of_scope";
+        answer = NUMAI_OUT_OF_SCOPE_FALLBACK_MESSAGE;
+        suggestions = fallbackFollowUpSuggestions(locale);
+      } else {
+        const resolvedAnswer = String(output.answer ?? "").trim();
+        if (!resolvedAnswer) {
+          throw new HttpError(502, "numai_empty_answer");
+        }
+        answer = resolvedAnswer;
+        suggestions = resolveFollowUpSuggestions(output, locale);
+      }
+    } catch (error) {
+      if (!isNumAiTechnicalError(error)) {
+        throw error;
+      }
+      fallbackReason = "technical_error";
+      originalErrorCode = resolveErrorCode(error);
+      answer = NUMAI_TECHNICAL_FALLBACK_MESSAGE;
+      suggestions = fallbackFollowUpSuggestions(locale);
     }
 
-    const suggestions = resolveFollowUpSuggestions(output, locale);
+    if (fallbackReason && charged) {
+      walletBalanceAfterCharge = await grantSoulPoints(
+        admin,
+        user.id,
+        NUMAI_SOUL_POINT_COST,
+        "manual_adjustment",
+        {
+          reason: "guest_numai_generation_refund",
+          request_ref: requestRef,
+          refund_type: fallbackReason,
+          original_error_code: originalErrorCode,
+        },
+        requestRef,
+      );
+      charged = false;
+    }
+
+    const metadataJson: JsonObject = {
+      follow_up_suggestions: suggestions,
+      model_name: DEFAULT_GUEST_MODEL,
+      mode: "guest_no_profile",
+    };
+    if (fallbackReason) {
+      metadataJson.fallback_reason = fallbackReason;
+    }
+    if (originalErrorCode) {
+      metadataJson.original_error_code = originalErrorCode;
+    }
+
     return {
       ok: true,
       data: {
         thread_id: "",
         assistant_message: {
           message_text: answer,
-          metadata_json: {
-            follow_up_suggestions: suggestions,
-            model_name: DEFAULT_GUEST_MODEL,
-            mode: "guest_no_profile",
-          },
+          metadata_json: metadataJson,
         },
-        charged_soul_points: NUMAI_SOUL_POINT_COST,
+        charged_soul_points: charged ? NUMAI_SOUL_POINT_COST : 0,
         wallet_balance: walletBalanceAfterCharge,
         assistant_suggestions: suggestions,
       },
       meta: {
         model_name: DEFAULT_GUEST_MODEL,
-        raw_output: geminiResult.rawTextOutput,
+        raw_output: rawOutput,
       },
     };
   } catch (error) {
@@ -616,6 +683,7 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
         {
           reason: "guest_numai_generation_refund",
           request_ref: requestRef,
+          original_error_code: resolveErrorCode(error),
         },
         requestRef,
       );

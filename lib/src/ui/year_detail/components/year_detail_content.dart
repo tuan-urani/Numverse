@@ -10,13 +10,11 @@ import 'package:test/src/utils/app_styles.dart';
 class YearDetailContent extends StatelessWidget {
   const YearDetailContent({
     required this.personalYearNumber,
-    required this.periodLabel,
     required this.content,
     super.key,
   });
 
   final int personalYearNumber;
-  final String periodLabel;
   final NumerologyPersonalYearContent content;
 
   @override
@@ -27,10 +25,8 @@ class YearDetailContent extends StatelessWidget {
         _AnimatedReveal(
           delay: 0,
           child: _YearHeroCard(
-            periodLabel: periodLabel,
             personalYearNumber: personalYearNumber,
             keyword: content.keyword,
-            heroTitle: content.heroTitle,
           ),
         ),
         const SizedBox(height: 24),
@@ -79,22 +75,16 @@ class _AnimatedReveal extends StatelessWidget {
 
 class _YearHeroCard extends StatelessWidget {
   const _YearHeroCard({
-    required this.periodLabel,
     required this.personalYearNumber,
     required this.keyword,
-    required this.heroTitle,
   });
 
-  final String periodLabel;
   final int personalYearNumber;
   final String keyword;
-  final String heroTitle;
 
   @override
   Widget build(BuildContext context) {
-    final String resolvedHeroTitle = heroTitle.isEmpty
-        ? '${LocaleKey.todayYearValueLabel.tr} $personalYearNumber'
-        : heroTitle;
+    final String resolvedHeroTitle = LocaleKey.todayYearValueLabel.tr;
     final String resolvedKeyword = keyword.isEmpty
         ? LocaleKey.todayYearKeyword.tr
         : keyword;
@@ -124,14 +114,6 @@ class _YearHeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  periodLabel,
-                  style: AppStyles.caption(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w500,
-                  ).copyWith(letterSpacing: 1.1),
-                ),
-                8.height,
                 Text(
                   resolvedHeroTitle,
                   style: AppStyles.h2(fontWeight: FontWeight.w700),
@@ -229,7 +211,13 @@ class _YearPriorityCard extends StatelessWidget {
             ),
           ];
 
-    return _BaseCard(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.4)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -247,8 +235,17 @@ class _YearPriorityCard extends StatelessWidget {
               ),
             ],
           ),
+          14.height,
           for (int index = 0; index < lessonValues.length; index++) ...<Widget>[
-            if (index == 0) 14.height else 10.height,
+            if (index > 0) ...<Widget>[
+              10.height,
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: AppColors.border.withValues(alpha: 0.32),
+              ),
+              10.height,
+            ],
             _LessonTile(
               index: index + 1,
               title: lessonValues[index].title,
@@ -292,20 +289,10 @@ class _YearFocusAreasCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            AppColors.violetAccent.withValues(alpha: 0.24),
-            AppColors.deepViolet.withValues(alpha: 0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.violetAccent.withValues(alpha: 0.34),
-        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,12 +311,21 @@ class _YearFocusAreasCard extends StatelessWidget {
               ),
             ],
           ),
+          14.height,
           for (
             int index = 0;
             index < focusAreaValues.length;
             index++
           ) ...<Widget>[
-            if (index == 0) 14.height else 10.height,
+            if (index > 0) ...<Widget>[
+              10.height,
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: AppColors.border.withValues(alpha: 0.32),
+              ),
+              10.height,
+            ],
             _FocusAreaTile(
               title: focusAreaValues[index].title,
               body: focusAreaValues[index].body,
@@ -352,9 +348,9 @@ class _BaseCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.5),
+        color: AppColors.transparent,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.4)),
       ),
       child: child,
     );
@@ -418,56 +414,40 @@ class _LessonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            AppColors.richGold.withValues(alpha: 0.1),
-            AppColors.richGold.withValues(alpha: 0.05),
-          ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.richGold.withValues(alpha: 0.2),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$index',
+            style: AppStyles.bodyMedium(
+              color: AppColors.richGold,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: AppColors.richGold.withValues(alpha: 0.3),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '$index',
-              style: AppStyles.h4(
-                color: AppColors.richGold,
-                fontWeight: FontWeight.w700,
+        10.width,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(title, style: AppStyles.h5(fontWeight: FontWeight.w600)),
+              3.height,
+              Text(
+                body,
+                style: AppStyles.bodySmall(color: AppColors.textMuted),
               ),
-            ),
+            ],
           ),
-          10.width,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(title, style: AppStyles.h5(fontWeight: FontWeight.w600)),
-                2.height,
-                Text(
-                  body,
-                  style: AppStyles.bodySmall(color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -480,22 +460,38 @@ class _FocusAreaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.34),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.32)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(title, style: AppStyles.bodyMedium(fontWeight: FontWeight.w600)),
-          2.height,
-          Text(body, style: AppStyles.bodySmall(color: AppColors.textMuted)),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(top: 7),
+          child: Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.richGold.withValues(alpha: 0.9),
+            ),
+          ),
+        ),
+        10.width,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: AppStyles.bodyMedium(fontWeight: FontWeight.w600),
+              ),
+              3.height,
+              Text(
+                body,
+                style: AppStyles.bodySmall(color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

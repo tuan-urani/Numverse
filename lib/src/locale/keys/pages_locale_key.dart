@@ -109,6 +109,8 @@ class PagesLocaleKey {
   static const String comparisonChallengeTitle = 'comparison_challenge_title';
   static const String comparisonAdviceTitle = 'comparison_advice_title';
   static const String comparisonQuote = 'comparison_quote';
+  static const String comparisonAspectInsightsTitle =
+      'comparison_aspect_insights_title';
   static const String comparisonStatusExcellent = 'comparison_status_excellent';
   static const String comparisonStatusGood = 'comparison_status_good';
   static const String comparisonStatusModerate = 'comparison_status_moderate';
@@ -169,6 +171,8 @@ class PagesLocaleKey {
   static const String numaiStartChat = 'numai_start_chat';
   static const String numaiStartChatDisabled = 'numai_start_chat_disabled';
   static const String numaiNotEnoughStart = 'numai_not_enough_start';
+  static const String numaiStartNeedMorePointsCta =
+      'numai_start_need_more_points_cta';
   static const String numaiChatTitle = 'numai_chat_title';
   static const String numaiChatSubtitle = 'numai_chat_subtitle';
   static const String numaiChatEmptyTitle = 'numai_chat_empty_title';

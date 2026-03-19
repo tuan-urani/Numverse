@@ -1,3 +1,4 @@
+import 'package:test/src/core/model/compatibility_aspect.dart';
 import 'package:test/src/core/model/numerology_content_models.dart';
 import 'package:test/src/core/model/numerology_reading_models.dart';
 
@@ -87,6 +88,12 @@ abstract class INumerologyContentRepository {
 
   NumerologyCompatibilityContent getCompatibilityContent({
     required int overallScore,
+    required String languageCode,
+  });
+
+  NumerologyCompatibilityContent getCompatibilityAspectContent({
+    required CompatibilityAspect aspect,
+    required int score,
     required String languageCode,
   });
 }

@@ -37,7 +37,7 @@ class ChartMatrixState extends Equatable {
       nameChartData: _emptyDataSet(),
       nameResolvedContent: const BirthChartResolvedContent(),
       nameDominantNumbers: const <DominantNumber>[],
-      expandedBirthChart: true,
+      expandedBirthChart: false,
       expandedNameChart: false,
     );
   }

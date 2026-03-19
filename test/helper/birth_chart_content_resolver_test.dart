@@ -121,11 +121,11 @@ void main() {
     expect(resolved.axisDescriptionByKey['mental'], 'mental-one');
     expect(resolved.axisDescriptionByKey['emotional'], 'emotional-one');
 
-    expect(resolved.activeArrows.length, 2);
+    expect(resolved.activeArrows.length, 1);
     expect(resolved.activeArrows.first.key, 'determination');
     expect(resolved.activeArrows.first.text, 'determination-present');
-    expect(resolved.activeArrows.last.key, 'frustration');
-    expect(resolved.activeArrows.last.text, 'frustration-present');
-    expect(resolved.inactiveArrows, isEmpty);
+    expect(resolved.inactiveArrows.length, 1);
+    expect(resolved.inactiveArrows.first.key, 'frustration');
+    expect(resolved.inactiveArrows.first.text, 'frustration-present');
   });
 }

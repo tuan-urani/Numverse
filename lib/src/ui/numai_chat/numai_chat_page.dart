@@ -100,6 +100,7 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
                         child: NumAiChatMessages(
                           messages: state.messages,
                           isLoading: state.isLoading,
+                          typingMessageId: state.typingMessageId,
                           onActionTap: () => _onActionTap(
                             context,
                             bloc: bloc,

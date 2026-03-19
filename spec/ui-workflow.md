@@ -615,7 +615,13 @@ Features:
 - Animated overall score hero with status label.
 - Side-by-side identity badges for both persons.
 - Aspect cards (core/communication/soul/personality) with score + progress bars.
-- Strengths, challenges, and advice cards.
+- Overall strengths, challenges, and advice cards (driven by overall score band).
+- Per-aspect insight section for 4 core indices:
+  - Life Path
+  - Expression
+  - Soul
+  - Personality
+  Each section resolves content by score band.
 - Closing quote card.
 
 ### 2. UI Structure
@@ -634,10 +640,15 @@ Features:
 2) `ComparisonResultBloc`:
 - `load()` combines current session profile + selected compare profile and computes pair scores.
 - `loadFromHistory()` restores pair scores directly from persisted history item.
+- For per-aspect narratives, bloc resolves content via repository by priority:
+  1. aspect-band key (`<aspect>.<band>`)
+  2. overall band key (`<band>`)
+  3. local static fallback band
 3) UI renders:
 - overall score/status,
 - detailed aspect cards,
-- static narrative guidance blocks.
+- overall narrative guidance blocks,
+- per-aspect insight cards (Life Path / Expression / Soul / Personality).
 4) Back action returns to previous route (fallback to main route).
 
 ### 4. Key Dependencies
@@ -646,7 +657,7 @@ Features:
 - `ComparisonResultBloc` for deterministic scoring state
 
 ### 5. Notes & Known Issues (Optional)
-- Narrative text is localized static copy; score values are computed dynamically from profile metrics.
+- Overall score formula remains unchanged; narrative diversity is increased by per-aspect content mapping.
 
 ## [NumAI Feature]
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/numai

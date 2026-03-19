@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:test/src/core/model/numerology_content_models.dart';
+
 class ComparisonResultState extends Equatable {
   const ComparisonResultState({
     required this.languageCode,
@@ -21,12 +23,17 @@ class ComparisonResultState extends Equatable {
     required this.overallScore,
     required this.coreScore,
     required this.communicationScore,
+    required this.expressionScore,
     required this.soulScore,
     required this.personalityScore,
     required this.strengths,
     required this.challenges,
     required this.advice,
     required this.quote,
+    required this.lifePathInsight,
+    required this.expressionInsight,
+    required this.soulInsight,
+    required this.personalityInsight,
   });
 
   factory ComparisonResultState.initial() {
@@ -50,12 +57,17 @@ class ComparisonResultState extends Equatable {
       overallScore: 0,
       coreScore: 0,
       communicationScore: 0,
+      expressionScore: 0,
       soulScore: 0,
       personalityScore: 0,
       strengths: <String>[],
       challenges: <String>[],
       advice: <String>[],
       quote: '',
+      lifePathInsight: ComparisonAspectInsight.empty,
+      expressionInsight: ComparisonAspectInsight.empty,
+      soulInsight: ComparisonAspectInsight.empty,
+      personalityInsight: ComparisonAspectInsight.empty,
     );
   }
 
@@ -81,12 +93,17 @@ class ComparisonResultState extends Equatable {
   final int overallScore;
   final int coreScore;
   final int communicationScore;
+  final int expressionScore;
   final int soulScore;
   final int personalityScore;
   final List<String> strengths;
   final List<String> challenges;
   final List<String> advice;
   final String quote;
+  final ComparisonAspectInsight lifePathInsight;
+  final ComparisonAspectInsight expressionInsight;
+  final ComparisonAspectInsight soulInsight;
+  final ComparisonAspectInsight personalityInsight;
 
   ComparisonResultState copyWith({
     String? languageCode,
@@ -108,12 +125,17 @@ class ComparisonResultState extends Equatable {
     int? overallScore,
     int? coreScore,
     int? communicationScore,
+    int? expressionScore,
     int? soulScore,
     int? personalityScore,
     List<String>? strengths,
     List<String>? challenges,
     List<String>? advice,
     String? quote,
+    ComparisonAspectInsight? lifePathInsight,
+    ComparisonAspectInsight? expressionInsight,
+    ComparisonAspectInsight? soulInsight,
+    ComparisonAspectInsight? personalityInsight,
   }) {
     return ComparisonResultState(
       languageCode: languageCode ?? this.languageCode,
@@ -135,12 +157,17 @@ class ComparisonResultState extends Equatable {
       overallScore: overallScore ?? this.overallScore,
       coreScore: coreScore ?? this.coreScore,
       communicationScore: communicationScore ?? this.communicationScore,
+      expressionScore: expressionScore ?? this.expressionScore,
       soulScore: soulScore ?? this.soulScore,
       personalityScore: personalityScore ?? this.personalityScore,
       strengths: strengths ?? this.strengths,
       challenges: challenges ?? this.challenges,
       advice: advice ?? this.advice,
       quote: quote ?? this.quote,
+      lifePathInsight: lifePathInsight ?? this.lifePathInsight,
+      expressionInsight: expressionInsight ?? this.expressionInsight,
+      soulInsight: soulInsight ?? this.soulInsight,
+      personalityInsight: personalityInsight ?? this.personalityInsight,
     );
   }
 
@@ -165,11 +192,51 @@ class ComparisonResultState extends Equatable {
     overallScore,
     coreScore,
     communicationScore,
+    expressionScore,
     soulScore,
     personalityScore,
     strengths,
     challenges,
     advice,
     quote,
+    lifePathInsight,
+    expressionInsight,
+    soulInsight,
+    personalityInsight,
   ];
+}
+
+class ComparisonAspectInsight extends Equatable {
+  const ComparisonAspectInsight({
+    required this.strengths,
+    required this.challenges,
+    required this.advice,
+    required this.quote,
+  });
+
+  static const ComparisonAspectInsight empty = ComparisonAspectInsight(
+    strengths: <String>[],
+    challenges: <String>[],
+    advice: <String>[],
+    quote: '',
+  );
+
+  factory ComparisonAspectInsight.fromContent(
+    NumerologyCompatibilityContent content,
+  ) {
+    return ComparisonAspectInsight(
+      strengths: content.strengths,
+      challenges: content.challenges,
+      advice: content.advice,
+      quote: content.quote,
+    );
+  }
+
+  final List<String> strengths;
+  final List<String> challenges;
+  final List<String> advice;
+  final String quote;
+
+  @override
+  List<Object?> get props => <Object?>[strengths, challenges, advice, quote];
 }

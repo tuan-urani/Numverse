@@ -49,6 +49,7 @@ class CloudNumAiThreadMessage {
     required this.messageText,
     required this.createdAt,
     required this.followUpSuggestions,
+    required this.fallbackReason,
   });
 
   final String id;
@@ -56,17 +57,20 @@ class CloudNumAiThreadMessage {
   final String messageText;
   final DateTime createdAt;
   final List<String> followUpSuggestions;
+  final String? fallbackReason;
 
   factory CloudNumAiThreadMessage.fromJson(Map<String, dynamic> json) {
     final Map<String, dynamic> metadata = _toMap(json['metadata_json']);
+    final DateTime parsedCreatedAt =
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.now();
     return CloudNumAiThreadMessage(
       id: (json['id'] as String? ?? '').trim(),
       senderType: (json['sender_type'] as String? ?? '').trim(),
       messageText: (json['message_text'] as String? ?? '').trim(),
-      createdAt:
-          DateTime.tryParse(json['created_at'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt: parsedCreatedAt.toLocal(),
       followUpSuggestions: _toStringList(metadata['follow_up_suggestions']),
+      fallbackReason: (metadata['fallback_reason'] as String?)?.trim(),
     );
   }
 

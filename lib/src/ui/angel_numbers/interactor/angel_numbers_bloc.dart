@@ -99,15 +99,46 @@ class AngelNumbersBloc extends Bloc<AngelNumbersEvent, AngelNumbersState> {
     final NumerologyAngelNumberContent? knownContent = _contentRepository
         .findAngelNumberContent(number: number, languageCode: _languageCode);
     if (knownContent != null) {
-      return AngelNumberMeaning(
-        title: knownContent.title,
-        coreMeanings: knownContent.coreMeanings,
-        universeMessages: knownContent.universeMessages,
-        guidance: knownContent.guidance,
-      );
+      return _toMeaning(knownContent);
+    }
+
+    final String? mappedNumber = _mapToKnownAngelNumber(number);
+    if (mappedNumber != null) {
+      final NumerologyAngelNumberContent? mappedContent = _contentRepository
+          .findAngelNumberContent(
+            number: mappedNumber,
+            languageCode: _languageCode,
+          );
+      if (mappedContent != null) {
+        return _toMeaning(mappedContent);
+      }
     }
 
     return _generateMeaning(number);
+  }
+
+  AngelNumberMeaning _toMeaning(NumerologyAngelNumberContent content) {
+    return AngelNumberMeaning(
+      title: content.title,
+      coreMeanings: content.coreMeanings,
+      universeMessages: content.universeMessages,
+      guidance: content.guidance,
+    );
+  }
+
+  String? _mapToKnownAngelNumber(String number) {
+    // Keep 00/000/0000 valid by mapping zero-only inputs to the 111 content.
+    if (number.split('').every((String digit) => digit == '0')) {
+      return '111';
+    }
+
+    final int digitRoot = _calculateDigitRoot(number);
+    if (digitRoot < 1 || digitRoot > 9) {
+      return null;
+    }
+
+    final String rootDigit = digitRoot.toString();
+    return rootDigit * 3;
   }
 
   static const Map<String, _BasicDigitMeaning> _basicMeanings =

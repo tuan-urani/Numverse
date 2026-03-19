@@ -14,12 +14,16 @@ class ChartMatrixContent extends StatelessWidget {
     required this.state,
     required this.onToggleBirthChart,
     required this.onToggleNameChart,
+    required this.birthSectionKey,
+    required this.nameSectionKey,
     super.key,
   });
 
   final ChartMatrixState state;
   final VoidCallback onToggleBirthChart;
   final VoidCallback onToggleNameChart;
+  final GlobalKey birthSectionKey;
+  final GlobalKey nameSectionKey;
 
   @override
   Widget build(BuildContext context) {
@@ -31,83 +35,92 @@ class ChartMatrixContent extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         children: <Widget>[
-          _ExpandableIntroCard(
-            title: 'Biểu đồ ngày sinh',
-            body:
-                'Từ ngày sinh ${state.formattedBirthDate}, ta có biểu đồ Pythagorean thể hiện năng lượng và tiềm năng của bạn.',
-            icon: Icons.grid_4x4_rounded,
-            isExpanded: state.expandedBirthChart,
-            onTap: onToggleBirthChart,
-            accentColor: AppColors.richGold,
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            child: state.expandedBirthChart
-                ? Column(
-                    children: <Widget>[
-                      12.height,
-                      _ChartGridCard(
-                        title: 'Ma trận Pythagorean',
-                        chart: state.birthChart,
-                        numberColor: AppColors.richGold,
-                        cellColor: AppColors.richGold.withValues(alpha: 0.22),
-                        borderColor: AppColors.richGold.withValues(alpha: 0.45),
-                        glowColor: AppColors.richGold.withValues(alpha: 0.16),
-                      ),
-                      12.height,
-                      _BirthChartAnalysisCard(state: state),
-                      12.height,
-                      _MissingNumbersCard(
-                        numbers: state.birthChart.missingNumbers,
-                        data: state.birthChartData,
-                        resolvedLessonByNumber:
-                            state.birthResolvedContent.lessonByNumber,
-                      ),
-                    ],
-                  )
-                : const SizedBox.shrink(),
-          ),
-          16.height,
-          _ExpandableIntroCard(
-            title: 'Biểu đồ tên',
-            body:
-                'Từ tên "${state.profileName.toUpperCase()}", ta có biểu đồ thể hiện cách bạn biểu đạt bản thân ra bên ngoài.',
-            icon: Icons.text_fields_rounded,
-            isExpanded: state.expandedNameChart,
-            onTap: onToggleNameChart,
-            accentColor: AppColors.energyPurple,
-            backgroundGradient: <Color>[
-              AppColors.energyPurple.withValues(alpha: 0.18),
-              AppColors.violetAccent.withValues(alpha: 0.12),
+          Column(
+            key: birthSectionKey,
+            children: <Widget>[
+              _ExpandableIntroCard(
+                title: 'Biểu đồ ngày sinh',
+                body:
+                    'Từ ngày sinh ${state.formattedBirthDate}, ta có biểu đồ Pythagorean thể hiện năng lượng và tiềm năng của bạn.',
+                icon: Icons.grid_4x4_rounded,
+                isExpanded: state.expandedBirthChart,
+                onTap: onToggleBirthChart,
+                accentColor: AppColors.richGold,
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                child: state.expandedBirthChart
+                    ? Column(
+                        children: <Widget>[
+                          12.height,
+                          _ChartGridCard(
+                            title: '',
+                            chart: state.birthChart,
+                            numberColor: AppColors.richGold,
+                            cellColor: AppColors.richGold.withValues(
+                              alpha: 0.22,
+                            ),
+                            borderColor: AppColors.richGold.withValues(
+                              alpha: 0.45,
+                            ),
+                            glowColor: AppColors.richGold.withValues(
+                              alpha: 0.16,
+                            ),
+                          ),
+                          12.height,
+                          _BirthChartAnalysisCard(state: state),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ],
           ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            child: state.expandedNameChart
-                ? Column(
-                    children: <Widget>[
-                      12.height,
-                      _ChartGridCard(
-                        title: 'Ma trận Pythagorean (Tên)',
-                        chart: state.nameChart,
-                        numberColor: AppColors.energyPurple,
-                        cellColor: AppColors.energyPurple.withValues(
-                          alpha: 0.26,
-                        ),
-                        borderColor: AppColors.energyPurple.withValues(
-                          alpha: 0.45,
-                        ),
-                        glowColor: AppColors.energyPurple.withValues(
-                          alpha: 0.2,
-                        ),
-                      ),
-                      12.height,
-                      _NameChartAnalysisCard(state: state),
-                    ],
-                  )
-                : const SizedBox.shrink(),
+          16.height,
+          Column(
+            key: nameSectionKey,
+            children: <Widget>[
+              _ExpandableIntroCard(
+                title: 'Biểu đồ tên',
+                body:
+                    'Từ tên "${state.profileName.toUpperCase()}", ta có biểu đồ thể hiện cách bạn biểu đạt bản thân ra bên ngoài.',
+                icon: Icons.text_fields_rounded,
+                isExpanded: state.expandedNameChart,
+                onTap: onToggleNameChart,
+                accentColor: AppColors.energyPurple,
+                backgroundGradient: <Color>[
+                  AppColors.energyPurple.withValues(alpha: 0.18),
+                  AppColors.violetAccent.withValues(alpha: 0.12),
+                ],
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                child: state.expandedNameChart
+                    ? Column(
+                        children: <Widget>[
+                          12.height,
+                          _ChartGridCard(
+                            title: '',
+                            chart: state.nameChart,
+                            numberColor: AppColors.energyPurple,
+                            cellColor: AppColors.energyPurple.withValues(
+                              alpha: 0.26,
+                            ),
+                            borderColor: AppColors.energyPurple.withValues(
+                              alpha: 0.45,
+                            ),
+                            glowColor: AppColors.energyPurple.withValues(
+                              alpha: 0.2,
+                            ),
+                          ),
+                          12.height,
+                          _NameChartAnalysisCard(state: state),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
           8.height,
         ],
@@ -277,8 +290,10 @@ class _ChartGridCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: <Widget>[
-            Text(title, style: AppStyles.h4(fontWeight: FontWeight.w600)),
-            12.height,
+            if (title.trim().isNotEmpty) ...<Widget>[
+              Text(title, style: AppStyles.h4(fontWeight: FontWeight.w600)),
+              12.height,
+            ],
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -409,127 +424,14 @@ class _BirthChartAnalysisCard extends StatelessWidget {
                     '',
                 color: AppColors.warning,
               ),
-            10.height,
-            const Divider(color: AppColors.border),
-            10.height,
-            _AxisBlock(
-              title: data.mentalAxis.name,
-              score: state.birthAxes.mental,
-              description:
-                  resolved.axisDescriptionByKey['mental'] ??
-                  (state.birthAxes.mental.present
-                      ? data.mentalAxis.presentDescription
-                      : data.mentalAxis.missingDescription),
-              icon: Icons.psychology_rounded,
-            ),
-            10.height,
-            _AxisBlock(
-              title: data.emotionalAxis.name,
-              score: state.birthAxes.emotional,
-              description:
-                  resolved.axisDescriptionByKey['emotional'] ??
-                  (state.birthAxes.emotional.present
-                      ? data.emotionalAxis.presentDescription
-                      : data.emotionalAxis.missingDescription),
-              icon: Icons.favorite_rounded,
-            ),
-            10.height,
-            _AxisBlock(
-              title: data.physicalAxis.name,
-              score: state.birthAxes.physical,
-              description:
-                  resolved.axisDescriptionByKey['physical'] ??
-                  (state.birthAxes.physical.present
-                      ? data.physicalAxis.presentDescription
-                      : data.physicalAxis.missingDescription),
-              icon: Icons.trending_up_rounded,
-            ),
             if (resolved.hasArrowInsights) ...<Widget>[
               10.height,
               const Divider(color: AppColors.border),
               10.height,
               _ArrowInsightsCard(
                 activeArrows: resolved.activeArrows,
-                inactiveArrows: resolved.inactiveArrows,
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MissingNumbersCard extends StatelessWidget {
-  const _MissingNumbersCard({
-    required this.numbers,
-    required this.data,
-    this.resolvedLessonByNumber = const <int, String>{},
-  });
-
-  final List<int> numbers;
-  final BirthChartDataSet data;
-  final Map<int, String> resolvedLessonByNumber;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
-        gradient: LinearGradient(
-          colors: <Color>[
-            AppColors.warning.withValues(alpha: 0.16),
-            AppColors.warning.withValues(alpha: 0.05),
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Số trống (Bài học cần học)',
-              style: AppStyles.h4(
-                color: AppColors.warning,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            10.height,
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: numbers.map((int number) {
-                return Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.warning.withValues(alpha: 0.45),
-                    ),
-                    color: AppColors.warning.withValues(alpha: 0.15),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$number',
-                      style: AppStyles.numberSmall(color: AppColors.warning),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            10.height,
-            for (final int number in numbers)
-              _MeaningLine(
-                number: number,
-                text:
-                    resolvedLessonByNumber[number] ??
-                    data.numbers[number]?.lesson ??
-                    '',
-                color: AppColors.warning,
-              ),
           ],
         ),
       ),
@@ -569,151 +471,75 @@ class _NameChartAnalysisCard extends StatelessWidget {
               'Phân tích biểu đồ tên',
               style: AppStyles.h4(fontWeight: FontWeight.w600),
             ),
-            10.height,
-            if (state.nameDominantNumbers.isNotEmpty)
-              _MiniPanel(
-                title: 'Năng lượng thống trị',
+            12.height,
+            _SectionTitle(color: AppColors.energyPurple, title: 'Điểm mạnh'),
+            8.height,
+            for (final int number in state.nameChart.presentNumbers)
+              _MeaningLine(
+                numberLabel: _nameNumberLabel(state.nameChart, number),
+                text:
+                    resolved.strengthByNumber[number] ??
+                    data.numbers[number]?.strength ??
+                    '',
                 color: AppColors.energyPurple,
-                child: Column(
-                  children: state.nameDominantNumbers.map((
-                    DominantNumber item,
-                  ) {
-                    return _MeaningLine(
-                      number: item.number,
-                      text:
-                          '${resolved.strengthByNumber[item.number] ?? data.numbers[item.number]?.strength ?? ''} (x${item.count})',
-                      color: AppColors.energyPurple,
-                    );
-                  }).toList(),
-                ),
               ),
-            if (state.nameDominantNumbers.isNotEmpty) 8.height,
-            _MiniPanel(
-              title: 'Năng lượng có trong tên',
+            10.height,
+            const Divider(color: AppColors.border),
+            10.height,
+            _SectionTitle(
               color: AppColors.energyPurple,
-              child: Column(
-                children: state.nameChart.presentNumbers.map((int number) {
-                  final int count = state.nameChart.numbers[number] ?? 0;
-                  final String prefix = count > 1
-                      ? '$number (x$count)'
-                      : '$number';
-                  return _MeaningLine(
-                    numberLabel: prefix,
-                    text:
-                        resolved.strengthByNumber[number] ??
-                        data.numbers[number]?.strength ??
-                        '',
-                    color: AppColors.energyPurple,
-                  );
-                }).toList(),
-              ),
+              title: 'Điểm yếu (Bài học)',
             ),
-            if (state.nameChart.missingNumbers.isNotEmpty) ...<Widget>[
-              8.height,
-              _MiniPanel(
-                title: 'Số thiếu trong tên',
-                color: AppColors.violetAccent,
-                child: Column(
-                  children: state.nameChart.missingNumbers.map((int number) {
-                    return _MeaningLine(
-                      number: number,
-                      text:
-                          resolved.lessonByNumber[number] ??
-                          data.numbers[number]?.lesson ??
-                          '',
-                      color: AppColors.violetAccent,
-                    );
-                  }).toList(),
-                ),
+            8.height,
+            for (final int number in state.nameChart.missingNumbers)
+              _MeaningLine(
+                number: number,
+                text:
+                    resolved.lessonByNumber[number] ??
+                    data.numbers[number]?.lesson ??
+                    '',
+                color: AppColors.energyPurple,
+              ),
+            if (resolved.hasArrowInsights) ...<Widget>[
+              10.height,
+              const Divider(color: AppColors.border),
+              10.height,
+              _ArrowInsightsCard(
+                activeArrows: resolved.activeArrows,
+                accentColor: AppColors.energyPurple,
               ),
             ],
-            8.height,
-            _MiniPanel(
-              title: 'Phân tích 3 trục',
-              color: AppColors.energyPurple,
-              child: Column(
-                children: <Widget>[
-                  _AxisMiniBar(
-                    label: data.mentalAxis.name,
-                    count: state.nameAxes.mental.count,
-                    color: AppColors.energyPurple,
-                  ),
-                  _AxisMiniBar(
-                    label: data.emotionalAxis.name,
-                    count: state.nameAxes.emotional.count,
-                    color: AppColors.energyPurple,
-                  ),
-                  _AxisMiniBar(
-                    label: data.physicalAxis.name,
-                    count: state.nameAxes.physical.count,
-                    color: AppColors.energyPurple,
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _MiniPanel extends StatelessWidget {
-  const _MiniPanel({
-    required this.title,
-    required this.color,
-    required this.child,
-  });
-
-  final String title;
-  final Color color;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-        color: color.withValues(alpha: 0.12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              style: AppStyles.bodySmall(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            8.height,
-            child,
-          ],
-        ),
-      ),
-    );
+  static String _nameNumberLabel(BirthChartGrid chart, int number) {
+    final int count = chart.numbers[number] ?? 0;
+    if (count > 1) {
+      return '$number (x$count)';
+    }
+    return '$number';
   }
 }
 
 class _ArrowInsightsCard extends StatelessWidget {
   const _ArrowInsightsCard({
     required this.activeArrows,
-    required this.inactiveArrows,
+    this.accentColor = AppColors.richGold,
   });
 
   final List<ResolvedArrowInsight> activeArrows;
-  final List<ResolvedArrowInsight> inactiveArrows;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.3)),
-        color: AppColors.richGold.withValues(alpha: 0.08),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+        color: accentColor.withValues(alpha: 0.08),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -721,145 +547,30 @@ class _ArrowInsightsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Mũi tên trong biểu đồ',
-              style: AppStyles.bodySmall(fontWeight: FontWeight.w600),
+              'Mũi tên đặc trưng của bạn',
+              style: AppStyles.bodyMedium(fontWeight: FontWeight.w700),
             ),
-            if (activeArrows.isNotEmpty) ...<Widget>[
-              8.height,
-              _SectionTitle(
-                color: AppColors.richGold,
-                title: 'Mũi tên nổi bật',
+            8.height,
+            for (final ResolvedArrowInsight item in activeArrows)
+              _ArrowMeaningItem(
+                title:
+                    '${_withArrowPrefix(item.title)} (${item.numbers.join('-')})',
+                description: item.text,
+                color: accentColor,
               ),
-              6.height,
-              for (final ResolvedArrowInsight item in activeArrows)
-                _MeaningLine(
-                  numberLabel: '${item.title} (${item.numbers.join('-')})',
-                  text: item.text,
-                  color: AppColors.richGold,
-                ),
-            ],
-            if (inactiveArrows.isNotEmpty) ...<Widget>[
-              if (activeArrows.isNotEmpty) 6.height,
-              _SectionTitle(
-                color: AppColors.warning,
-                title: 'Mũi tên cần chú ý',
-              ),
-              6.height,
-              for (final ResolvedArrowInsight item in inactiveArrows)
-                _MeaningLine(
-                  numberLabel: '${item.title} (${item.numbers.join('-')})',
-                  text: item.text,
-                  color: AppColors.warning,
-                ),
-            ],
           ],
         ),
       ),
     );
   }
-}
 
-class _AxisBlock extends StatelessWidget {
-  const _AxisBlock({
-    required this.title,
-    required this.score,
-    required this.description,
-    required this.icon,
-  });
-
-  final String title;
-  final ChartAxisScore score;
-  final String description;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final double progress = score.count / 3;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Icon(icon, size: 14, color: AppColors.richGold),
-            6.width,
-            Expanded(
-              child: Text(
-                title,
-                style: AppStyles.bodySmall(fontWeight: FontWeight.w600),
-              ),
-            ),
-            Text(
-              '${score.count}/3',
-              style: AppStyles.caption(color: AppColors.textMuted),
-            ),
-          ],
-        ),
-        6.height,
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: AppColors.background.withValues(alpha: 0.4),
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.richGold),
-          ),
-        ),
-        6.height,
-        Text(
-          description,
-          style: AppStyles.caption(color: AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-}
-
-class _AxisMiniBar extends StatelessWidget {
-  const _AxisMiniBar({
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-
-  final String label;
-  final int count;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppStyles.caption(color: AppColors.textSecondary),
-                ),
-              ),
-              Text(
-                '$count/3',
-                style: AppStyles.caption(color: AppColors.textMuted),
-              ),
-            ],
-          ),
-          4.height,
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: count / 3,
-              minHeight: 4,
-              backgroundColor: AppColors.background.withValues(alpha: 0.35),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ),
-        ],
-      ),
-    );
+  static String _withArrowPrefix(String title) {
+    final String trimmed = title.trim();
+    final String normalized = trimmed.toLowerCase();
+    if (normalized.startsWith('mũi tên') || normalized.startsWith('mui ten')) {
+      return trimmed;
+    }
+    return 'Mũi tên $trimmed';
   }
 }
 
@@ -881,7 +592,7 @@ class _SectionTitle extends StatelessWidget {
         8.width,
         Text(
           title,
-          style: AppStyles.bodySmall(color: color, fontWeight: FontWeight.w600),
+          style: AppStyles.bodyMedium(color: color, fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -911,13 +622,46 @@ class _MeaningLine extends StatelessWidget {
         children: <Widget>[
           Text(
             '$leading: ',
-            style: AppStyles.caption(color: color, fontWeight: FontWeight.w700),
+            style: AppStyles.bodySmall(color: color, fontWeight: FontWeight.w700),
           ),
           Expanded(
             child: Text(
               text,
-              style: AppStyles.caption(color: AppColors.textSecondary),
+              style: AppStyles.bodySmall(color: AppColors.textSecondary),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArrowMeaningItem extends StatelessWidget {
+  const _ArrowMeaningItem({
+    required this.title,
+    required this.description,
+    required this.color,
+  });
+
+  final String title;
+  final String description;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: AppStyles.bodySmall(color: color, fontWeight: FontWeight.w700),
+          ),
+          2.height,
+          Text(
+            description,
+            style: AppStyles.bodySmall(color: AppColors.textSecondary),
           ),
         ],
       ),

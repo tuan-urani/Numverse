@@ -1,1 +1,1 @@
-const int kCompatibilityComparisonCost = 20;
+const int kCompatibilityComparisonCost = 5;

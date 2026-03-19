@@ -31,9 +31,6 @@ class YearDetailPage extends StatelessWidget {
               number: personalYear,
               languageCode: languageCode,
             );
-        final DateTime now = DateTime.now();
-        final String periodLabel = '${now.year}';
-
         return AppMysticalScaffold(
           child: SafeArea(
             bottom: false,
@@ -45,7 +42,6 @@ class YearDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
                     child: YearDetailContent(
                       personalYearNumber: personalYear,
-                      periodLabel: periodLabel,
                       content: yearContent,
                     ),
                   ),
@@ -61,7 +57,8 @@ class YearDetailPage extends StatelessWidget {
   int _resolvePersonalYearNumber(MainSessionState state) {
     final String profileId =
         state.currentProfile?.id ?? MainSessionBloc.guestProfileId;
-    final ProfileTimeLifeSnapshot? snapshot = state.timeLifeByProfileId[profileId];
+    final ProfileTimeLifeSnapshot? snapshot =
+        state.timeLifeByProfileId[profileId];
     final profile = state.currentProfile;
     if (profile == null) {
       final int? universalNumber = snapshot?.valueOf(

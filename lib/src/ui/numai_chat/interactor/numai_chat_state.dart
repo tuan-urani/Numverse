@@ -8,6 +8,7 @@ class NumAiChatState extends Equatable {
     required this.showInsufficientPointsWarning,
     required this.threadId,
     required this.activeProfileId,
+    required this.typingMessageId,
   });
 
   factory NumAiChatState.initial() {
@@ -18,6 +19,7 @@ class NumAiChatState extends Equatable {
       showInsufficientPointsWarning: false,
       threadId: null,
       activeProfileId: null,
+      typingMessageId: null,
     );
   }
 
@@ -27,6 +29,7 @@ class NumAiChatState extends Equatable {
   final bool showInsufficientPointsWarning;
   final String? threadId;
   final String? activeProfileId;
+  final String? typingMessageId;
 
   bool get isEmpty => messages.isEmpty;
 
@@ -40,6 +43,8 @@ class NumAiChatState extends Equatable {
     bool clearThreadId = false,
     String? activeProfileId,
     bool clearActiveProfileId = false,
+    String? typingMessageId,
+    bool clearTypingMessageId = false,
   }) {
     return NumAiChatState(
       messages: messages ?? this.messages,
@@ -53,6 +58,9 @@ class NumAiChatState extends Equatable {
       activeProfileId: clearActiveProfileId
           ? null
           : activeProfileId ?? this.activeProfileId,
+      typingMessageId: clearTypingMessageId
+          ? null
+          : typingMessageId ?? this.typingMessageId,
     );
   }
 
@@ -64,6 +72,7 @@ class NumAiChatState extends Equatable {
     showInsufficientPointsWarning,
     threadId,
     activeProfileId,
+    typingMessageId,
   ];
 }
 
@@ -75,6 +84,7 @@ class NumAiChatMessage extends Equatable {
     required this.timestamp,
     this.hasActionButton = false,
     this.followUpSuggestions = const <String>[],
+    this.fallbackReason,
   });
 
   final String id;
@@ -83,6 +93,7 @@ class NumAiChatMessage extends Equatable {
   final DateTime timestamp;
   final bool hasActionButton;
   final List<String> followUpSuggestions;
+  final String? fallbackReason;
 
   @override
   List<Object?> get props => <Object?>[
@@ -92,6 +103,7 @@ class NumAiChatMessage extends Equatable {
     timestamp,
     hasActionButton,
     followUpSuggestions,
+    fallbackReason,
   ];
 }
 

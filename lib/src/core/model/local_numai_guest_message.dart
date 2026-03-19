@@ -40,13 +40,13 @@ class LocalNumAiGuestMessage {
   }
 
   factory LocalNumAiGuestMessage.fromJson(Map<String, dynamic> json) {
+    final DateTime parsedCreatedAt =
+        DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now();
     return LocalNumAiGuestMessage(
       id: (json['id'] as String? ?? '').trim(),
       senderType: (json['senderType'] as String? ?? '').trim(),
       messageText: (json['messageText'] as String? ?? '').trim(),
-      createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt: parsedCreatedAt.toLocal(),
       followUpSuggestions: _parseSuggestions(json['followUpSuggestions']),
     );
   }

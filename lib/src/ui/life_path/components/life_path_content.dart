@@ -39,6 +39,7 @@ class LifePathContent extends StatelessWidget {
     if (items.length < _maxPhaseCount) {
       return const _EmptyCycleCard();
     }
+    final _RadarChartItem currentStage = _currentStageItem(items);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -52,6 +53,8 @@ class LifePathContent extends StatelessWidget {
             accentColor: AppColors.primary,
             items: items,
           ),
+          12.height,
+          _CurrentStageCard(item: currentStage),
           8.height,
         ],
       ),
@@ -182,6 +185,20 @@ class LifePathContent extends StatelessWidget {
   static int _minInt(int a, int b) => a < b ? a : b;
 
   static int _maxInt(int a, int b) => a > b ? a : b;
+
+  static _RadarChartItem _currentStageItem(List<_RadarChartItem> items) {
+    for (final _RadarChartItem item in items) {
+      if (item.status == LifeCycleStatus.active) {
+        return item;
+      }
+    }
+    for (final _RadarChartItem item in items) {
+      if (item.status == LifeCycleStatus.future) {
+        return item;
+      }
+    }
+    return items.last;
+  }
 }
 
 class _NoProfileCard extends StatelessWidget {
@@ -328,7 +345,6 @@ class _RadarCycleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _RadarChartItem? activeItem = _activePhase(items);
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: AppColors.mysticalCardGradient(),
@@ -350,11 +366,6 @@ class _RadarCycleCard extends StatelessWidget {
                     style: AppStyles.h5(fontWeight: FontWeight.w600),
                   ),
                 ),
-                if (activeItem != null)
-                  _ActivePhaseChip(
-                    label: 'Đang ở ${activeItem.code}',
-                    color: accentColor,
-                  ),
               ],
             ),
             10.height,
@@ -364,14 +375,179 @@ class _RadarCycleCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  _RadarChartItem? _activePhase(List<_RadarChartItem> source) {
-    for (final _RadarChartItem item in source) {
-      if (item.status == LifeCycleStatus.active) {
-        return item;
-      }
-    }
-    return null;
+class _CurrentStageCard extends StatelessWidget {
+  const _CurrentStageCard({required this.item});
+
+  final _RadarChartItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final _StageStatusMeta status = _stageStatusMeta(item.status);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppColors.mysticalCardGradient(),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.timeline_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    'Giai đoạn hiện tại',
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                _StageStatusChip(meta: status),
+              ],
+            ),
+            10.height,
+            Text(item.title, style: AppStyles.h4(fontWeight: FontWeight.w600)),
+            2.height,
+            Text(
+              item.periodLabel,
+              style: AppStyles.caption(color: AppColors.textMuted),
+            ),
+            10.height,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                _NumberTag(
+                  label: 'Cuộc đời ${item.args.pinnacle.number}',
+                  color: AppColors.richGold,
+                ),
+                _NumberTag(
+                  label: 'Thử thách ${item.args.challenge.number}',
+                  color: AppColors.warning,
+                ),
+              ],
+            ),
+            12.height,
+            Align(
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                onTap: () => TabNavigationHelper.pushCommonRoute(
+                  AppPages.phaseDetail,
+                  arguments: item.args,
+                ),
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        'Xem chi tiết',
+                        style: AppStyles.bodySmall(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      4.width,
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NumberTag extends StatelessWidget {
+  const _NumberTag({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.34)),
+      ),
+      child: Text(
+        label,
+        style: AppStyles.caption(color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _StageStatusChip extends StatelessWidget {
+  const _StageStatusChip({required this.meta});
+
+  final _StageStatusMeta meta;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: meta.color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        meta.label,
+        style: AppStyles.caption(
+          color: meta.color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _StageStatusMeta {
+  const _StageStatusMeta({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+}
+
+_StageStatusMeta _stageStatusMeta(LifeCycleStatus status) {
+  switch (status) {
+    case LifeCycleStatus.active:
+      return const _StageStatusMeta(
+        label: 'Đang active',
+        color: AppColors.primary,
+      );
+    case LifeCycleStatus.passed:
+      return const _StageStatusMeta(
+        label: 'Đã qua',
+        color: AppColors.textMuted,
+      );
+    case LifeCycleStatus.future:
+      return const _StageStatusMeta(
+        label: 'Sắp tới',
+        color: AppColors.energyPurple,
+      );
   }
 }
 
@@ -779,27 +955,54 @@ class _VertexMarker extends StatelessWidget {
             height: 32,
             alignment: Alignment.center,
             color: AppColors.transparent,
-            child: Container(
-              width: 17,
-              height: 17,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryLight.withValues(alpha: 0.95),
-                  width: 2.4,
-                ),
-                color: isActive
-                    ? AppColors.goldBright.withValues(alpha: 0.95)
-                    : AppColors.primary.withValues(alpha: 0.82),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.primaryLight.withValues(
-                      alpha: isActive ? 0.35 : 0.2,
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                if (isActive)
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.goldBright.withValues(alpha: 0.7),
+                        width: 1.8,
+                      ),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: AppColors.goldBright.withValues(alpha: 0.34),
+                          blurRadius: 12,
+                        ),
+                      ],
                     ),
-                    blurRadius: 8,
                   ),
-                ],
-              ),
+                Container(
+                  width: isActive ? 18 : 17,
+                  height: isActive ? 18 : 17,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isActive
+                          ? AppColors.goldBright
+                          : AppColors.primaryLight.withValues(alpha: 0.95),
+                      width: isActive ? 2.8 : 2.4,
+                    ),
+                    color: isActive
+                        ? AppColors.goldBright.withValues(alpha: 0.95)
+                        : AppColors.primary.withValues(alpha: 0.96),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color:
+                            (isActive
+                                    ? AppColors.goldBright
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: isActive ? 0.42 : 0.2),
+                        blurRadius: isActive ? 12 : 8,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -841,6 +1044,7 @@ class _VertexLabel extends StatelessWidget {
       maxWidth: chartWidth,
     );
     final double safeTop = placement.top < 0 ? 0 : placement.top;
+    final bool isActive = item.status == LifeCycleStatus.active;
     return Positioned(
       left: safeLeft,
       top: safeTop,
@@ -855,8 +1059,8 @@ class _VertexLabel extends StatelessWidget {
               Text(
                 item.title,
                 style: AppStyles.bodySmall(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w700,
+                  color: isActive ? AppColors.primaryLight : AppColors.white,
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -866,8 +1070,10 @@ class _VertexLabel extends StatelessWidget {
               Text(
                 item.periodLabel,
                 style: AppStyles.caption(
-                  color: AppColors.white.withValues(alpha: 0.82),
-                  fontWeight: FontWeight.w500,
+                  color: isActive
+                      ? AppColors.primaryLight.withValues(alpha: 0.92)
+                      : AppColors.white.withValues(alpha: 0.82),
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 ),
                 textAlign: placement.textAlign,
               ),
@@ -885,12 +1091,12 @@ class _VertexLabel extends StatelessWidget {
     double sideWidth,
   ) {
     final double topWidth = (width * 0.44).clamp(130.0, 190.0);
-    const double sideGap = 18;
+    const double sideGap = 22;
     switch (index) {
       case 0:
         return _Placement(
           left: center.dx - (topWidth / 2),
-          top: center.dy - 72,
+          top: center.dy - 78,
           width: topWidth,
           crossAxisAlignment: CrossAxisAlignment.center,
           textAlign: TextAlign.center,
@@ -900,8 +1106,8 @@ class _VertexLabel extends StatelessWidget {
           left: center.dx + sideGap,
           top: center.dy - 22,
           width: sideWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          textAlign: TextAlign.left,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          textAlign: TextAlign.center,
         );
       case 2:
         return _Placement(
@@ -916,8 +1122,8 @@ class _VertexLabel extends StatelessWidget {
           left: center.dx - sideWidth - sideGap,
           top: center.dy - 22,
           width: sideWidth,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          textAlign: TextAlign.right,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          textAlign: TextAlign.center,
         );
     }
   }
@@ -962,28 +1168,6 @@ double _clampDouble(double value, {required double min, required double max}) {
     return max;
   }
   return value;
-}
-
-class _ActivePhaseChip extends StatelessWidget {
-  const _ActivePhaseChip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: AppStyles.caption(color: color, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
 }
 
 class _RadarChartItem {

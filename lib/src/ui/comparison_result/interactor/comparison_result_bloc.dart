@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import 'package:test/src/core/model/comparison_profile.dart';
+import 'package:test/src/core/model/compatibility_aspect.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/numerology_content_models.dart';
 import 'package:test/src/core/model/user_profile.dart';
@@ -80,6 +81,42 @@ class ComparisonResultBloc
           overallScore: scores.overall,
           languageCode: languageCode,
         );
+    final int expressionScore = CompatibilityScoring.pairScore(
+      selfMetrics.expression,
+      targetMetrics.expression,
+    );
+    final ComparisonAspectInsight lifePathInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.lifePath,
+            score: scores.core,
+            languageCode: languageCode,
+          ),
+        );
+    final ComparisonAspectInsight expressionInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.expression,
+            score: expressionScore,
+            languageCode: languageCode,
+          ),
+        );
+    final ComparisonAspectInsight soulInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.soul,
+            score: scores.soul,
+            languageCode: languageCode,
+          ),
+        );
+    final ComparisonAspectInsight personalityInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.personality,
+            score: scores.personality,
+            languageCode: languageCode,
+          ),
+        );
 
     emit(
       state.copyWith(
@@ -102,12 +139,17 @@ class ComparisonResultBloc
         overallScore: scores.overall,
         coreScore: scores.core,
         communicationScore: scores.communication,
+        expressionScore: expressionScore,
         soulScore: scores.soul,
         personalityScore: scores.personality,
         strengths: compatibilityContent.strengths,
         challenges: compatibilityContent.challenges,
         advice: compatibilityContent.advice,
         quote: compatibilityContent.quote,
+        lifePathInsight: lifePathInsight,
+        expressionInsight: expressionInsight,
+        soulInsight: soulInsight,
+        personalityInsight: personalityInsight,
       ),
     );
   }
@@ -135,6 +177,42 @@ class ComparisonResultBloc
           overallScore: item.overallScore,
           languageCode: languageCode,
         );
+    final int expressionScore = CompatibilityScoring.pairScore(
+      item.primaryExpression,
+      item.targetExpression,
+    );
+    final ComparisonAspectInsight lifePathInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.lifePath,
+            score: item.coreScore,
+            languageCode: languageCode,
+          ),
+        );
+    final ComparisonAspectInsight expressionInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.expression,
+            score: expressionScore,
+            languageCode: languageCode,
+          ),
+        );
+    final ComparisonAspectInsight soulInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.soul,
+            score: item.soulScore,
+            languageCode: languageCode,
+          ),
+        );
+    final ComparisonAspectInsight personalityInsight =
+        ComparisonAspectInsight.fromContent(
+          _contentRepository.getCompatibilityAspectContent(
+            aspect: CompatibilityAspect.personality,
+            score: item.personalityScore,
+            languageCode: languageCode,
+          ),
+        );
 
     emit(
       state.copyWith(
@@ -157,12 +235,17 @@ class ComparisonResultBloc
         overallScore: item.overallScore,
         coreScore: item.coreScore,
         communicationScore: item.communicationScore,
+        expressionScore: expressionScore,
         soulScore: item.soulScore,
         personalityScore: item.personalityScore,
         strengths: compatibilityContent.strengths,
         challenges: compatibilityContent.challenges,
         advice: compatibilityContent.advice,
         quote: compatibilityContent.quote,
+        lifePathInsight: lifePathInsight,
+        expressionInsight: expressionInsight,
+        soulInsight: soulInsight,
+        personalityInsight: personalityInsight,
       ),
     );
   }
