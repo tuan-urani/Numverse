@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
-import 'package:dio/dio.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/login/interactor/login_bloc.dart';
 import 'package:test/src/ui/login/interactor/login_state.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
+import 'package:test/src/ui/main/interactor/main_session_error_resolver.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/ui/widgets/app_primary_button.dart';
@@ -133,26 +133,7 @@ class LoginForm extends StatelessWidget {
   }
 
   String _resolveErrorMessage(Object error) {
-    if (error is DioException) {
-      final dynamic raw = error.response?.data;
-      if (raw is Map<String, dynamic>) {
-        final String message =
-            (raw['msg'] as String? ??
-                    raw['message'] as String? ??
-                    raw['error_description'] as String? ??
-                    raw['error'] as String? ??
-                    '')
-                .trim();
-        if (message.isNotEmpty) {
-          return message;
-        }
-      }
-      final String dioMessage = (error.message ?? '').trim();
-      if (dioMessage.isNotEmpty) {
-        return dioMessage;
-      }
-    }
-    return LocaleKey.stateErrorSubtitle.tr;
+    return resolveMainSessionErrorMessage(error);
   }
 }
 

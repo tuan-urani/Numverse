@@ -127,6 +127,10 @@ function isTruthyFlag(value: unknown): boolean {
   return false;
 }
 
+function strictBooleanFlag(value: unknown): boolean {
+  return typeof value === "boolean" ? value : false;
+}
+
 function resolveErrorCode(error: unknown): string {
   if (error instanceof HttpError) {
     return error.message.trim();
@@ -476,8 +480,8 @@ async function callGuestGeminiJson(
     ? "Bạn là NumAI assistant cho user chưa tạo profile. Trả lời ngắn gọn, hữu ích, thực tế, không phán xét, không hứa hẹn cực đoan. Luôn trả về JSON hợp lệ."
     : "You are NumAI assistant for users without a profile. Be concise, useful, practical, and non-judgmental. Always return valid JSON.";
   const taskPrompt = locale.toLowerCase().startsWith("vi")
-    ? 'Trả về JSON với shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean\n}\n\nYêu cầu:\n- answer tập trung trả lời đúng câu hỏi hiện tại.\n- suggestions phải có đúng 3 gợi ý câu hỏi tiếp theo.\n- referenced_sections ghi các phần đã dùng, ví dụ: recent_messages, user_question.\n- is_out_of_scope = true nếu câu hỏi nằm ngoài thần số học; ngược lại là false.\n- Không bao markdown, không dùng ```.'
-    : 'Return JSON with shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean\n}\n\nRequirements:\n- answer focuses on the user\'s latest question.\n- suggestions must include exactly 3 follow-up questions.\n- referenced_sections can include recent_messages and user_question.\n- is_out_of_scope must be true when the question is outside numerology; otherwise false.\n- No markdown wrapper, no ```.';
+    ? 'Trả về JSON với shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean,\n  "requires_profile_info": boolean\n}\n\nYêu cầu:\n- answer tập trung trả lời đúng câu hỏi hiện tại.\n- suggestions phải có đúng 3 gợi ý câu hỏi tiếp theo.\n- referenced_sections ghi các phần đã dùng, ví dụ: recent_messages, user_question.\n- is_out_of_scope = true nếu câu hỏi nằm ngoài thần số học; ngược lại là false.\n- requires_profile_info = true chỉ khi câu hỏi thuộc thần số học cá nhân nhưng thiếu dữ liệu profile (tên/ngày sinh) để cá nhân hóa cho guest chưa có profile.\n- Nếu is_out_of_scope = true thì requires_profile_info phải là false.\n- Không bao markdown, không dùng ```.'
+    : 'Return JSON with shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean,\n  "requires_profile_info": boolean\n}\n\nRequirements:\n- answer focuses on the user\'s latest question.\n- suggestions must include exactly 3 follow-up questions.\n- referenced_sections can include recent_messages and user_question.\n- is_out_of_scope must be true when the question is outside numerology; otherwise false.\n- requires_profile_info must be true only when the question is personal numerology and needs missing profile data (name/date of birth) for a guest without a profile.\n- If is_out_of_scope is true, requires_profile_info must be false.\n- No markdown wrapper, no ```.';
 
   const renderedPrompt = [
     "[Task Prompt]",
@@ -593,6 +597,7 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
     let fallbackReason: "technical_error" | "out_of_scope" | null = null;
     let originalErrorCode: string | null = null;
     let rawOutput: string | null = null;
+    let requiresProfileInfo = false;
 
     try {
       const geminiResult = await callGuestGeminiJson(
@@ -609,6 +614,7 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
         fallbackReason = "out_of_scope";
         answer = NUMAI_OUT_OF_SCOPE_FALLBACK_MESSAGE;
         suggestions = fallbackFollowUpSuggestions(locale);
+        requiresProfileInfo = false;
       } else {
         const resolvedAnswer = String(output.answer ?? "").trim();
         if (!resolvedAnswer) {
@@ -616,6 +622,7 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
         }
         answer = resolvedAnswer;
         suggestions = resolveFollowUpSuggestions(output, locale);
+        requiresProfileInfo = strictBooleanFlag(output.requires_profile_info);
       }
     } catch (error) {
       if (!isNumAiTechnicalError(error)) {
@@ -625,6 +632,7 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
       originalErrorCode = resolveErrorCode(error);
       answer = NUMAI_TECHNICAL_FALLBACK_MESSAGE;
       suggestions = fallbackFollowUpSuggestions(locale);
+      requiresProfileInfo = false;
     }
 
     if (fallbackReason && charged) {
@@ -648,6 +656,7 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
       follow_up_suggestions: suggestions,
       model_name: DEFAULT_GUEST_MODEL,
       mode: "guest_no_profile",
+      requires_profile_info: requiresProfileInfo,
     };
     if (fallbackReason) {
       metadataJson.fallback_reason = fallbackReason;

@@ -32,7 +32,7 @@ class CoreNumbersContent extends StatelessWidget {
   }
 }
 
-class _LoadedContent extends StatelessWidget {
+class _LoadedContent extends StatefulWidget {
   const _LoadedContent({required this.state, super.key});
 
   static const bool _showSummarySection = false;
@@ -40,7 +40,21 @@ class _LoadedContent extends StatelessWidget {
   final CoreNumbersState state;
 
   @override
+  State<_LoadedContent> createState() => _LoadedContentState();
+}
+
+class _LoadedContentState extends State<_LoadedContent> {
+  int? _expandedCardIndex;
+
+  void _onCardTap(int index) {
+    setState(() {
+      _expandedCardIndex = _expandedCardIndex == index ? null : index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final CoreNumbersState state = widget.state;
     final List<_CoreNumberCardData> cards = <_CoreNumberCardData>[
       _CoreNumberCardData(
         number: state.lifePathNumber,
@@ -85,12 +99,16 @@ class _LoadedContent extends StatelessWidget {
       children: <Widget>[
         _IntroCard(),
         12.height,
-        if (_showSummarySection) ...<Widget>[
+        if (_LoadedContent._showSummarySection) ...<Widget>[
           _SummaryCard(state: state),
           12.height,
         ],
-        for (final _CoreNumberCardData card in cards) ...<Widget>[
-          _CoreNumberCard(data: card),
+        for (int index = 0; index < cards.length; index++) ...<Widget>[
+          _CoreNumberCard(
+            data: cards[index],
+            isExpanded: _expandedCardIndex == index,
+            onTap: () => _onCardTap(index),
+          ),
           12.height,
         ],
         8.height,
@@ -272,28 +290,19 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _CoreNumberCard extends StatefulWidget {
-  const _CoreNumberCard({required this.data});
+class _CoreNumberCard extends StatelessWidget {
+  const _CoreNumberCard({
+    required this.data,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   final _CoreNumberCardData data;
-
-  @override
-  State<_CoreNumberCard> createState() => _CoreNumberCardState();
-}
-
-class _CoreNumberCardState extends State<_CoreNumberCard> {
-  bool _isExpanded = false;
-
-  void _toggleExpanded() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-    });
-  }
+  final bool isExpanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final _CoreNumberCardData data = widget.data;
-
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.card.withValues(alpha: 0.6),
@@ -318,7 +327,7 @@ class _CoreNumberCardState extends State<_CoreNumberCard> {
       child: Material(
         color: AppColors.transparent,
         child: InkWell(
-          onTap: _toggleExpanded,
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -398,7 +407,7 @@ class _CoreNumberCardState extends State<_CoreNumberCard> {
                     ),
                     8.width,
                     AnimatedRotation(
-                      turns: _isExpanded ? 0.5 : 0,
+                      turns: isExpanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeOutCubic,
                       child: const Icon(
@@ -414,9 +423,28 @@ class _CoreNumberCardState extends State<_CoreNumberCard> {
                   data.intro,
                   style: AppStyles.bodySmall(color: AppColors.textSecondary),
                 ),
-                AnimatedCrossFade(
-                  firstChild: const SizedBox.shrink(),
-                  secondChild: Column(
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(end: isExpanded ? 1 : 0),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOutCubic,
+                  builder:
+                      (
+                        BuildContext context,
+                        double animationValue,
+                        Widget? child,
+                      ) {
+                        return ClipRect(
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            heightFactor: animationValue,
+                            child: Opacity(
+                              opacity: animationValue,
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       10.height,
@@ -469,14 +497,6 @@ class _CoreNumberCardState extends State<_CoreNumberCard> {
                       ),
                     ],
                   ),
-                  crossFadeState: _isExpanded
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: const Duration(milliseconds: 220),
-                  firstCurve: Curves.easeOutCubic,
-                  secondCurve: Curves.easeOutCubic,
-                  sizeCurve: Curves.easeInOutCubic,
-                  alignment: Alignment.topCenter,
                 ),
               ],
             ),

@@ -5,6 +5,7 @@ class LocalNumAiGuestMessage {
     required this.messageText,
     required this.createdAt,
     required this.followUpSuggestions,
+    required this.requiresProfileInfo,
   });
 
   final String id;
@@ -12,6 +13,7 @@ class LocalNumAiGuestMessage {
   final String messageText;
   final DateTime createdAt;
   final List<String> followUpSuggestions;
+  final bool requiresProfileInfo;
 
   LocalNumAiGuestMessage copyWith({
     String? id,
@@ -19,6 +21,7 @@ class LocalNumAiGuestMessage {
     String? messageText,
     DateTime? createdAt,
     List<String>? followUpSuggestions,
+    bool? requiresProfileInfo,
   }) {
     return LocalNumAiGuestMessage(
       id: id ?? this.id,
@@ -26,6 +29,7 @@ class LocalNumAiGuestMessage {
       messageText: messageText ?? this.messageText,
       createdAt: createdAt ?? this.createdAt,
       followUpSuggestions: followUpSuggestions ?? this.followUpSuggestions,
+      requiresProfileInfo: requiresProfileInfo ?? this.requiresProfileInfo,
     );
   }
 
@@ -36,6 +40,7 @@ class LocalNumAiGuestMessage {
       'messageText': messageText,
       'createdAt': createdAt.toIso8601String(),
       'followUpSuggestions': followUpSuggestions,
+      'requiresProfileInfo': requiresProfileInfo,
     };
   }
 
@@ -48,6 +53,7 @@ class LocalNumAiGuestMessage {
       messageText: (json['messageText'] as String? ?? '').trim(),
       createdAt: parsedCreatedAt.toLocal(),
       followUpSuggestions: _parseSuggestions(json['followUpSuggestions']),
+      requiresProfileInfo: _parseBoolean(json['requiresProfileInfo']),
     );
   }
 
@@ -60,5 +66,9 @@ class LocalNumAiGuestMessage {
         .map((String item) => item.trim())
         .where((String item) => item.isNotEmpty)
         .toList();
+  }
+
+  static bool _parseBoolean(Object? raw) {
+    return raw is bool ? raw : false;
   }
 }

@@ -95,7 +95,10 @@ class ChartMatrixBloc extends Bloc<ChartMatrixEvent, ChartMatrixState> {
     ChartMatrixBirthChartToggled event,
     Emitter<ChartMatrixState> emit,
   ) {
-    emit(state.copyWith(expandedBirthChart: !state.expandedBirthChart));
+    final bool willExpand = !state.expandedBirthChart;
+    emit(
+      state.copyWith(expandedBirthChart: willExpand, expandedNameChart: false),
+    );
   }
 
   void toggleNameChart() {
@@ -106,6 +109,9 @@ class ChartMatrixBloc extends Bloc<ChartMatrixEvent, ChartMatrixState> {
     ChartMatrixNameChartToggled event,
     Emitter<ChartMatrixState> emit,
   ) {
-    emit(state.copyWith(expandedNameChart: !state.expandedNameChart));
+    final bool willExpand = !state.expandedNameChart;
+    emit(
+      state.copyWith(expandedNameChart: willExpand, expandedBirthChart: false),
+    );
   }
 }

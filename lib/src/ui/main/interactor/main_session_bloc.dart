@@ -7,6 +7,7 @@ import 'package:test/src/core/model/app_session_snapshot.dart';
 import 'package:test/src/core/model/cloud_ad_reward_grant_result.dart';
 import 'package:test/src/core/model/cloud_ad_reward_status_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
+import 'package:test/src/core/model/cloud_error_codes.dart';
 import 'package:test/src/core/model/comparison_profile.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
@@ -492,6 +493,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     Emitter<MainSessionState> emit,
   ) async {
     // Tạo profile mới, set làm current profile, persist, rồi tính lại metrics.
+    final MainSessionState previousState = state;
     try {
       final UserProfile profile = _profileService.createProfile(
         name: event.name,
@@ -502,11 +504,17 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         profile,
       ];
       emit(state.copyWith(profiles: profiles, currentProfile: profile));
-      await _persistSnapshot(syncCloud: true);
+      await _persistSnapshot(
+        syncCloud: true,
+        rethrowCloudErrorCodes: const <String>{kCloudErrorProfileLimitReached},
+      );
       await _ensureLifeBasedForCurrentProfile(emit, force: true);
       await _refreshTimeLifeForCurrentProfile(emit);
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
+      if (isCloudErrorCode(error, kCloudErrorProfileLimitReached)) {
+        emit(previousState);
+      }
       _completeError(event.completer, error, stackTrace);
     }
   }
@@ -1460,7 +1468,10 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
   }
 
   /// Lưu snapshot session hiện tại xuống storage local.
-  Future<void> _persistSnapshot({bool syncCloud = false}) async {
+  Future<void> _persistSnapshot({
+    bool syncCloud = false,
+    Set<String> rethrowCloudErrorCodes = const <String>{},
+  }) async {
     // Đồng bộ toàn bộ MainSessionState hiện tại xuống storage local.
     final AppSessionSnapshot snapshot = AppSessionSnapshot(
       isAuthenticated: state.isAuthenticated,
@@ -1495,6 +1506,12 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     try {
       await _cloudAccountRepository.syncSessionSnapshot(snapshot: snapshot);
     } catch (error, stackTrace) {
+      final String? cloudErrorCode = extractCloudErrorCode(error);
+      if (cloudErrorCode != null &&
+          rethrowCloudErrorCodes.contains(cloudErrorCode)) {
+        throw StateError(cloudErrorCode);
+      }
+
       // Không fail UI flow khi cloud sync lỗi, vì local snapshot đã lưu thành công.
       developer.log(
         'Failed to sync session snapshot to cloud.',

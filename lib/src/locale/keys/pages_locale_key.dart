@@ -235,6 +235,8 @@ class PagesLocaleKey {
   static const String profileBirthDatePlaceholder =
       'profile_birth_date_placeholder';
   static const String profileCreateProfileCta = 'profile_create_profile_cta';
+  static const String profileCreateLimitReached =
+      'profile_create_limit_reached';
   static const String profilePlanFreeTag = 'profile_plan_free_tag';
   static const String profileSoulPointsLabel = 'profile_soul_points_label';
   static const String profileSoulPointsEarnMoreCta =

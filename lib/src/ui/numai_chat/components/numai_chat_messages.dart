@@ -5,6 +5,7 @@ import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/numai_chat/components/numai_typewriter_text.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
+import 'package:test/src/ui/widgets/custom_circular_progress.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -54,7 +55,10 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.messages.isEmpty && !widget.isLoading) {
+    if (widget.messages.isEmpty) {
+      if (widget.isLoading) {
+        return const _HistoryLoadingState();
+      }
       return _EmptyState(onQuickSuggestionTap: widget.onQuickSuggestionTap);
     }
 
@@ -93,6 +97,39 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
       _scrollController.position.maxScrollExtent + 48,
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
+    );
+  }
+}
+
+class _HistoryLoadingState extends StatelessWidget {
+  const _HistoryLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.card.withValues(alpha: 0.62),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CustomCircularProgress(color: AppColors.richGold),
+            ),
+            8.width,
+            Text(
+              LocaleKey.numaiChatAnalyzing.tr,
+              style: AppStyles.bodySmall(color: AppColors.textMuted),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

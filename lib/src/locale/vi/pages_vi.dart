@@ -7,8 +7,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.readingCoreNumbersBody:
       'Số chủ đạo, linh hồn, nhân cách, sứ mệnh',
   PagesLocaleKey.readingChartMatrixTitle: 'Biểu đồ và ma trận',
-  PagesLocaleKey.readingChartMatrixBody:
-      'Biểu đồ ngày sinh, Matrix Aspect Detail',
+  PagesLocaleKey.readingChartMatrixBody: 'Biểu đồ ngày sinh, tên',
   PagesLocaleKey.readingLifePathTitle: 'Lộ trình cuộc đời',
   PagesLocaleKey.readingLifePathBody: '4 đỉnh cao, 4 thử thách',
   PagesLocaleKey.readingPortraitTitle: 'Chân dung cá nhân',
@@ -213,6 +212,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileSetupTapPrompt: 'Chạm để thiết lập hồ sơ',
   PagesLocaleKey.profileBirthDatePlaceholder: 'DD/MM/YYYY',
   PagesLocaleKey.profileCreateProfileCta: 'Tạo hồ sơ của bạn',
+  PagesLocaleKey.profileCreateLimitReached: 'Bạn đã đạt giới hạn tạo hồ sơ.',
   PagesLocaleKey.profilePlanFreeTag: 'Free',
   PagesLocaleKey.profileSoulPointsLabel: '@points Soul Points',
   PagesLocaleKey.profileSoulPointsEarnMoreCta: 'Nhận thêm ->',

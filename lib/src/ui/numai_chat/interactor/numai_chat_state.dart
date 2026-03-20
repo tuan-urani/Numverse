@@ -85,6 +85,7 @@ class NumAiChatMessage extends Equatable {
     this.hasActionButton = false,
     this.followUpSuggestions = const <String>[],
     this.fallbackReason,
+    this.requiresProfileInfo = false,
   });
 
   final String id;
@@ -94,6 +95,7 @@ class NumAiChatMessage extends Equatable {
   final bool hasActionButton;
   final List<String> followUpSuggestions;
   final String? fallbackReason;
+  final bool requiresProfileInfo;
 
   @override
   List<Object?> get props => <Object?>[
@@ -104,6 +106,7 @@ class NumAiChatMessage extends Equatable {
     hasActionButton,
     followUpSuggestions,
     fallbackReason,
+    requiresProfileInfo,
   ];
 }
 

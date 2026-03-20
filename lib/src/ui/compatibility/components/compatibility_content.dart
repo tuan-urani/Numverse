@@ -67,7 +67,7 @@ class CompatibilityContent extends StatelessWidget {
                 style: AppStyles.numberSmall(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
-                ).copyWith(fontSize: 28, height: 1.2, letterSpacing: 0.2),
+                ),
               ),
               2.height,
               Text(
@@ -963,10 +963,10 @@ class _HistoryItemCard extends StatelessWidget {
 
   Color _scoreColor(int score) {
     if (score >= 80) {
-      return AppColors.success;
+      return AppColors.richGold;
     }
     if (score >= 70) {
-      return AppColors.richGold;
+      return AppColors.success;
     }
     if (score >= 60) {
       return AppColors.warning;

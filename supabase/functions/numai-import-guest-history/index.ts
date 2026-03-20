@@ -20,6 +20,7 @@ type ImportableGuestMessage = {
   messageText: string;
   createdAt: string;
   followUpSuggestions: string[];
+  requiresProfileInfo: boolean;
 };
 
 const corsHeaders = {
@@ -77,6 +78,10 @@ function ensureArrayOfStrings(value: unknown): string[] {
     .filter((item) => typeof item === "string")
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
+}
+
+function strictBooleanFlag(value: unknown): boolean {
+  return typeof value === "boolean" ? value : false;
 }
 
 function createClients(req: Request): {
@@ -274,6 +279,7 @@ function sanitizeGuestMessagesForImport(
       messageText,
       createdAt,
       followUpSuggestions: ensureArrayOfStrings(payload.follow_up_suggestions),
+      requiresProfileInfo: strictBooleanFlag(payload.requires_profile_info),
     });
   }
 
@@ -439,6 +445,9 @@ async function handleImportGuestHistory(req: Request): Promise<JsonObject> {
     }
     if (item.followUpSuggestions.length > 0) {
       metadataJson.follow_up_suggestions = item.followUpSuggestions;
+    }
+    if (item.requiresProfileInfo) {
+      metadataJson.requires_profile_info = true;
     }
 
     rowsToInsert.push({

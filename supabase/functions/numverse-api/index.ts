@@ -148,6 +148,10 @@ function isTruthyFlag(value: unknown): boolean {
   return false;
 }
 
+function strictBooleanFlag(value: unknown): boolean {
+  return typeof value === "boolean" ? value : false;
+}
+
 function resolveErrorCode(error: unknown): string {
   if (error instanceof HttpError) {
     return error.message.trim();
@@ -241,6 +245,7 @@ type ImportableGuestMessage = {
   messageText: string;
   createdAt: string;
   followUpSuggestions: string[];
+  requiresProfileInfo: boolean;
 };
 
 type ClientNumAiSnapshot = {
@@ -364,6 +369,7 @@ function sanitizeGuestMessagesForImport(rawMessages: unknown): ImportableGuestMe
       messageText,
       createdAt,
       followUpSuggestions: ensureArrayOfStrings(payload.follow_up_suggestions),
+      requiresProfileInfo: strictBooleanFlag(payload.requires_profile_info),
     });
   }
 
@@ -1544,6 +1550,9 @@ async function handleImportGuestNumaiHistory(req: Request): Promise<JsonObject> 
       }
       if (item.followUpSuggestions.length > 0) {
         metadataJson.follow_up_suggestions = item.followUpSuggestions;
+      }
+      if (item.requiresProfileInfo) {
+        metadataJson.requires_profile_info = true;
       }
 
       return {

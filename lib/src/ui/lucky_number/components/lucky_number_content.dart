@@ -9,10 +9,26 @@ import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
-class LuckyNumberContent extends StatelessWidget {
+class LuckyNumberContent extends StatefulWidget {
   const LuckyNumberContent({required this.state, super.key});
 
   final LuckyNumberState state;
+
+  @override
+  State<LuckyNumberContent> createState() => _LuckyNumberContentState();
+}
+
+class _LuckyNumberContentState extends State<LuckyNumberContent> {
+  int _expandedSectionIndex = 0;
+
+  void _expandSection(int index) {
+    if (_expandedSectionIndex == index) {
+      return;
+    }
+    setState(() {
+      _expandedSectionIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +36,25 @@ class LuckyNumberContent extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
       child: Column(
         children: <Widget>[
-          _LuckyDisplayCard(state: state),
+          _LuckyDisplayCard(state: widget.state),
           12.height,
-          _MeaningCard(state: state),
+          _MeaningCard(
+            state: widget.state,
+            isExpanded: _expandedSectionIndex == 0,
+            onTap: () => _expandSection(0),
+          ),
           12.height,
-          _UsageCard(howToUse: state.howToUse),
+          _UsageCard(
+            howToUse: widget.state.howToUse,
+            isExpanded: _expandedSectionIndex == 1,
+            onTap: () => _expandSection(1),
+          ),
           12.height,
-          _SituationsCard(situations: state.situations),
+          _SituationsCard(
+            situations: widget.state.situations,
+            isExpanded: _expandedSectionIndex == 2,
+            onTap: () => _expandSection(2),
+          ),
           12.height,
         ],
       ),
@@ -197,35 +225,28 @@ class _LuckyDisplayCardState extends State<_LuckyDisplayCard>
 }
 
 class _MeaningCard extends StatelessWidget {
-  const _MeaningCard({required this.state});
+  const _MeaningCard({
+    required this.state,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   final LuckyNumberState state;
+  final bool isExpanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return _SoftCard(
+    return _AccordionCard(
+      title: LocaleKey.luckyNumberMeaningTitle.trParams(<String, String>{
+        'number': '${state.luckyNumber}',
+      }),
+      leading: Icons.auto_awesome,
+      isExpanded: isExpanded,
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.auto_awesome,
-                size: 20,
-                color: AppColors.richGold,
-              ),
-              8.width,
-              Expanded(
-                child: Text(
-                  LocaleKey.luckyNumberMeaningTitle.trParams(<String, String>{
-                    'number': '${state.luckyNumber}',
-                  }),
-                  style: AppStyles.h4(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          10.height,
           Text(
             state.title,
             style: AppStyles.bodyMedium(
@@ -245,21 +266,26 @@ class _MeaningCard extends StatelessWidget {
 }
 
 class _UsageCard extends StatelessWidget {
-  const _UsageCard({required this.howToUse});
+  const _UsageCard({
+    required this.howToUse,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   final List<String> howToUse;
+  final bool isExpanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return _SoftCard(
+    return _AccordionCard(
+      title: LocaleKey.luckyNumberUsageTitle.tr,
+      leading: Icons.lightbulb_rounded,
+      isExpanded: isExpanded,
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            LocaleKey.luckyNumberUsageTitle.tr,
-            style: AppStyles.h4(fontWeight: FontWeight.w600),
-          ),
-          10.height,
           for (final String item in howToUse)
             Padding(
               padding: const EdgeInsets.only(bottom: 9),
@@ -293,21 +319,26 @@ class _UsageCard extends StatelessWidget {
 }
 
 class _SituationsCard extends StatelessWidget {
-  const _SituationsCard({required this.situations});
+  const _SituationsCard({
+    required this.situations,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   final List<String> situations;
+  final bool isExpanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return _SoftCard(
+    return _AccordionCard(
+      title: LocaleKey.luckyNumberSituationsTitle.tr,
+      leading: Icons.check_circle_outline_rounded,
+      isExpanded: isExpanded,
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            LocaleKey.luckyNumberSituationsTitle.tr,
-            style: AppStyles.h4(fontWeight: FontWeight.w600),
-          ),
-          10.height,
           for (final String situation in situations)
             Padding(
               padding: const EdgeInsets.only(bottom: 9),
@@ -340,30 +371,105 @@ class _SituationsCard extends StatelessWidget {
   }
 }
 
-class _SoftCard extends StatelessWidget {
-  const _SoftCard({required this.child});
+class _AccordionCard extends StatelessWidget {
+  const _AccordionCard({
+    required this.title,
+    required this.leading,
+    required this.isExpanded,
+    required this.onTap,
+    required this.child,
+  });
 
+  final String title;
+  final IconData leading;
+  final bool isExpanded;
+  final VoidCallback onTap;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: AppColors.card.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.richGold.withValues(alpha: 0.42),
-          width: 1.1,
+          color: AppColors.richGold.withValues(alpha: isExpanded ? 0.52 : 0.34),
+          width: isExpanded ? 1.2 : 1,
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: AppColors.richGold.withValues(alpha: 0.08),
-            blurRadius: 12,
+            color: AppColors.richGold.withValues(
+              alpha: isExpanded ? 0.12 : 0.06,
+            ),
+            blurRadius: isExpanded ? 14 : 10,
             spreadRadius: 1,
           ),
         ],
       ),
-      child: Padding(padding: const EdgeInsets.all(16), child: child),
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Icon(leading, size: 20, color: AppColors.richGold),
+                    8.width,
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppStyles.h4(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    AnimatedRotation(
+                      duration: const Duration(milliseconds: 200),
+                      turns: isExpanded ? 0.5 : 0,
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder:
+                      (Widget content, Animation<double> animation) {
+                        return ClipRect(
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            axisAlignment: -1,
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: content,
+                            ),
+                          ),
+                        );
+                      },
+                  child: isExpanded
+                      ? Padding(
+                          key: const ValueKey<String>('accordion-expanded'),
+                          padding: const EdgeInsets.only(top: 10),
+                          child: child,
+                        )
+                      : const SizedBox(
+                          key: ValueKey<String>('accordion-collapsed'),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

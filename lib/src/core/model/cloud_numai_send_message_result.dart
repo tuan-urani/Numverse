@@ -6,6 +6,7 @@ class CloudNumAiSendMessageResult {
     required this.chargedSoulPoints,
     required this.walletBalance,
     required this.fallbackReason,
+    required this.requiresProfileInfo,
   });
 
   final String threadId;
@@ -14,6 +15,7 @@ class CloudNumAiSendMessageResult {
   final int chargedSoulPoints;
   final int walletBalance;
   final String? fallbackReason;
+  final bool requiresProfileInfo;
 
   factory CloudNumAiSendMessageResult.fromEnvelope(Map<String, dynamic> json) {
     final Map<String, dynamic> data = _toMap(json['data']);
@@ -33,6 +35,9 @@ class CloudNumAiSendMessageResult {
       chargedSoulPoints: (data['charged_soul_points'] as num?)?.toInt() ?? 0,
       walletBalance: (data['wallet_balance'] as num?)?.toInt() ?? 0,
       fallbackReason: (metadata['fallback_reason'] as String?)?.trim(),
+      requiresProfileInfo: metadata['requires_profile_info'] is bool
+          ? metadata['requires_profile_info'] as bool
+          : false,
     );
   }
 

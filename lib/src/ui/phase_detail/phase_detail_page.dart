@@ -120,13 +120,27 @@ class _LegacyDetailView extends StatelessWidget {
   }
 }
 
-class _StageDetailView extends StatelessWidget {
+class _StageDetailView extends StatefulWidget {
   const _StageDetailView({required this.args});
 
   final PhaseDetailStageArgs args;
 
   @override
+  State<_StageDetailView> createState() => _StageDetailViewState();
+}
+
+class _StageDetailViewState extends State<_StageDetailView> {
+  int? _expandedSectionIndex;
+
+  void _toggleSection(int index) {
+    setState(() {
+      _expandedSectionIndex = _expandedSectionIndex == index ? null : index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final PhaseDetailStageArgs args = widget.args;
     return AppMysticalScaffold(
       child: SafeArea(
         bottom: false,
@@ -152,6 +166,8 @@ class _StageDetailView extends StatelessWidget {
                       icon: Icons.auto_graph_rounded,
                       color: AppColors.richGold,
                       args: args.pinnacle,
+                      isExpanded: _expandedSectionIndex == 0,
+                      onToggle: () => _toggleSection(0),
                     ),
                     10.height,
                     _StageSectionCard(
@@ -159,6 +175,8 @@ class _StageDetailView extends StatelessWidget {
                       icon: Icons.warning_amber_rounded,
                       color: AppColors.warning,
                       args: args.challenge,
+                      isExpanded: _expandedSectionIndex == 1,
+                      onToggle: () => _toggleSection(1),
                     ),
                     8.height,
                   ],
@@ -243,49 +261,46 @@ class _StageHeroCard extends StatelessWidget {
   }
 }
 
-class _StageSectionCard extends StatefulWidget {
+class _StageSectionCard extends StatelessWidget {
   const _StageSectionCard({
     required this.title,
     required this.icon,
     required this.color,
     required this.args,
+    required this.isExpanded,
+    required this.onToggle,
   });
 
   final String title;
   final IconData icon;
   final Color color;
   final PhaseDetailArgs args;
-
-  @override
-  State<_StageSectionCard> createState() => _StageSectionCardState();
-}
-
-class _StageSectionCardState extends State<_StageSectionCard> {
-  bool _expanded = false;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final bool challenge = widget.args.type == PhaseDetailType.challenge;
-    final String headline = widget.args.theme.trim().isNotEmpty
-        ? widget.args.theme
+    final bool challenge = args.type == PhaseDetailType.challenge;
+    final String headline = args.theme.trim().isNotEmpty
+        ? args.theme
         : (challenge
-              ? 'Thử thách ${widget.args.index + 1} · Số ${widget.args.number}'
-              : 'Cuộc đời ${widget.args.index + 1} · Số ${widget.args.number}');
+              ? 'Thử thách ${args.index + 1} · Số ${args.number}'
+              : 'Cuộc đời ${args.index + 1} · Số ${args.number}');
     final String collapsedHint = challenge
-        ? 'Chạm để xem nội dung chi tiết · Số thử thách ${widget.args.number}'
-        : 'Chạm để xem nội dung chi tiết · Số cuộc đời ${widget.args.number}';
+        ? 'Chạm để xem nội dung chi tiết · Số thử thách ${args.number}'
+        : 'Chạm để xem nội dung chi tiết · Số cuộc đời ${args.number}';
     return Material(
       color: AppColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => setState(() => _expanded = !_expanded),
+        onTap: onToggle,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: AppColors.mysticalCardGradient(),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: widget.color.withValues(alpha: 0.34)),
+            border: Border.all(color: color.withValues(alpha: 0.34)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,19 +309,19 @@ class _StageSectionCardState extends State<_StageSectionCard> {
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Row(
                   children: <Widget>[
-                    Icon(widget.icon, size: 18, color: widget.color),
+                    Icon(icon, size: 18, color: color),
                     8.width,
                     Expanded(
                       child: Text(
-                        widget.title,
+                        title,
                         style: AppStyles.h5(
-                          color: widget.color,
+                          color: color,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     Icon(
-                      _expanded
+                      isExpanded
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
                       size: 20,
@@ -326,17 +341,15 @@ class _StageSectionCardState extends State<_StageSectionCard> {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      color: widget.color.withValues(alpha: 0.08),
-                      border: Border.all(
-                        color: widget.color.withValues(alpha: 0.24),
-                      ),
+                      color: color.withValues(alpha: 0.08),
+                      border: Border.all(color: color.withValues(alpha: 0.24)),
                     ),
                     child: Row(
                       children: <Widget>[
                         Icon(
                           Icons.touch_app_rounded,
                           size: 16,
-                          color: widget.color.withValues(alpha: 0.9),
+                          color: color.withValues(alpha: 0.9),
                         ),
                         8.width,
                         Expanded(
@@ -358,10 +371,7 @@ class _StageSectionCardState extends State<_StageSectionCard> {
                     children: <Widget>[
                       Row(
                         children: <Widget>[
-                          _NumberOrb(
-                            number: widget.args.number,
-                            color: widget.color,
-                          ),
+                          _NumberOrb(number: args.number, color: color),
                           12.width,
                           Expanded(
                             child: Column(
@@ -384,14 +394,14 @@ class _StageSectionCardState extends State<_StageSectionCard> {
                       _DetailTextCard(
                         title: 'Mô tả',
                         icon: Icons.insights_rounded,
-                        body: widget.args.description,
+                        body: args.description,
                         color: AppColors.richGold,
                       ),
                       8.height,
                       _DetailTextCard(
-                        title: widget.args.opportunitiesTitle,
+                        title: args.opportunitiesTitle,
                         icon: Icons.auto_graph_rounded,
-                        body: widget.args.opportunities,
+                        body: args.opportunities,
                         color: challenge
                             ? AppColors.warning
                             : AppColors.energyEmerald,
@@ -400,13 +410,13 @@ class _StageSectionCardState extends State<_StageSectionCard> {
                       _DetailTextCard(
                         title: 'Lời khuyên',
                         icon: Icons.lightbulb_rounded,
-                        body: widget.args.advice,
+                        body: args.advice,
                         color: AppColors.energyPurple,
                       ),
                     ],
                   ),
                 ),
-                crossFadeState: _expanded
+                crossFadeState: isExpanded
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 duration: const Duration(milliseconds: 220),

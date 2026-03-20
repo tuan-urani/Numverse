@@ -231,8 +231,6 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
     if (!mounted || sessionCubit.state.currentProfile == null) {
       return;
     }
-
-    bloc.appendPendingQuestionAnswerAfterProfile();
   }
 
   void _onBackTap(BuildContext context) {

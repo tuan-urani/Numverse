@@ -91,7 +91,10 @@ class LifePathBloc extends Bloc<LifePathEvent, LifePathState> {
     LifePathPinnaclesToggled event,
     Emitter<LifePathState> emit,
   ) {
-    emit(state.copyWith(expandedPinnacles: !state.expandedPinnacles));
+    final bool willExpand = !state.expandedPinnacles;
+    emit(
+      state.copyWith(expandedPinnacles: willExpand, expandedChallenges: false),
+    );
   }
 
   void toggleChallenges() {
@@ -102,6 +105,9 @@ class LifePathBloc extends Bloc<LifePathEvent, LifePathState> {
     LifePathChallengesToggled event,
     Emitter<LifePathState> emit,
   ) {
-    emit(state.copyWith(expandedChallenges: !state.expandedChallenges));
+    final bool willExpand = !state.expandedChallenges;
+    emit(
+      state.copyWith(expandedChallenges: willExpand, expandedPinnacles: false),
+    );
   }
 }

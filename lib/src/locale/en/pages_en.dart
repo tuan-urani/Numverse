@@ -217,6 +217,8 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileSetupTapPrompt: 'Tap to set up profile',
   PagesLocaleKey.profileBirthDatePlaceholder: 'DD/MM/YYYY',
   PagesLocaleKey.profileCreateProfileCta: 'Create your profile',
+  PagesLocaleKey.profileCreateLimitReached:
+      'You have reached the profile creation limit.',
   PagesLocaleKey.profilePlanFreeTag: 'Free',
   PagesLocaleKey.profileSoulPointsLabel: '@points Soul Points',
   PagesLocaleKey.profileSoulPointsEarnMoreCta: 'Earn more ->',

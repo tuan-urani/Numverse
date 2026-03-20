@@ -7,7 +7,7 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
-class YearDetailContent extends StatelessWidget {
+class YearDetailContent extends StatefulWidget {
   const YearDetailContent({
     required this.personalYearNumber,
     required this.content,
@@ -18,6 +18,19 @@ class YearDetailContent extends StatelessWidget {
   final NumerologyPersonalYearContent content;
 
   @override
+  State<YearDetailContent> createState() => _YearDetailContentState();
+}
+
+class _YearDetailContentState extends State<YearDetailContent> {
+  int? _expandedSectionIndex = 0;
+
+  void _toggleSection(int index) {
+    setState(() {
+      _expandedSectionIndex = _expandedSectionIndex == index ? null : index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,21 +38,36 @@ class YearDetailContent extends StatelessWidget {
         _AnimatedReveal(
           delay: 0,
           child: _YearHeroCard(
-            personalYearNumber: personalYearNumber,
-            keyword: content.keyword,
+            personalYearNumber: widget.personalYearNumber,
+            keyword: widget.content.keyword,
           ),
         ),
         const SizedBox(height: 24),
-        _AnimatedReveal(delay: 80, child: _YearThemeCard(theme: content.theme)),
+        _AnimatedReveal(
+          delay: 80,
+          child: _YearThemeCard(
+            theme: widget.content.theme,
+            isExpanded: _expandedSectionIndex == 0,
+            onToggle: () => _toggleSection(0),
+          ),
+        ),
         const SizedBox(height: 24),
         _AnimatedReveal(
           delay: 160,
-          child: _YearPriorityCard(lessons: content.lessons),
+          child: _YearPriorityCard(
+            lessons: widget.content.lessons,
+            isExpanded: _expandedSectionIndex == 1,
+            onToggle: () => _toggleSection(1),
+          ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
           delay: 240,
-          child: _YearFocusAreasCard(focusAreas: content.focusAreas),
+          child: _YearFocusAreasCard(
+            focusAreas: widget.content.focusAreas,
+            isExpanded: _expandedSectionIndex == 2,
+            onToggle: () => _toggleSection(2),
+          ),
         ),
         const SizedBox(height: 12),
       ],
@@ -138,9 +166,15 @@ class _YearHeroCard extends StatelessWidget {
 }
 
 class _YearThemeCard extends StatelessWidget {
-  const _YearThemeCard({required this.theme});
+  const _YearThemeCard({
+    required this.theme,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final List<String> theme;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -163,24 +197,54 @@ class _YearThemeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.star_rounded,
-                color: AppColors.richGold,
-                size: 20,
-              ),
-              8.width,
-              Text(
-                LocaleKey.yearDetailThemeTitle.tr,
-                style: AppStyles.h5(fontWeight: FontWeight.w600),
-              ),
-            ],
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.star_rounded,
+                  color: AppColors.richGold,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.yearDetailThemeTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.richGold,
+                  ),
+                ),
+              ],
+            ),
           ),
-          for (int index = 0; index < themeValues.length; index++) ...<Widget>[
-            if (index == 0) 14.height else 12.height,
-            Text(themeValues[index], style: baseStyle),
-          ],
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < themeValues.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 12.height,
+                    Text(themeValues[index], style: baseStyle),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -188,9 +252,15 @@ class _YearThemeCard extends StatelessWidget {
 }
 
 class _YearPriorityCard extends StatelessWidget {
-  const _YearPriorityCard({required this.lessons});
+  const _YearPriorityCard({
+    required this.lessons,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final List<NumerologyPersonalMonthStep> lessons;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -221,37 +291,65 @@ class _YearPriorityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.track_changes_rounded,
-                color: AppColors.richGold,
-                size: 20,
-              ),
-              8.width,
-              Text(
-                LocaleKey.yearDetailPriorityTitle.tr,
-                style: AppStyles.h5(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          14.height,
-          for (int index = 0; index < lessonValues.length; index++) ...<Widget>[
-            if (index > 0) ...<Widget>[
-              10.height,
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: AppColors.border.withValues(alpha: 0.32),
-              ),
-              10.height,
-            ],
-            _LessonTile(
-              index: index + 1,
-              title: lessonValues[index].title,
-              body: lessonValues[index].body,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.track_changes_rounded,
+                  color: AppColors.richGold,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.yearDetailPriorityTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.richGold,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < lessonValues.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) ...<Widget>[
+                      10.height,
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.border.withValues(alpha: 0.32),
+                      ),
+                      10.height,
+                    ],
+                    _LessonTile(
+                      index: index + 1,
+                      title: lessonValues[index].title,
+                      body: lessonValues[index].body,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -259,9 +357,15 @@ class _YearPriorityCard extends StatelessWidget {
 }
 
 class _YearFocusAreasCard extends StatelessWidget {
-  const _YearFocusAreasCard({required this.focusAreas});
+  const _YearFocusAreasCard({
+    required this.focusAreas,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final List<NumerologyPersonalMonthStep> focusAreas;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -297,42 +401,92 @@ class _YearFocusAreasCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.menu_book_rounded,
-                color: AppColors.richGold,
-                size: 20,
-              ),
-              8.width,
-              Text(
-                LocaleKey.yearDetailFocusAreaTitle.tr,
-                style: AppStyles.h5(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          14.height,
-          for (
-            int index = 0;
-            index < focusAreaValues.length;
-            index++
-          ) ...<Widget>[
-            if (index > 0) ...<Widget>[
-              10.height,
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: AppColors.border.withValues(alpha: 0.32),
-              ),
-              10.height,
-            ],
-            _FocusAreaTile(
-              title: focusAreaValues[index].title,
-              body: focusAreaValues[index].body,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.menu_book_rounded,
+                  color: AppColors.richGold,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.yearDetailFocusAreaTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.richGold,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < focusAreaValues.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) ...<Widget>[
+                      10.height,
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.border.withValues(alpha: 0.32),
+                      ),
+                      10.height,
+                    ],
+                    _FocusAreaTile(
+                      title: focusAreaValues[index].title,
+                      body: focusAreaValues[index].body,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _AccordionBody extends StatelessWidget {
+  const _AccordionBody({required this.isExpanded, required this.child});
+
+  final bool isExpanded;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: isExpanded ? 1 : 0),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOutCubic,
+      child: child,
+      builder: (BuildContext context, double animationValue, Widget? child) {
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: animationValue,
+            child: Opacity(opacity: animationValue, child: child),
+          ),
+        );
+      },
     );
   }
 }

@@ -50,6 +50,7 @@ class CloudNumAiThreadMessage {
     required this.createdAt,
     required this.followUpSuggestions,
     required this.fallbackReason,
+    required this.requiresProfileInfo,
   });
 
   final String id;
@@ -58,6 +59,7 @@ class CloudNumAiThreadMessage {
   final DateTime createdAt;
   final List<String> followUpSuggestions;
   final String? fallbackReason;
+  final bool requiresProfileInfo;
 
   factory CloudNumAiThreadMessage.fromJson(Map<String, dynamic> json) {
     final Map<String, dynamic> metadata = _toMap(json['metadata_json']);
@@ -71,6 +73,9 @@ class CloudNumAiThreadMessage {
       createdAt: parsedCreatedAt.toLocal(),
       followUpSuggestions: _toStringList(metadata['follow_up_suggestions']),
       fallbackReason: (metadata['fallback_reason'] as String?)?.trim(),
+      requiresProfileInfo: metadata['requires_profile_info'] is bool
+          ? metadata['requires_profile_info'] as bool
+          : false,
     );
   }
 

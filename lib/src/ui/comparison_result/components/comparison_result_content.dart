@@ -7,13 +7,28 @@ import 'package:test/src/ui/comparison_result/interactor/comparison_result_state
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
-class ComparisonResultContent extends StatelessWidget {
+class ComparisonResultContent extends StatefulWidget {
   const ComparisonResultContent({required this.state, super.key});
 
   final ComparisonResultState state;
 
   @override
+  State<ComparisonResultContent> createState() =>
+      _ComparisonResultContentState();
+}
+
+class _ComparisonResultContentState extends State<ComparisonResultContent> {
+  int? _expandedAspectIndex;
+
+  void _toggleAspect(int index) {
+    setState(() {
+      _expandedAspectIndex = _expandedAspectIndex == index ? null : index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ComparisonResultState state = widget.state;
     final List<String> strengths = state.strengths.isNotEmpty
         ? state.strengths
         : <String>[
@@ -78,8 +93,16 @@ class ComparisonResultContent extends StatelessWidget {
             ),
           ),
           10.height,
-          for (final _AspectInsightData insight in aspectInsights) ...<Widget>[
-            _AspectInsightCard(data: insight),
+          for (
+            int index = 0;
+            index < aspectInsights.length;
+            index++
+          ) ...<Widget>[
+            _AspectInsightCard(
+              data: aspectInsights[index],
+              isExpanded: _expandedAspectIndex == index,
+              onTap: () => _toggleAspect(index),
+            ),
             10.height,
           ],
           6.height,
@@ -109,13 +132,6 @@ class ComparisonResultContent extends StatelessWidget {
             numbered: true,
             marker: '',
           ),
-          16.height,
-          _QuoteCard(
-            quote: state.quote.isNotEmpty
-                ? state.quote
-                : LocaleKey.comparisonQuote.tr,
-          ),
-          10.height,
         ],
       ),
     );
@@ -147,6 +163,7 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
   @override
   Widget build(BuildContext context) {
     final String status = _statusLabel(widget.state.overallScore);
+    final Color scoreColor = _scoreColor(widget.state.overallScore);
 
     return Container(
       width: double.infinity,
@@ -154,7 +171,7 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
       decoration: BoxDecoration(
         gradient: AppColors.mysticalCardGradient(),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.34)),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.34)),
       ),
       child: AnimatedBuilder(
         animation: _controller,
@@ -173,9 +190,7 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
                       height: 104,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.richGold.withValues(
-                          alpha: ringOpacity,
-                        ),
+                        color: scoreColor.withValues(alpha: ringOpacity),
                       ),
                     ),
                   ),
@@ -186,17 +201,17 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: <Color>[
-                          AppColors.richGold.withValues(alpha: 0.34),
+                          scoreColor.withValues(alpha: 0.34),
                           AppColors.violetAccent.withValues(alpha: 0.3),
                         ],
                       ),
                       border: Border.all(
-                        color: AppColors.richGold.withValues(alpha: 0.52),
+                        color: scoreColor.withValues(alpha: 0.52),
                         width: 2,
                       ),
                       boxShadow: <BoxShadow>[
                         BoxShadow(
-                          color: AppColors.richGold.withValues(alpha: 0.28),
+                          color: scoreColor.withValues(alpha: 0.28),
                           blurRadius: 18,
                         ),
                       ],
@@ -205,7 +220,7 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
                     child: Text(
                       '${widget.state.overallScore}',
                       style: AppStyles.numberLarge(
-                        color: AppColors.richGold,
+                        color: scoreColor,
                         fontWeight: FontWeight.w700,
                       ).copyWith(fontSize: 42),
                     ),
@@ -213,7 +228,13 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
                 ],
               ),
               12.height,
-              Text(status, style: AppStyles.h2(fontWeight: FontWeight.w700)),
+              Text(
+                status,
+                style: AppStyles.h2(
+                  color: scoreColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               4.height,
               Text(
                 LocaleKey.comparisonOverallLabel.tr,
@@ -257,6 +278,19 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
       return LocaleKey.comparisonStatusModerate.tr;
     }
     return LocaleKey.comparisonStatusEffort.tr;
+  }
+
+  Color _scoreColor(int score) {
+    if (score >= 80) {
+      return AppColors.richGold;
+    }
+    if (score >= 70) {
+      return AppColors.success;
+    }
+    if (score >= 60) {
+      return AppColors.warning;
+    }
+    return AppColors.error;
   }
 
   String _lastName(String value) {
@@ -402,48 +436,6 @@ class _ListCard extends StatelessWidget {
   }
 }
 
-class _QuoteCard extends StatelessWidget {
-  const _QuoteCard({required this.quote});
-
-  final String quote;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          colors: <Color>[
-            AppColors.richGold.withValues(alpha: 0.12),
-            AppColors.violetAccent.withValues(alpha: 0.1),
-          ],
-        ),
-        border: Border.all(color: AppColors.richGold.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        children: <Widget>[
-          const Icon(
-            Icons.favorite_rounded,
-            size: 20,
-            color: AppColors.richGold,
-          ),
-          8.height,
-          Text(
-            quote,
-            textAlign: TextAlign.center,
-            style: AppStyles.bodyMedium(
-              color: AppColors.richGold,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _AspectInsightData {
   const _AspectInsightData({
     required this.title,
@@ -458,26 +450,21 @@ class _AspectInsightData {
   final ComparisonAspectInsight content;
 }
 
-class _AspectInsightCard extends StatefulWidget {
-  const _AspectInsightCard({required this.data});
+class _AspectInsightCard extends StatelessWidget {
+  const _AspectInsightCard({
+    required this.data,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   final _AspectInsightData data;
-
-  @override
-  State<_AspectInsightCard> createState() => _AspectInsightCardState();
-}
-
-class _AspectInsightCardState extends State<_AspectInsightCard> {
-  bool _isExpanded = false;
+  final bool isExpanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final _AspectInsightData data = widget.data;
-    final Color scoreColor = switch (data.score) {
-      >= 80 => AppColors.richGold,
-      >= 60 => AppColors.warning,
-      _ => AppColors.textMuted,
-    };
+    final _AspectInsightData data = this.data;
+    final Color scoreColor = _scoreColor(data.score);
 
     return Container(
       width: double.infinity,
@@ -492,11 +479,7 @@ class _AspectInsightCardState extends State<_AspectInsightCard> {
         children: <Widget>[
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
+            onTap: onTap,
             child: Row(
               children: <Widget>[
                 Container(
@@ -526,7 +509,7 @@ class _AspectInsightCardState extends State<_AspectInsightCard> {
                 Text('%', style: AppStyles.caption(color: AppColors.textMuted)),
                 6.width,
                 AnimatedRotation(
-                  turns: _isExpanded ? 0.5 : 0,
+                  turns: isExpanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: Icon(
                     Icons.expand_more_rounded,
@@ -547,7 +530,7 @@ class _AspectInsightCardState extends State<_AspectInsightCard> {
                   axisAlignment: -1,
                   child: FadeTransition(opacity: animation, child: child),
                 ),
-            child: _isExpanded
+            child: isExpanded
                 ? Padding(
                     key: ValueKey<String>('expanded-${data.title}'),
                     padding: const EdgeInsets.only(top: 10),
@@ -571,5 +554,18 @@ class _AspectInsightCardState extends State<_AspectInsightCard> {
         ],
       ),
     );
+  }
+
+  Color _scoreColor(int score) {
+    if (score >= 80) {
+      return AppColors.richGold;
+    }
+    if (score >= 70) {
+      return AppColors.success;
+    }
+    if (score >= 60) {
+      return AppColors.warning;
+    }
+    return AppColors.error;
   }
 }

@@ -125,8 +125,7 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.numaiStartChat: 'チャット開始',
   PagesLocaleKey.numaiStartChatDisabled: 'Soul Points 不足',
   PagesLocaleKey.numaiNotEnoughStart: 'チャットには最低3SPが必要です。Todayタブでチェックインしてください。',
-  PagesLocaleKey.numaiStartNeedMorePointsCta:
-      '続行するにはあと @points ポイント必要です。さらに獲得',
+  PagesLocaleKey.numaiStartNeedMorePointsCta: '続行するにはあと @points ポイント必要です。さらに獲得',
   PagesLocaleKey.numaiChatTitle: 'NumAI チャット',
   PagesLocaleKey.numaiChatSubtitle: '数秘アシスタント',
   PagesLocaleKey.numaiChatEmptyTitle: 'こんにちは、NumAIです',
@@ -175,6 +174,7 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.profileSetupTapPrompt: 'タップしてプロフィール設定',
   PagesLocaleKey.profileBirthDatePlaceholder: 'DD/MM/YYYY',
   PagesLocaleKey.profileCreateProfileCta: 'プロフィールを作成',
+  PagesLocaleKey.profileCreateLimitReached: 'プロフィール作成の上限に達しました。',
   PagesLocaleKey.profilePlanFreeTag: 'Free',
   PagesLocaleKey.profileSoulPointsLabel: '@points Soul Points',
   PagesLocaleKey.profileSoulPointsEarnMoreCta: 'もっと獲得 ->',

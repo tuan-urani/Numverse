@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:test/src/core/model/app_session_snapshot.dart';
 import 'package:test/src/core/model/cloud_ad_reward_grant_result.dart';
 import 'package:test/src/core/model/cloud_ad_reward_status_result.dart';
+import 'package:test/src/core/model/cloud_error_codes.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
 import 'package:test/src/core/model/cloud_daily_checkin_result.dart';
 import 'package:test/src/core/model/cloud_login_result.dart';
@@ -277,15 +278,23 @@ class CloudAccountRepository implements ICloudAccountRepository {
         ? fallbackDisplayName
         : localSnapshot.userName;
 
-    final Response<dynamic> response = await _ensureAuthenticatedRequest((
-      String token,
-    ) {
-      return _dio.postUri(
-        rpcUri,
-        data: <String, dynamic>{'p_payload': snapshotPayload},
-        options: Options(headers: _authHeaders(accessToken: token)),
-      );
-    }, initialAccessToken: accessToken);
+    final Response<dynamic> response;
+    try {
+      response = await _ensureAuthenticatedRequest((String token) {
+        return _dio.postUri(
+          rpcUri,
+          data: <String, dynamic>{'p_payload': snapshotPayload},
+          options: Options(headers: _authHeaders(accessToken: token)),
+        );
+      }, initialAccessToken: accessToken);
+    } on DioException catch (error) {
+      final String? serverErrorCode = extractCloudErrorCode(error);
+      if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
+        throw StateError(serverErrorCode);
+      }
+      rethrow;
+    }
+
     final Map<String, dynamic> result = _ensureJsonMap(response.data);
     return result['already_synced'] != true;
   }
@@ -367,13 +376,21 @@ class CloudAccountRepository implements ICloudAccountRepository {
     };
 
     final Uri rpcUri = _supabaseConfig.rpcUri('sync_local_session_snapshot');
-    await _ensureAuthenticatedRequest((String token) {
-      return _dio.postUri(
-        rpcUri,
-        data: <String, dynamic>{'p_payload': payload},
-        options: Options(headers: _authHeaders(accessToken: token)),
-      );
-    }, initialAccessToken: accessToken);
+    try {
+      await _ensureAuthenticatedRequest((String token) {
+        return _dio.postUri(
+          rpcUri,
+          data: <String, dynamic>{'p_payload': payload},
+          options: Options(headers: _authHeaders(accessToken: token)),
+        );
+      }, initialAccessToken: accessToken);
+    } on DioException catch (error) {
+      final String? serverErrorCode = extractCloudErrorCode(error);
+      if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
+        throw StateError(serverErrorCode);
+      }
+      rethrow;
+    }
 
     final List<Map<String, dynamic>> snapshotPayloads =
         _buildNumAiSnapshotPayloads(snapshot);
@@ -398,12 +415,8 @@ class CloudAccountRepository implements ICloudAccountRepository {
         );
       }, initialAccessToken: accessToken);
     } on DioException catch (error) {
-      final Map<String, dynamic> errorPayload = _ensureJsonMap(
-        error.response?.data,
-      );
-      final String serverErrorCode = (errorPayload['error'] as String? ?? '')
-          .trim();
-      if (serverErrorCode.isNotEmpty) {
+      final String? serverErrorCode = extractCloudErrorCode(error);
+      if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
         throw StateError(serverErrorCode);
       }
       rethrow;
@@ -1021,6 +1034,7 @@ class CloudAccountRepository implements ICloudAccountRepository {
             'created_at_epoch_ms': item.createdAt.millisecondsSinceEpoch,
             if (item.followUpSuggestions.isNotEmpty)
               'follow_up_suggestions': item.followUpSuggestions,
+            if (item.requiresProfileInfo) 'requires_profile_info': true,
           },
         )
         .where(

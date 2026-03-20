@@ -41,7 +41,13 @@ class NumberLibraryBloc extends Bloc<NumberLibraryEvent, NumberLibraryState> {
     NumberLibraryBasicNumbersExpandedToggled event,
     Emitter<NumberLibraryState> emit,
   ) {
-    emit(state.copyWith(isBasicNumbersExpanded: !state.isBasicNumbersExpanded));
+    final bool willExpand = !state.isBasicNumbersExpanded;
+    emit(
+      state.copyWith(
+        isBasicNumbersExpanded: willExpand,
+        isMasterNumbersExpanded: false,
+      ),
+    );
   }
 
   void toggleMasterNumbersExpanded() {
@@ -52,8 +58,12 @@ class NumberLibraryBloc extends Bloc<NumberLibraryEvent, NumberLibraryState> {
     NumberLibraryMasterNumbersExpandedToggled event,
     Emitter<NumberLibraryState> emit,
   ) {
+    final bool willExpand = !state.isMasterNumbersExpanded;
     emit(
-      state.copyWith(isMasterNumbersExpanded: !state.isMasterNumbersExpanded),
+      state.copyWith(
+        isMasterNumbersExpanded: willExpand,
+        isBasicNumbersExpanded: false,
+      ),
     );
   }
 

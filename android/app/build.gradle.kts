@@ -1,4 +1,5 @@
 import java.io.File
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 fun loadEnv(name: String): Map<String, String> {
     val envFile = rootProject.file("../" + name)
@@ -34,7 +35,7 @@ fun resolveEnvValue(
     return ""
 }
 
-const val androidAdMobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val androidAdMobTestAppId = "ca-app-pub-3940256099942544~3347511713"
 
 plugins {
     id("com.android.application")
@@ -44,7 +45,7 @@ plugins {
 }
 
 android {
-    namespace = "com.numverse.numverse.test"
+    namespace = "com.numverse.numverse"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -53,12 +54,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
     defaultConfig {
-        applicationId = "com.numverse.numverse.test"
+        applicationId = "com.numverse.numverse"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -105,6 +102,12 @@ android {
                 },
             )
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 

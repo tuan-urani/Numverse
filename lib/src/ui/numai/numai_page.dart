@@ -16,6 +16,7 @@ import 'package:test/src/ui/numai_chat/components/numai_typewriter_text.dart';
 import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
+import 'package:test/src/ui/widgets/custom_circular_progress.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -211,6 +212,7 @@ class _NumAiPageState extends State<NumAiPage> {
   }
 
   Future<void> _sendMessage({String? messageText, _NumAiDomain? domain}) async {
+    final bool shouldClearInput = messageText == null;
     final String resolvedMessage = (messageText ?? _controller.text).trim();
     if (resolvedMessage.isEmpty) {
       return;
@@ -230,6 +232,11 @@ class _NumAiPageState extends State<NumAiPage> {
       setState(() {
         _activeDomainId = selectedDomain.id;
       });
+    }
+
+    if (shouldClearInput) {
+      _controller.clear();
+      setState(() {});
     }
 
     final bool hasProfile = _sessionBloc.state.currentProfile != null;
@@ -252,9 +259,6 @@ class _NumAiPageState extends State<NumAiPage> {
       return;
     }
 
-    if (messageText == null) {
-      _controller.clear();
-    }
     setState(() {});
   }
 
@@ -303,7 +307,6 @@ class _NumAiPageState extends State<NumAiPage> {
     if (!mounted || _sessionBloc.state.currentProfile == null) {
       return;
     }
-    _chatBloc.appendPendingQuestionAnswerAfterProfile();
   }
 
   Future<void> _showSoulPointsInsufficientModal() async {
@@ -505,7 +508,10 @@ class _NumAiMessagesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (messages.isEmpty && !isLoading) {
+    if (messages.isEmpty) {
+      if (isLoading) {
+        return const _NumAiHistoryLoadingState();
+      }
       return ListView(
         controller: scrollController,
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -616,6 +622,39 @@ class _NumAiMessagesPanel extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _NumAiHistoryLoadingState extends StatelessWidget {
+  const _NumAiHistoryLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.card.withValues(alpha: 0.62),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CustomCircularProgress(color: AppColors.richGold),
+            ),
+            8.width,
+            Text(
+              LocaleKey.numaiChatAnalyzing.tr,
+              style: AppStyles.bodySmall(color: AppColors.textMuted),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

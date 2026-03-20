@@ -1,4 +1,4 @@
-package com.numverse.numverse.test
+package com.numverse.numverse
 
 import io.flutter.embedding.android.FlutterActivity
 

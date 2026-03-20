@@ -7,7 +7,7 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
-class TodayDetailContent extends StatelessWidget {
+class TodayDetailContent extends StatefulWidget {
   const TodayDetailContent({
     required this.personalDayNumber,
     required this.personalContent,
@@ -20,37 +20,109 @@ class TodayDetailContent extends StatelessWidget {
   final NumerologyTodayPersonalNumberContent personalContent;
 
   @override
+  State<TodayDetailContent> createState() => _TodayDetailContentState();
+}
+
+class _TodayDetailContentState extends State<TodayDetailContent> {
+  int? _expandedSectionIndex = 0;
+
+  void _toggleSection(int index) {
+    setState(() {
+      _expandedSectionIndex = _expandedSectionIndex == index ? null : index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    const int interpretationIndex = 0;
+    final int shouldDoIndex = TodayDetailContent._showSuggestionSection ? 2 : 1;
+    final int shouldAvoidIndex = shouldDoIndex + 1;
+    final int? suggestionIndex = TodayDetailContent._showSuggestionSection
+        ? 1
+        : null;
+    final List<String> shouldDo = _resolveShouldDo();
+    final List<String> shouldAvoid = _resolveShouldAvoid();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _AnimatedReveal(
           delay: 0,
           child: _PersonalDayCard(
-            personalDayNumber: personalDayNumber,
-            content: personalContent,
+            personalDayNumber: widget.personalDayNumber,
+            content: widget.personalContent,
           ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
           delay: 80,
-          child: _InterpretationCard(content: personalContent),
+          child: _InterpretationCard(
+            content: widget.personalContent,
+            isExpanded: _expandedSectionIndex == interpretationIndex,
+            onToggle: () => _toggleSection(interpretationIndex),
+          ),
         ),
-        if (_showSuggestionSection) ...<Widget>[
+        if (TodayDetailContent._showSuggestionSection) ...<Widget>[
           const SizedBox(height: 24),
           _AnimatedReveal(
             delay: 160,
-            child: _SuggestionCard(content: personalContent),
+            child: _SuggestionCard(
+              content: widget.personalContent,
+              isExpanded: _expandedSectionIndex == suggestionIndex,
+              onToggle: () => _toggleSection(suggestionIndex!),
+            ),
           ),
         ],
         const SizedBox(height: 24),
         _AnimatedReveal(
-          delay: _showSuggestionSection ? 220 : 160,
-          child: _DoAvoidCard(content: personalContent),
+          delay: TodayDetailContent._showSuggestionSection ? 220 : 160,
+          child: _ActionSectionCard(
+            title: LocaleKey.todayActionDo.tr,
+            items: shouldDo,
+            accentColor: AppColors.richGold,
+            icon: Icons.check_circle_rounded,
+            isExpanded: _expandedSectionIndex == shouldDoIndex,
+            onToggle: () => _toggleSection(shouldDoIndex),
+          ),
+        ),
+        const SizedBox(height: 24),
+        _AnimatedReveal(
+          delay: TodayDetailContent._showSuggestionSection ? 280 : 220,
+          child: _ActionSectionCard(
+            title: LocaleKey.todayActionAvoid.tr,
+            items: shouldAvoid,
+            accentColor: AppColors.energyPink,
+            icon: Icons.block_rounded,
+            isExpanded: _expandedSectionIndex == shouldAvoidIndex,
+            onToggle: () => _toggleSection(shouldAvoidIndex),
+          ),
         ),
         const SizedBox(height: 12),
       ],
     );
+  }
+
+  List<String> _resolveShouldDo() {
+    if (widget.personalContent.shouldDoActions.isNotEmpty) {
+      return widget.personalContent.shouldDoActions;
+    }
+    if (widget.personalContent.hintActions.length >= 2) {
+      return widget.personalContent.hintActions.take(2).toList(growable: false);
+    }
+    return <String>[
+      LocaleKey.todayActionDoOne.tr,
+      LocaleKey.todayActionDoTwo.tr,
+    ];
+  }
+
+  List<String> _resolveShouldAvoid() {
+    if (widget.personalContent.shouldAvoidActions.isNotEmpty) {
+      return widget.personalContent.shouldAvoidActions;
+    }
+    return <String>[
+      LocaleKey.todayActionAvoidOne.tr,
+      LocaleKey.todayActionAvoidTwo.tr,
+    ];
   }
 }
 
@@ -258,9 +330,15 @@ class _PulsingDayNumberState extends State<_PulsingDayNumber>
 }
 
 class _InterpretationCard extends StatelessWidget {
-  const _InterpretationCard({required this.content});
+  const _InterpretationCard({
+    required this.content,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final NumerologyTodayPersonalNumberContent content;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -273,25 +351,54 @@ class _InterpretationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.auto_awesome_rounded,
-                color: AppColors.richGold,
-                size: 20,
-              ),
-              8.width,
-              Text(
-                LocaleKey.todayDetailInterpretationTitle.tr,
-                style: AppStyles.h5(fontWeight: FontWeight.w600),
-              ),
-            ],
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.richGold,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.todayDetailInterpretationTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.richGold,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
           ),
-          14.height,
-          for (int index = 0; index < details.length; index++) ...<Widget>[
-            if (index > 0) 12.height,
-            Text(details[index], style: baseStyle),
-          ],
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < details.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 12.height,
+                    Text(details[index], style: baseStyle),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -312,9 +419,15 @@ class _InterpretationCard extends StatelessWidget {
 }
 
 class _SuggestionCard extends StatelessWidget {
-  const _SuggestionCard({required this.content});
+  const _SuggestionCard({
+    required this.content,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final NumerologyTodayPersonalNumberContent content;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -337,15 +450,48 @@ class _SuggestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            LocaleKey.todayDetailSuggestionTitle.tr,
-            style: AppStyles.h5(fontWeight: FontWeight.w600),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    LocaleKey.todayDetailSuggestionTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.richGold,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
           ),
-          14.height,
-          for (int index = 0; index < suggestions.length; index++) ...<Widget>[
-            if (index > 0) 12.height,
-            _BulletRow(text: suggestions[index]),
-          ],
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < suggestions.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 12.height,
+                    _BulletRow(text: suggestions[index]),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -384,70 +530,22 @@ class _DetailCard extends StatelessWidget {
   }
 }
 
-class _DoAvoidCard extends StatelessWidget {
-  const _DoAvoidCard({required this.content});
-
-  final NumerologyTodayPersonalNumberContent content;
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> shouldDo = _resolveShouldDo();
-    final List<String> shouldAvoid = _resolveShouldAvoid();
-    return Column(
-      children: <Widget>[
-        _ActionListCard(
-          title: LocaleKey.todayActionDo.tr,
-          items: shouldDo,
-          accentColor: AppColors.richGold,
-          icon: Icons.check_circle_rounded,
-        ),
-        12.height,
-        _ActionListCard(
-          title: LocaleKey.todayActionAvoid.tr,
-          items: shouldAvoid,
-          accentColor: AppColors.energyPink,
-          icon: Icons.block_rounded,
-        ),
-      ],
-    );
-  }
-
-  List<String> _resolveShouldDo() {
-    if (content.shouldDoActions.isNotEmpty) {
-      return content.shouldDoActions;
-    }
-    if (content.hintActions.length >= 2) {
-      return content.hintActions.take(2).toList(growable: false);
-    }
-    return <String>[
-      LocaleKey.todayActionDoOne.tr,
-      LocaleKey.todayActionDoTwo.tr,
-    ];
-  }
-
-  List<String> _resolveShouldAvoid() {
-    if (content.shouldAvoidActions.isNotEmpty) {
-      return content.shouldAvoidActions;
-    }
-    return <String>[
-      LocaleKey.todayActionAvoidOne.tr,
-      LocaleKey.todayActionAvoidTwo.tr,
-    ];
-  }
-}
-
-class _ActionListCard extends StatelessWidget {
-  const _ActionListCard({
+class _ActionSectionCard extends StatelessWidget {
+  const _ActionSectionCard({
     required this.title,
     required this.items,
     required this.accentColor,
     required this.icon,
+    required this.isExpanded,
+    required this.onToggle,
   });
 
   final String title;
   final List<String> items;
   final Color accentColor;
   final IconData icon;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -462,48 +560,105 @@ class _ActionListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, color: accentColor, size: 18),
-              8.width,
-              Text(
-                title,
-                style: AppStyles.h5(
-                  color: accentColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          12.height,
-          for (int index = 0; index < items.length; index++) ...<Widget>[
-            if (index > 0) 10.height,
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
               children: <Widget>[
-                Container(
-                  margin: const EdgeInsets.only(top: 7),
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accentColor.withValues(alpha: 0.95),
-                  ),
-                ),
-                10.width,
+                Icon(icon, color: accentColor, size: 18),
+                8.width,
                 Expanded(
                   child: Text(
-                    items[index],
-                    style: AppStyles.bodyMedium(
-                      color: AppColors.textPrimary.withValues(alpha: 0.92),
+                    title,
+                    style: AppStyles.h5(
+                      color: accentColor,
+                      fontWeight: FontWeight.w600,
                     ),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: accentColor,
+                    size: 20,
                   ),
                 ),
               ],
             ),
-          ],
+          ),
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < items.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 10.height,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          margin: const EdgeInsets.only(top: 7),
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accentColor.withValues(alpha: 0.95),
+                          ),
+                        ),
+                        10.width,
+                        Expanded(
+                          child: Text(
+                            items[index],
+                            style: AppStyles.bodyMedium(
+                              color: AppColors.textPrimary.withValues(
+                                alpha: 0.92,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _AccordionBody extends StatelessWidget {
+  const _AccordionBody({required this.isExpanded, required this.child});
+
+  final bool isExpanded;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: isExpanded ? 1 : 0),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOutCubic,
+      child: child,
+      builder: (BuildContext context, double animationValue, Widget? child) {
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: animationValue,
+            child: Opacity(opacity: animationValue, child: child),
+          ),
+        );
+      },
     );
   }
 }

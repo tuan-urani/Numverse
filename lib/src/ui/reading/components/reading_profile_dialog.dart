@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
+import 'package:test/src/ui/main/interactor/main_session_error_resolver.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -29,6 +30,7 @@ class ReadingProfileDialog extends StatefulWidget {
 class _ReadingProfileDialogState extends State<ReadingProfileDialog> {
   late final TextEditingController _nameController;
   DateTime? _birthDate;
+  String? _errorText;
   bool _isSubmitting = false;
 
   @override
@@ -125,6 +127,13 @@ class _ReadingProfileDialogState extends State<ReadingProfileDialog> {
                   ),
                 ),
               ),
+              if (_errorText != null) ...<Widget>[
+                8.height,
+                Text(
+                  _errorText!,
+                  style: AppStyles.caption(color: AppColors.error),
+                ),
+              ],
               18.height,
               Row(
                 children: <Widget>[
@@ -237,9 +246,21 @@ class _ReadingProfileDialogState extends State<ReadingProfileDialog> {
 
     setState(() {
       _isSubmitting = true;
+      _errorText = null;
     });
 
-    await widget.onSubmit(name, _birthDate!);
+    try {
+      await widget.onSubmit(name, _birthDate!);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _errorText = resolveMainSessionErrorMessage(error);
+      });
+      return;
+    }
 
     if (!mounted) {
       return;

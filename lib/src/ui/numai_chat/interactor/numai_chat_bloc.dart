@@ -342,8 +342,10 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         role: NumAiChatMessageRole.assistant,
         content: result.assistantText,
         timestamp: assistantSentAt,
+        hasActionButton: result.requiresProfileInfo,
         followUpSuggestions: result.suggestions,
         fallbackReason: result.fallbackReason,
+        requiresProfileInfo: result.requiresProfileInfo,
       );
       final List<NumAiChatMessage> allMessages = <NumAiChatMessage>[
         ...nextMessages,
@@ -464,8 +466,10 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         role: NumAiChatMessageRole.assistant,
         content: result.assistantText,
         timestamp: assistantSentAt,
+        hasActionButton: !event.hasProfile && result.requiresProfileInfo,
         followUpSuggestions: result.suggestions,
         fallbackReason: result.fallbackReason,
+        requiresProfileInfo: result.requiresProfileInfo,
       );
       emit(
         state.copyWith(
@@ -604,27 +608,10 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     NumAiChatPendingQuestionAnswerAppended event,
     Emitter<NumAiChatState> emit,
   ) {
-    final String? pendingQuestion = state.pendingProfileQuestion;
-    if (pendingQuestion == null) {
+    if (state.pendingProfileQuestion == null) {
       return;
     }
-
-    final DateTime now = DateTime.now();
-    final NumAiChatMessage response = NumAiChatMessage(
-      id: '${now.microsecondsSinceEpoch}-assistant-profile',
-      role: NumAiChatMessageRole.assistant,
-      content: _technicalFallbackMessage,
-      timestamp: now,
-      fallbackReason: 'technical_error',
-    );
-
-    emit(
-      state.copyWith(
-        messages: <NumAiChatMessage>[...state.messages, response],
-        clearPendingProfileQuestion: true,
-        typingMessageId: response.id,
-      ),
-    );
+    emit(state.copyWith(clearPendingProfileQuestion: true));
   }
 
   Future<void> _onConversationReset(
@@ -663,8 +650,10 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           : NumAiChatMessageRole.assistant,
       content: item.messageText,
       timestamp: item.createdAt,
+      hasActionButton: false,
       followUpSuggestions: item.followUpSuggestions,
       fallbackReason: item.fallbackReason,
+      requiresProfileInfo: item.requiresProfileInfo,
     );
   }
 
@@ -676,7 +665,10 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           : NumAiChatMessageRole.assistant,
       content: item.messageText,
       timestamp: item.createdAt,
+      hasActionButton:
+          item.senderType == 'assistant' && item.requiresProfileInfo,
       followUpSuggestions: item.followUpSuggestions,
+      requiresProfileInfo: item.requiresProfileInfo,
     );
   }
 
@@ -712,6 +704,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
             messageText: item.content.trim(),
             createdAt: item.timestamp,
             followUpSuggestions: item.followUpSuggestions,
+            requiresProfileInfo: item.requiresProfileInfo,
           ),
         )
         .where(

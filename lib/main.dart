@@ -26,6 +26,15 @@ class App extends StatelessWidget {
       translations: TranslationManager(),
       locale: TranslationManager.defaultLocale,
       fallbackLocale: TranslationManager.fallbackLocale,
+      builder: (BuildContext context, Widget? child) {
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       theme: baseTheme.copyWith(
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: baseTheme.colorScheme.copyWith(

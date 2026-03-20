@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/ui/main/interactor/main_session_error_resolver.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -284,7 +285,18 @@ class _CompatibilityProfileInputDialogState
       _isSubmitting = true;
     });
 
-    await widget.onSubmit(name, birthDate);
+    try {
+      await widget.onSubmit(name, birthDate);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorText = resolveMainSessionErrorMessage(error);
+        _isSubmitting = false;
+      });
+      return;
+    }
 
     if (!mounted) {
       return;

@@ -7,7 +7,7 @@ import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
-class MonthDetailContent extends StatelessWidget {
+class MonthDetailContent extends StatefulWidget {
   const MonthDetailContent({
     required this.personalMonthNumber,
     required this.periodLabel,
@@ -20,6 +20,19 @@ class MonthDetailContent extends StatelessWidget {
   final NumerologyPersonalMonthContent content;
 
   @override
+  State<MonthDetailContent> createState() => _MonthDetailContentState();
+}
+
+class _MonthDetailContentState extends State<MonthDetailContent> {
+  int? _expandedSectionIndex = 0;
+
+  void _toggleSection(int index) {
+    setState(() {
+      _expandedSectionIndex = _expandedSectionIndex == index ? null : index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,26 +40,39 @@ class MonthDetailContent extends StatelessWidget {
         _AnimatedReveal(
           delay: 0,
           child: _MonthHeroCard(
-            personalMonthNumber: personalMonthNumber,
-            keyword: content.keyword,
+            personalMonthNumber: widget.personalMonthNumber,
+            keyword: widget.content.keyword,
           ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
           delay: 80,
           child: _MonthFocusCard(
-            focus: content.focus,
-            steps: content.steps,
+            focus: widget.content.focus,
+            steps: widget.content.steps,
             showFocusSteps: false,
+            isExpanded: _expandedSectionIndex == 0,
+            onToggle: () => _toggleSection(0),
           ),
         ),
         const SizedBox(height: 24),
         _AnimatedReveal(
           delay: 160,
-          child: _MonthPriorityCard(content.priorities),
+          child: _MonthPriorityCard(
+            widget.content.priorities,
+            isExpanded: _expandedSectionIndex == 1,
+            onToggle: () => _toggleSection(1),
+          ),
         ),
         const SizedBox(height: 24),
-        _AnimatedReveal(delay: 240, child: _MonthCautionCard(content.cautions)),
+        _AnimatedReveal(
+          delay: 240,
+          child: _MonthCautionCard(
+            widget.content.cautions,
+            isExpanded: _expandedSectionIndex == 2,
+            onToggle: () => _toggleSection(2),
+          ),
+        ),
         const SizedBox(height: 12),
       ],
     );
@@ -147,11 +173,15 @@ class _MonthFocusCard extends StatelessWidget {
   const _MonthFocusCard({
     required this.focus,
     required this.steps,
+    required this.isExpanded,
+    required this.onToggle,
     this.showFocusSteps = false,
   });
 
   final List<String> focus;
   final List<NumerologyPersonalMonthStep> steps;
+  final bool isExpanded;
+  final VoidCallback onToggle;
   final bool showFocusSteps;
 
   @override
@@ -183,40 +213,74 @@ class _MonthFocusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.trending_up_rounded,
-                color: AppColors.richGold,
-                size: 20,
-              ),
-              8.width,
-              Text(
-                LocaleKey.monthDetailFocusTitle.tr,
-                style: AppStyles.h5(fontWeight: FontWeight.w600),
-              ),
-            ],
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.trending_up_rounded,
+                  color: AppColors.richGold,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.monthDetailFocusTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.richGold,
+                  ),
+                ),
+              ],
+            ),
           ),
-          for (int index = 0; index < focusValues.length; index++) ...<Widget>[
-            if (index == 0) 14.height else 12.height,
-            Text(
-              focusValues[index],
-              style: AppStyles.bodyMedium(
-                color: AppColors.textPrimary.withValues(alpha: 0.92),
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < focusValues.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 12.height,
+                    Text(
+                      focusValues[index],
+                      style: AppStyles.bodyMedium(
+                        color: AppColors.textPrimary.withValues(alpha: 0.92),
+                      ),
+                    ),
+                  ],
+                  if (showFocusSteps) ...<Widget>[
+                    14.height,
+                    for (
+                      int index = 0;
+                      index < stepValues.length;
+                      index++
+                    ) ...<Widget>[
+                      if (index > 0) 10.height,
+                      _StepTile(
+                        index: index + 1,
+                        title: stepValues[index].title,
+                        body: stepValues[index].body,
+                      ),
+                    ],
+                  ],
+                ],
               ),
             ),
-          ],
-          if (showFocusSteps) ...<Widget>[
-            14.height,
-            for (int index = 0; index < stepValues.length; index++) ...<Widget>[
-              if (index > 0) 10.height,
-              _StepTile(
-                index: index + 1,
-                title: stepValues[index].title,
-                body: stepValues[index].body,
-              ),
-            ],
-          ],
+          ),
         ],
       ),
     );
@@ -224,9 +288,15 @@ class _MonthFocusCard extends StatelessWidget {
 }
 
 class _MonthPriorityCard extends StatelessWidget {
-  const _MonthPriorityCard(this.priorities);
+  const _MonthPriorityCard(
+    this.priorities, {
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final List<String> priorities;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -243,28 +313,54 @@ class _MonthPriorityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.lightbulb_outline_rounded,
-                color: AppColors.richGold,
-                size: 20,
-              ),
-              8.width,
-              Text(
-                LocaleKey.monthDetailPriorityTitle.tr,
-                style: AppStyles.h5(fontWeight: FontWeight.w600),
-              ),
-            ],
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.lightbulb_outline_rounded,
+                  color: AppColors.richGold,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.monthDetailPriorityTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.richGold,
+                  ),
+                ),
+              ],
+            ),
           ),
-          for (
-            int index = 0;
-            index < priorityValues.length;
-            index++
-          ) ...<Widget>[
-            if (index == 0) 14.height else 12.height,
-            _BulletRow(text: priorityValues[index]),
-          ],
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < priorityValues.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 12.height,
+                    _BulletRow(text: priorityValues[index]),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -272,9 +368,15 @@ class _MonthPriorityCard extends StatelessWidget {
 }
 
 class _MonthCautionCard extends StatelessWidget {
-  const _MonthCautionCard(this.cautions);
+  const _MonthCautionCard(
+    this.cautions, {
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   final List<String> cautions;
+  final bool isExpanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -304,24 +406,86 @@ class _MonthCautionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            LocaleKey.monthDetailCautionTitle.tr,
-            style: AppStyles.h5(fontWeight: FontWeight.w600),
-          ),
-          for (
-            int index = 0;
-            index < cautionValues.length;
-            index++
-          ) ...<Widget>[
-            if (index == 0) 14.height else 12.height,
-            _BulletRow(
-              text: cautionValues[index],
-              marker: '!',
-              markerColor: AppColors.error,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onToggle,
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.error,
+                  size: 20,
+                ),
+                8.width,
+                Expanded(
+                  child: Text(
+                    LocaleKey.monthDetailCautionTitle.tr,
+                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          _AccordionBody(
+            isExpanded: isExpanded,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < cautionValues.length;
+                    index++
+                  ) ...<Widget>[
+                    if (index > 0) 12.height,
+                    _BulletRow(
+                      text: cautionValues[index],
+                      marker: '!',
+                      markerColor: AppColors.error,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _AccordionBody extends StatelessWidget {
+  const _AccordionBody({required this.isExpanded, required this.child});
+
+  final bool isExpanded;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: isExpanded ? 1 : 0),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOutCubic,
+      child: child,
+      builder: (BuildContext context, double animationValue, Widget? child) {
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: animationValue,
+            child: Opacity(opacity: animationValue, child: child),
+          ),
+        );
+      },
     );
   }
 }

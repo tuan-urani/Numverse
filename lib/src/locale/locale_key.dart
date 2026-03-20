@@ -621,6 +621,8 @@ class LocaleKey {
       PagesLocaleKey.profileBirthDatePlaceholder;
   static const String profileCreateProfileCta =
       PagesLocaleKey.profileCreateProfileCta;
+  static const String profileCreateLimitReached =
+      PagesLocaleKey.profileCreateLimitReached;
   static const String profilePlanFreeTag = PagesLocaleKey.profilePlanFreeTag;
   static const String profileSoulPointsLabel =
       PagesLocaleKey.profileSoulPointsLabel;

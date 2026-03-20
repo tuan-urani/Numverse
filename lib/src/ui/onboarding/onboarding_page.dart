@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
+import 'package:test/src/ui/main/interactor/main_session_error_resolver.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
@@ -640,7 +641,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         return;
       }
       await Get.offAllNamed(AppPages.main);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -651,7 +652,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       });
       Get.snackbar(
         LocaleKey.commonError.tr,
-        LocaleKey.stateErrorSubtitle.tr,
+        resolveMainSessionErrorMessage(error),
         backgroundColor: AppColors.deepViolet.withValues(alpha: 0.9),
         colorText: AppColors.textPrimary,
         snackPosition: SnackPosition.BOTTOM,
