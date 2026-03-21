@@ -16,6 +16,8 @@ final Map<String, String> commonJa = <String, String>{
   CommonLocaleKey.commonEdit: '編集',
   CommonLocaleKey.commonComingSoon: '準備中',
   CommonLocaleKey.commonEmpty: 'データがありません',
+  CommonLocaleKey.commonClose: '閉じる',
+  CommonLocaleKey.commonNoInternetConnection: 'インターネット接続がありません。',
   CommonLocaleKey.loginSessionExpires: 'ログインセッションが期限切れです！',
   CommonLocaleKey.success: '成功',
   CommonLocaleKey.error: 'エラー',

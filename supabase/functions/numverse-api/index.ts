@@ -31,19 +31,23 @@ class HttpError extends Error {
 const ENGINE_VERSION = Deno.env.get("NUMEROLOGY_ENGINE_VERSION") ?? "v1";
 const DEFAULT_LOCALE = "vi-VN";
 const DEFAULT_TIMEZONE = "Asia/Ho_Chi_Minh";
+const NUMAI_OPENAI_MODEL = Deno.env.get("NUMAI_CHAT_MODEL") ?? "gpt-5-nano";
 const NUMAI_SOUL_POINT_COST = 3;
 const NUMAI_RECENT_MESSAGES_LIMIT = 4;
+const NUMAI_DEFAULT_MAX_OUTPUT_TOKENS = 1000;
+const NUMAI_OPENAI_REASONING_EFFORT = "low";
 const NUMAI_TECHNICAL_FALLBACK_MESSAGE =
   "Oops, hệ thống đang gặp trục trặc nhỏ khi xử lý dữ liệu. Bạn thử lại ngay nhé.";
 const NUMAI_OUT_OF_SCOPE_FALLBACK_MESSAGE =
   "Mình chỉ hỗ trợ về thần số học.\nBạn có thể hỏi về con số, năm cá nhân hoặc ý nghĩa cuộc đời.";
 const NUMAI_TECHNICAL_ERROR_CODES = new Set<string>([
-  "gemini_provider_error",
-  "gemini_empty_output",
+  "openai_provider_error",
+  "openai_empty_output",
+  "openai_timeout",
   "invalid_json_output",
   "invalid_numai_output",
   "numai_empty_answer",
-  "missing_env_gemini_api_key",
+  "missing_env_openai_api_key",
 ]);
 
 const corsHeaders = {
@@ -130,6 +134,66 @@ function stripCodeFences(text: string): string {
     .replace(/^```[a-zA-Z]*\s*/, "")
     .replace(/\s*```$/, "")
     .trim();
+}
+
+function extractOpenAiOutputText(rawPayload: unknown): string {
+  const payload = asObject(rawPayload);
+  if (!payload) {
+    return "";
+  }
+
+  const directOutputText = payload.output_text;
+  if (typeof directOutputText === "string" && directOutputText.trim().length > 0) {
+    return directOutputText.trim();
+  }
+
+  const outputItems = payload.output;
+  if (!Array.isArray(outputItems)) {
+    return "";
+  }
+
+  const chunks: string[] = [];
+  for (const outputItem of outputItems) {
+    const outputObject = asObject(outputItem);
+    if (!outputObject) {
+      continue;
+    }
+
+    const contentItems = outputObject.content;
+    if (!Array.isArray(contentItems)) {
+      continue;
+    }
+
+    for (const contentItem of contentItems) {
+      const contentObject = asObject(contentItem);
+      if (!contentObject) {
+        continue;
+      }
+      if (contentObject.type !== "output_text") {
+        continue;
+      }
+
+      const textChunk = typeof contentObject.text === "string"
+        ? contentObject.text.trim()
+        : "";
+      if (textChunk.length > 0) {
+        chunks.push(textChunk);
+      }
+    }
+  }
+
+  return chunks.join("\n").trim();
+}
+
+function logStructuredError(functionName: string, error: unknown): void {
+  const payload: JsonObject = {
+    function: functionName,
+    error_code: resolveErrorCode(error),
+  };
+  if (error instanceof Error && error.stack) {
+    payload.stack = error.stack;
+  }
+  console.error(JSON.stringify(payload));
 }
 
 function isTruthyFlag(value: unknown): boolean {
@@ -517,11 +581,15 @@ async function completeGenerationRun(
   }
 }
 
-async function callGeminiJson(
+async function callOpenAiJson(
   promptTemplate: PromptTemplateRow,
   contextJson: JsonObject,
-): Promise<{ parsedOutput: JsonObject; rawTextOutput: string; latencyMs: number }> {
-  const geminiApiKey = getEnv("GEMINI_API_KEY");
+): Promise<{
+  parsedOutput: JsonObject;
+  rawTextOutput: string;
+  latencyMs: number;
+}> {
+  const openAiApiKey = getEnv("OPENAI_API_KEY");
   const renderedPrompt = [
     "[Task Prompt]",
     promptTemplate.task_prompt_template,
@@ -530,47 +598,83 @@ async function callGeminiJson(
     JSON.stringify(contextJson, null, 2),
   ].join("\n");
 
+  const requestPayload: JsonObject = {
+    model: NUMAI_OPENAI_MODEL,
+    input: [
+      {
+        role: "system",
+        content: [
+          {
+            type: "input_text",
+            text: promptTemplate.system_prompt,
+          },
+        ],
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: renderedPrompt,
+          },
+        ],
+      },
+    ],
+    text: {
+      format: {
+        type: "json_object",
+      },
+    },
+    reasoning: {
+      effort: NUMAI_OPENAI_REASONING_EFFORT,
+    },
+  };
+  const maxOutputTokens = Number(
+    promptTemplate.max_output_tokens ?? NUMAI_DEFAULT_MAX_OUTPUT_TOKENS,
+  );
+  if (Number.isFinite(maxOutputTokens) && maxOutputTokens > 0) {
+    requestPayload.max_output_tokens = Math.trunc(maxOutputTokens);
+  }
+
+  const openAiTimeoutMs = 30_000;
+  const timeoutController = new AbortController();
+  let didTimeout = false;
+  const timeoutHandle = setTimeout(() => {
+    didTimeout = true;
+    timeoutController.abort();
+  }, openAiTimeoutMs);
+
   const startedAt = Date.now();
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${promptTemplate.model_name}:generateContent?key=${geminiApiKey}`,
-    {
+  let response: Response;
+  try {
+    response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${openAiApiKey}`,
       },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: promptTemplate.system_prompt }],
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: renderedPrompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: promptTemplate.temperature ?? 0.45,
-          maxOutputTokens: promptTemplate.max_output_tokens ?? 700,
-          responseMimeType: "application/json",
-        },
-      }),
-    },
-  );
-  const latencyMs = Date.now() - startedAt;
-  const rawPayload = await response.json();
-
-  if (!response.ok) {
-    throw new HttpError(502, "gemini_provider_error", rawPayload);
+      body: JSON.stringify(requestPayload),
+      signal: timeoutController.signal,
+    });
+  } catch (error) {
+    if (didTimeout) {
+      throw new HttpError(504, "openai_timeout");
+    }
+    throw new HttpError(502, "openai_provider_error");
+  } finally {
+    clearTimeout(timeoutHandle);
   }
 
-  const textOutput = stripCodeFences(
-    rawPayload?.candidates?.[0]?.content?.parts
-      ?.map((part: { text?: string }) => part.text ?? "")
-      .join("") ?? "",
-  );
+  const latencyMs = Date.now() - startedAt;
+  const rawPayload = await response.json();
+  const textOutput = stripCodeFences(extractOpenAiOutputText(rawPayload));
+
+  if (!response.ok) {
+    throw new HttpError(502, "openai_provider_error");
+  }
 
   if (!textOutput) {
-    throw new HttpError(502, "gemini_empty_output", rawPayload);
+    throw new HttpError(502, "openai_empty_output");
   }
 
   try {
@@ -584,7 +688,7 @@ async function callGeminiJson(
     if (error instanceof HttpError) {
       throw error;
     }
-    throw new HttpError(502, "invalid_json_output", { textOutput });
+    throw new HttpError(502, "invalid_json_output");
   }
 }
 
@@ -1177,8 +1281,8 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
       prompt_template_id: prompt.id,
       prompt_key: prompt.prompt_key,
       target_table: "ai_messages",
-      provider: prompt.provider,
-      model_name: prompt.model_name,
+      provider: "openai",
+      model_name: NUMAI_OPENAI_MODEL,
       prompt_version: prompt.version,
       system_prompt_snapshot: prompt.system_prompt,
       task_prompt_snapshot: prompt.task_prompt_template,
@@ -1217,12 +1321,12 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
     let generationLatencyMs: number | null = null;
 
     try {
-      const geminiResult = await callGeminiJson(prompt, contextJson);
-      generationOutput = geminiResult.parsedOutput;
-      rawTextOutput = geminiResult.rawTextOutput;
-      generationLatencyMs = geminiResult.latencyMs;
+      const openAiResult = await callOpenAiJson(prompt, contextJson);
+      generationOutput = openAiResult.parsedOutput;
+      rawTextOutput = openAiResult.rawTextOutput;
+      generationLatencyMs = openAiResult.latencyMs;
 
-      const output = ensureObject(geminiResult.parsedOutput, "invalid_numai_output");
+      const output = ensureObject(openAiResult.parsedOutput, "invalid_numai_output");
       if (isTruthyFlag(output.is_out_of_scope)) {
         fallbackReason = "out_of_scope";
         assistantText = NUMAI_OUT_OF_SCOPE_FALLBACK_MESSAGE;
@@ -1243,22 +1347,24 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
       fallbackReason = "technical_error";
       generationStatus = "failed";
       originalErrorCode = resolveErrorCode(error);
+      logStructuredError("numverse-api:send-numai-message:technical_fallback", error);
       assistantText = NUMAI_TECHNICAL_FALLBACK_MESSAGE;
       suggestions = fallbackFollowUpSuggestions(locale);
     }
 
-    if (fallbackReason && charged) {
+    if (fallbackReason === "technical_error" && charged) {
+      const refundMetadata: JsonObject = {
+        reason: "numai_generation_refund",
+        refund_type: fallbackReason,
+        message_id: String(userMessage.id),
+        original_error_code: originalErrorCode,
+      };
       walletBalanceAfterCharge = await grantSoulPoints(
         admin,
         user.id,
         NUMAI_SOUL_POINT_COST,
         "manual_adjustment",
-        {
-          reason: "numai_generation_refund",
-          refund_type: fallbackReason,
-          message_id: String(userMessage.id),
-          original_error_code: originalErrorCode,
-        },
+        refundMetadata,
         String(userMessage.id),
       );
       charged = false;
@@ -1267,7 +1373,7 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
     const metadataJson: JsonObject = {
       referenced_sections: referencedSections,
       follow_up_suggestions: suggestions,
-      model_name: prompt.model_name,
+      model_name: NUMAI_OPENAI_MODEL,
       prompt_version: prompt.version,
     };
     if (fallbackReason) {
@@ -1333,7 +1439,7 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
       await completeGenerationRun(admin, generationRun.id, {
         status: "failed",
         target_id: assistantMessage.id,
-        output_json: generationOutput,
+        output_json: generationOutput ? { ...generationOutput } : null,
         raw_text_output: rawTextOutput,
         latency_ms: generationLatencyMs,
         error_text: originalErrorCode ?? "technical_fallback",
@@ -1359,16 +1465,17 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
     };
   } catch (error) {
     if (charged) {
+      const refundMetadata: JsonObject = {
+        reason: "numai_generation_refund",
+        message_id: String(userMessage.id),
+        original_error_code: resolveErrorCode(error),
+      };
       await grantSoulPoints(
         admin,
         user.id,
         NUMAI_SOUL_POINT_COST,
         "manual_adjustment",
-        {
-          reason: "numai_generation_refund",
-          message_id: String(userMessage.id),
-          original_error_code: resolveErrorCode(error),
-        },
+        refundMetadata,
         String(userMessage.id),
       );
     }
@@ -1376,8 +1483,10 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
     await completeGenerationRun(admin, generationRun.id, {
       status: "failed",
       error_text: resolveErrorCode(error),
+      output_json: null,
       completed_at: nowIso(),
     });
+    logStructuredError("numverse-api:send-numai-message:unhandled", error);
     throw error;
   }
 }
@@ -1820,7 +1929,7 @@ Deno.serve(async (req: Request) => {
     }
     return jsonResponse(result);
   } catch (error) {
-    console.error(error);
+    logStructuredError("numverse-api:route", error);
     return errorResponse(error);
   }
 });

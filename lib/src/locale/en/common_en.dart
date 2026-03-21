@@ -16,6 +16,8 @@ final Map<String, String> commonEn = <String, String>{
   CommonLocaleKey.commonEdit: 'Edit',
   CommonLocaleKey.commonComingSoon: 'Coming soon',
   CommonLocaleKey.commonEmpty: 'No content yet',
+  CommonLocaleKey.commonClose: 'Close',
+  CommonLocaleKey.commonNoInternetConnection: 'No internet connection.',
   CommonLocaleKey.loginSessionExpires: 'Login session expires!',
   CommonLocaleKey.success: 'Success',
   CommonLocaleKey.error: 'Error',

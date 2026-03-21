@@ -66,6 +66,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     on<MainSessionSoulPointsDeducted>(_onSoulPointsDeducted);
     on<MainSessionSoulPointsSynced>(_onSoulPointsSynced);
     on<MainSessionCheckedIn>(_onCheckedIn);
+    on<MainSessionStartupAutoCheckInRequested>(_onStartupAutoCheckInRequested);
     on<MainSessionCheckInCelebrationConsumed>(_onCheckInCelebrationConsumed);
     on<MainSessionInteractionTracked>(_onInteractionTracked);
     on<MainSessionPageInteractionReset>(_onPageInteractionReset);
@@ -90,75 +91,35 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
-  /// Xử lý khởi tạo: load snapshot local, hydrate state và refresh metrics cần thiết.
+  /// Xử lý khởi tạo: bootstrap cloud session (bắt buộc online) và hydrate state.
   Future<void> _onInitializeRequested(
     MainSessionInitializeRequested event,
     Emitter<MainSessionState> emit,
   ) async {
-    // Tải snapshot local, hydrate state hiện tại, sau đó đảm bảo dữ liệu
-    // life-based/time-based đã được tính đúng trước khi vào app.
+    // Startup path ưu tiên cloud snapshot để tránh phụ thuộc local backup khi boot.
     try {
       emit(state.copyWith(viewState: AppViewStateStatus.loading));
-      final AppSessionSnapshot localSnapshot = await _sessionRepository
-          .loadSnapshot();
-
-      AppSessionSnapshot effectiveSnapshot = localSnapshot;
-      bool didBootstrapAnonymousOnInitialize = false;
-      if (_cloudAccountRepository.isConfigured &&
-          (localSnapshot.pendingAnonymousBootstrap ||
-              (localSnapshot.authMode == SessionAuthMode.anonymous &&
-                  !localSnapshot.hasCloudSession))) {
-        try {
-          await _cloudAccountRepository.ensureAnonymousSession();
-          didBootstrapAnonymousOnInitialize = true;
-          effectiveSnapshot = localSnapshot.copyWith(
-            isAuthenticated: true,
-            authMode: SessionAuthMode.anonymous,
-            pendingAnonymousBootstrap: false,
-            cloudUserId: _cloudAccountRepository.currentUserId,
-            clearUserEmail: true,
-          );
-        } catch (error, stackTrace) {
-          developer.log(
-            'Failed to bootstrap anonymous session. Keep pending bootstrap mode.',
-            name: 'MainSessionBloc',
-            error: error,
-            stackTrace: stackTrace,
-          );
-          effectiveSnapshot = localSnapshot.copyWith(
-            isAuthenticated: false,
-            authMode: SessionAuthMode.anonymous,
-            pendingAnonymousBootstrap: true,
-            clearUserEmail: true,
-            clearCloudUserId: true,
-          );
-        }
-      }
-
-      if (!didBootstrapAnonymousOnInitialize &&
-          effectiveSnapshot.hasCloudSession &&
-          _cloudAccountRepository.isConfigured) {
-        try {
-          final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
-              .fetchCloudSessionSnapshot(
-                fallbackEmail: localSnapshot.userEmail ?? '',
-                fallbackDisplayName: localSnapshot.userName ?? '',
-              );
-          effectiveSnapshot = _mergeCloudSnapshotWithFallbackHistory(
-            cloudSnapshot: cloudSnapshot,
-            fallbackHistory: effectiveSnapshot.compatibilityHistory,
-            fallbackCloudUserId: effectiveSnapshot.cloudUserId,
-            fallbackDailyAngelNumber: effectiveSnapshot.dailyAngelNumber,
-            fallbackDailyAngelRefreshAt: effectiveSnapshot.dailyAngelRefreshAt,
-          );
-        } catch (error, stackTrace) {
-          developer.log(
-            'Failed to fetch cloud session snapshot on initialize. Use local snapshot as fallback.',
-            name: 'MainSessionBloc',
-            error: error,
-            stackTrace: stackTrace,
-          );
-        }
+      AppSessionSnapshot effectiveSnapshot;
+      if (_cloudAccountRepository.isConfigured) {
+        await _cloudAccountRepository.ensureAnonymousSession();
+        final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
+            .fetchCloudSessionSnapshot(
+              fallbackEmail: '',
+              fallbackDisplayName: '',
+            );
+        final String resolvedCloudUserId =
+            (_cloudAccountRepository.currentUserId ?? cloudSnapshot.cloudUserId)
+                ?.trim() ??
+            '';
+        effectiveSnapshot = cloudSnapshot.copyWith(
+          isAuthenticated: true,
+          pendingAnonymousBootstrap: false,
+          cloudUserId: resolvedCloudUserId.isEmpty ? null : resolvedCloudUserId,
+          clearCloudUserId: resolvedCloudUserId.isEmpty,
+        );
+      } else {
+        // Dev fallback khi Supabase chưa cấu hình.
+        effectiveSnapshot = await _sessionRepository.loadSnapshot();
       }
 
       final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
@@ -202,9 +163,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       await _normalizeAdRewardStateIfNeeded(emit);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
-      await _tryRefreshCompatibilityHistoryFromCloud(emit);
-      await _tryAutoClaimDailyCheckInFromCloud(emit);
-      await _tryRefreshAdRewardStatusFromCloud(emit);
+      _triggerStartupAutoCheckInIfEligible();
     } catch (_) {
       emit(
         state.copyWith(
@@ -279,16 +238,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               fallbackEmail: identity.email,
               fallbackDisplayName: identity.name,
             );
-        final AppSessionSnapshot mergedCloudSnapshot =
-            _mergeCloudSnapshotWithFallbackHistory(
-              cloudSnapshot: cloudSnapshot,
-              fallbackHistory: state.compatibilityHistory,
-              fallbackCloudUserId: state.cloudUserId,
-              fallbackDailyAngelNumber: state.dailyAngelNumber,
-              fallbackDailyAngelRefreshAt: state.dailyAngelRefreshAt,
-            );
         await _applySnapshotToState(
-          mergedCloudSnapshot.copyWith(
+          cloudSnapshot.copyWith(
             authMode: SessionAuthMode.registered,
             pendingAnonymousBootstrap: false,
             cloudUserId: _cloudAccountRepository.currentUserId,
@@ -328,18 +279,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               fallbackEmail: identity.email,
               fallbackDisplayName: identity.name,
             );
-        final AppSessionSnapshot mergedCloudSnapshot =
-            _mergeCloudSnapshotWithFallbackHistory(
-              cloudSnapshot: cloudSnapshot,
-              fallbackHistory: localSnapshotBeforeAuth.compatibilityHistory,
-              fallbackCloudUserId: localSnapshotBeforeAuth.cloudUserId,
-              fallbackDailyAngelNumber:
-                  localSnapshotBeforeAuth.dailyAngelNumber,
-              fallbackDailyAngelRefreshAt:
-                  localSnapshotBeforeAuth.dailyAngelRefreshAt,
-            );
         await _applySnapshotToState(
-          mergedCloudSnapshot,
+          cloudSnapshot,
           emit,
           recomputeMetrics: true,
           forceRecomputeMetrics: true,
@@ -415,18 +356,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
               fallbackEmail: identity.email,
               fallbackDisplayName: identity.name,
             );
-        final AppSessionSnapshot mergedCloudSnapshot =
-            _mergeCloudSnapshotWithFallbackHistory(
-              cloudSnapshot: cloudSnapshot,
-              fallbackHistory: localSnapshotBeforeAuth.compatibilityHistory,
-              fallbackCloudUserId: localSnapshotBeforeAuth.cloudUserId,
-              fallbackDailyAngelNumber:
-                  localSnapshotBeforeAuth.dailyAngelNumber,
-              fallbackDailyAngelRefreshAt:
-                  localSnapshotBeforeAuth.dailyAngelRefreshAt,
-            );
         await _applySnapshotToState(
-          mergedCloudSnapshot,
+          cloudSnapshot,
           emit,
           recomputeMetrics: true,
           forceRecomputeMetrics: true,
@@ -456,7 +387,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     MainSessionLogoutRequested event,
     Emitter<MainSessionState> emit,
   ) async {
-    // Đăng xuất khỏi cloud, xoá toàn bộ storage local và reset state về guest.
+    // Đăng xuất khỏi cloud, xoá local storage, sau đó bootstrap lại anonymous cloud session.
     try {
       await _cloudAccountRepository.clearSession();
       await _sessionRepository.clear();
@@ -464,6 +395,34 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         MainSessionState.initial().copyWith(
           viewState: AppViewStateStatus.success,
         ),
+      );
+      if (!_cloudAccountRepository.isConfigured) {
+        _completeVoid(event.completer);
+        return;
+      }
+
+      await _cloudAccountRepository.ensureAnonymousSession();
+      final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
+          .fetchCloudSessionSnapshot(
+            fallbackEmail: '',
+            fallbackDisplayName: '',
+          );
+      final String resolvedCloudUserId =
+          (_cloudAccountRepository.currentUserId ?? cloudSnapshot.cloudUserId)
+              ?.trim() ??
+          '';
+      await _applySnapshotToState(
+        cloudSnapshot.copyWith(
+          isAuthenticated: true,
+          authMode: SessionAuthMode.anonymous,
+          pendingAnonymousBootstrap: false,
+          cloudUserId: resolvedCloudUserId.isEmpty ? null : resolvedCloudUserId,
+          clearCloudUserId: resolvedCloudUserId.isEmpty,
+          clearUserEmail: true,
+        ),
+        emit,
+        recomputeMetrics: true,
+        forceRecomputeMetrics: true,
       );
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
@@ -888,82 +847,65 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         return;
       }
 
-      if (state.hasCloudSession && _cloudAccountRepository.isConfigured) {
-        final CloudAdRewardStatusResult status = await _cloudAccountRepository
-            .getAdRewardStatus(placementCode: event.placementCode);
-
-        if (!status.canWatch || status.remaining <= 0) {
-          emit(
-            state.copyWith(
-              soulPoints: status.soulPoints,
-              dailyAdEarnings: status.todayEarned,
-              dailyAdLimit: status.dailyLimit,
-              lastAdRewardAt: status.lastRewardAt,
-              clearLastAdRewardAt: status.lastRewardAt == null,
-            ),
-          );
-          await _persistSnapshot();
-          _completeBool(event.completer, false);
-          return;
-        }
-
-        final String trimmedRequestId = (event.requestId ?? '').trim();
-        final String requestId = trimmedRequestId.isNotEmpty
-            ? trimmedRequestId
-            : _buildAdRewardRequestId(placementCode: event.placementCode);
-        final CloudAdRewardGrantResult grantResult =
-            await _cloudAccountRepository.grantAdReward(
-              requestId: requestId,
-              placementCode: event.placementCode,
-              requestedAmount: event.amount,
-              adNetwork: 'admob',
-              metadata: <String, dynamic>{'placementCode': event.placementCode},
-            );
-
-        emit(
-          state.copyWith(
-            soulPoints: grantResult.soulPoints,
-            dailyAdEarnings: grantResult.todayEarned,
-            dailyAdLimit: grantResult.dailyLimit,
-            lastAdRewardAt: grantResult.granted
-                ? DateTime.now()
-                : status.lastRewardAt,
-            clearLastAdRewardAt:
-                !grantResult.granted && status.lastRewardAt == null,
-          ),
-        );
-        await _persistSnapshot();
-        _completeBool(
-          event.completer,
-          grantResult.granted || grantResult.idempotent,
-        );
-        return;
-      }
-
-      await _normalizeAdRewardStateIfNeeded(emit);
-      final int remainingDailyAdPoints =
-          state.dailyAdLimit - state.dailyAdEarnings;
-      if (remainingDailyAdPoints <= 0) {
+      if (!_cloudAccountRepository.isConfigured) {
         _completeBool(event.completer, false);
         return;
       }
 
-      final int awardedPoints = remainingDailyAdPoints < event.amount
-          ? remainingDailyAdPoints
-          : event.amount;
-      final int nextSoulPoints = _rewardService.addSoulPoints(
-        currentSoulPoints: state.soulPoints,
-        amount: awardedPoints,
-      );
+      await _ensureAnonymousSessionIfNeeded(emit);
+      if (!state.hasCloudSession) {
+        _completeBool(event.completer, false);
+        return;
+      }
+
+      final CloudAdRewardStatusResult status = await _cloudAccountRepository
+          .getAdRewardStatus(placementCode: event.placementCode);
+
+      if (!status.canWatch || status.remaining <= 0) {
+        emit(
+          state.copyWith(
+            soulPoints: status.soulPoints,
+            dailyAdEarnings: status.todayEarned,
+            dailyAdLimit: status.dailyLimit,
+            lastAdRewardAt: status.lastRewardAt,
+            clearLastAdRewardAt: status.lastRewardAt == null,
+          ),
+        );
+        await _persistSnapshot();
+        _completeBool(event.completer, false);
+        return;
+      }
+
+      final String trimmedRequestId = (event.requestId ?? '').trim();
+      final String requestId = trimmedRequestId.isNotEmpty
+          ? trimmedRequestId
+          : _buildAdRewardRequestId(placementCode: event.placementCode);
+      final CloudAdRewardGrantResult grantResult = await _cloudAccountRepository
+          .grantAdReward(
+            requestId: requestId,
+            placementCode: event.placementCode,
+            requestedAmount: event.amount,
+            adNetwork: 'admob',
+            metadata: <String, dynamic>{'placementCode': event.placementCode},
+          );
+
       emit(
         state.copyWith(
-          soulPoints: nextSoulPoints,
-          dailyAdEarnings: state.dailyAdEarnings + awardedPoints,
-          lastAdRewardAt: DateTime.now(),
+          soulPoints: grantResult.soulPoints,
+          dailyAdEarnings: grantResult.todayEarned,
+          dailyAdLimit: grantResult.dailyLimit,
+          lastAdRewardAt: grantResult.granted
+              ? DateTime.now()
+              : status.lastRewardAt,
+          clearLastAdRewardAt:
+              !grantResult.granted && status.lastRewardAt == null,
         ),
       );
       await _persistSnapshot();
-      _completeBool(event.completer, true);
+      _completeBool(
+        event.completer,
+        grantResult.granted || grantResult.idempotent,
+      );
     } catch (error, stackTrace) {
       _completeError(event.completer, error, stackTrace);
     }
@@ -1095,31 +1037,25 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     MainSessionCheckedIn event,
     Emitter<MainSessionState> emit,
   ) async {
-    // V1: guest xử lý local-only.
-    // Với account đã đăng nhập: claim cloud-authoritative, không fallback local.
+    // Cloud-authoritative: check-in luôn gọi cloud, không fallback local.
     try {
-      if (!state.hasCloudSession) {
-        await _normalizeGuestRewardStateIfNeeded(emit);
-        await _checkInGuestLocal(emit);
+      if (!_cloudAccountRepository.isConfigured) {
         _completeVoid(event.completer);
         return;
       }
 
-      if (!_cloudAccountRepository.isConfigured) {
-        await _checkInGuestLocal(emit);
+      await _ensureAnonymousSessionIfNeeded(emit);
+      if (!state.hasCloudSession) {
+        emit(state.copyWith(errorMessage: 'checkin_cloud_failed'));
         _completeVoid(event.completer);
         return;
       }
 
       await _checkInCloud(emit);
       _completeVoid(event.completer);
-    } catch (error, stackTrace) {
-      if (state.hasCloudSession) {
-        emit(state.copyWith(errorMessage: 'checkin_cloud_failed'));
-        _completeVoid(event.completer);
-        return;
-      }
-      _completeError(event.completer, error, stackTrace);
+    } catch (_) {
+      emit(state.copyWith(errorMessage: 'checkin_cloud_failed'));
+      _completeVoid(event.completer);
     }
   }
 
@@ -1134,35 +1070,6 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       return;
     }
     emit(state.copyWith(lastCheckInRewardAwarded: 0));
-  }
-
-  /// Check-in local cho guest: cập nhật điểm/streak và persist xuống session snapshot.
-  Future<void> _checkInGuestLocal(Emitter<MainSessionState> emit) async {
-    final SessionCheckInUpdate? checkInUpdate = _rewardService.computeCheckIn(
-      hasCheckedInToday: state.hasCheckedInToday,
-      dailyEarnings: state.dailyEarnings,
-      dailyLimit: state.dailyLimit,
-      currentStreak: state.currentStreak,
-      soulPoints: state.soulPoints,
-    );
-    if (checkInUpdate == null) {
-      return;
-    }
-    final int rewardAwarded = _normalizeRewardAwarded(
-      checkInUpdate.soulPoints - state.soulPoints,
-    );
-
-    emit(
-      state.copyWith(
-        dailyEarnings: checkInUpdate.dailyEarnings,
-        currentStreak: checkInUpdate.currentStreak,
-        soulPoints: checkInUpdate.soulPoints,
-        lastCheckInAt: checkInUpdate.lastCheckInAt,
-        lastCheckInRewardAwarded: rewardAwarded,
-        lastCheckInEventId: state.lastCheckInEventId + 1,
-      ),
-    );
-    await _persistSnapshot();
   }
 
   /// Check-in cloud cho account đã đăng nhập và đồng bộ lại reward state local.
@@ -1200,6 +1107,42 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  void _triggerStartupAutoCheckInIfEligible() {
+    if (!_cloudAccountRepository.isConfigured ||
+        !state.hasCloudSession ||
+        state.authMode != SessionAuthMode.anonymous) {
+      return;
+    }
+
+    unawaited(_enqueueStartupAutoCheckIn());
+  }
+
+  Future<void> _enqueueStartupAutoCheckIn() async {
+    try {
+      add(const MainSessionStartupAutoCheckInRequested());
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to enqueue startup auto check-in event.',
+        name: 'MainSessionBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _onStartupAutoCheckInRequested(
+    MainSessionStartupAutoCheckInRequested event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    if (!_cloudAccountRepository.isConfigured ||
+        !state.hasCloudSession ||
+        state.authMode != SessionAuthMode.anonymous) {
+      return;
+    }
+
+    await _tryAutoClaimDailyCheckInFromCloud(emit);
   }
 
   /// Chuẩn hoá reward local cho guest theo ngày:
@@ -1689,44 +1632,6 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       merged = _upsertCompatibilityHistory(merged, item);
     }
     return merged;
-  }
-
-  AppSessionSnapshot _mergeCloudSnapshotWithFallbackHistory({
-    required AppSessionSnapshot cloudSnapshot,
-    required List<CompatibilityHistoryItem> fallbackHistory,
-    String? fallbackCloudUserId,
-    int? fallbackDailyAngelNumber,
-    DateTime? fallbackDailyAngelRefreshAt,
-  }) {
-    List<CompatibilityHistoryItem> resolvedHistory =
-        cloudSnapshot.compatibilityHistory;
-    final String cloudUserId = (cloudSnapshot.cloudUserId ?? '').trim();
-    final String fallbackUserId = (fallbackCloudUserId ?? '').trim();
-    final bool canMergeFallbackHistory =
-        fallbackHistory.isNotEmpty &&
-        (cloudUserId.isEmpty ||
-            fallbackUserId.isEmpty ||
-            cloudUserId == fallbackUserId);
-
-    if (cloudSnapshot.compatibilityHistory.isEmpty && canMergeFallbackHistory) {
-      resolvedHistory = _mergeCompatibilityHistory(
-        cloudSnapshot.compatibilityHistory,
-        fallbackHistory,
-      );
-    }
-
-    final int? resolvedDailyAngelNumber =
-        cloudSnapshot.dailyAngelNumber ?? fallbackDailyAngelNumber;
-    final DateTime? resolvedDailyAngelRefreshAt =
-        cloudSnapshot.dailyAngelRefreshAt ?? fallbackDailyAngelRefreshAt;
-
-    return cloudSnapshot.copyWith(
-      compatibilityHistory: resolvedHistory,
-      dailyAngelNumber: resolvedDailyAngelNumber,
-      clearDailyAngelNumber: resolvedDailyAngelNumber == null,
-      dailyAngelRefreshAt: resolvedDailyAngelRefreshAt,
-      clearDailyAngelRefreshAt: resolvedDailyAngelRefreshAt == null,
-    );
   }
 
   Future<void> _ensureAnonymousSessionIfNeeded(

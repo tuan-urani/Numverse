@@ -7,12 +7,20 @@ import 'package:test/src/core/repository/interface/i_app_session_repository.dart
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
 import 'package:test/src/core/repository/numerology_content_repository.dart';
+import 'package:test/src/core/service/supabase_offline_coordinator.dart';
 import 'package:test/src/utils/app_shared.dart';
 
 Future<void> registerCoreModule() async {
   if (!Get.isRegistered<AppShared>()) {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     Get.put<AppShared>(AppShared(preferences), permanent: true);
+  }
+
+  if (!Get.isRegistered<SupabaseOfflineCoordinator>()) {
+    Get.put<SupabaseOfflineCoordinator>(
+      SupabaseOfflineCoordinator(),
+      permanent: true,
+    );
   }
 
   if (!Get.isRegistered<IAppSessionRepository>()) {
@@ -24,15 +32,19 @@ Future<void> registerCoreModule() async {
 
   if (!Get.isRegistered<ICloudAccountRepository>()) {
     Get.lazyPut<ICloudAccountRepository>(
-      () => CloudAccountRepository(appShared: Get.find<AppShared>()),
+      () => CloudAccountRepository(
+        appShared: Get.find<AppShared>(),
+        offlineCoordinator: Get.find<SupabaseOfflineCoordinator>(),
+      ),
       fenix: true,
     );
   }
 
   if (!Get.isRegistered<INumerologyContentRepository>()) {
     final AssetNumerologyContentRepository repository =
-        AssetNumerologyContentRepository(appShared: Get.find<AppShared>());
-    await repository.warmUp();
+        AssetNumerologyContentRepository(
+          offlineCoordinator: Get.find<SupabaseOfflineCoordinator>(),
+        );
     Get.put<INumerologyContentRepository>(repository, permanent: true);
   }
 }

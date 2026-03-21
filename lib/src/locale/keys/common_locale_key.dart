@@ -16,6 +16,9 @@ class CommonLocaleKey {
   static const String commonEdit = 'common_edit';
   static const String commonComingSoon = 'common_coming_soon';
   static const String commonEmpty = 'common_empty';
+  static const String commonClose = 'common_close';
+  static const String commonNoInternetConnection =
+      'common_no_internet_connection';
 
   // Legacy compatibility keys
   static const String loginSessionExpires = 'loginSessionExpires';

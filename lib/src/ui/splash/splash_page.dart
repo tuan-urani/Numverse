@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
+import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
+import 'package:test/src/core/service/supabase_offline_coordinator.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/splash/components/splash_visual.dart';
 import 'package:test/src/utils/app_shared.dart';
@@ -19,39 +21,31 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
-  static const Duration _fadeStartDelay = Duration(milliseconds: 2000);
-  static const Duration _completeDelay = Duration(milliseconds: 2800);
-  static const Duration _fadeDuration = Duration(milliseconds: 800);
+  static const Duration _minSplashDuration = Duration(seconds: 3);
 
   late final AnimationController _outerRingController;
   late final AnimationController _middleRingController;
   late final AnimationController _glowController;
   late final AnimationController _dotController;
-  Timer? _fadeTimer;
-  Timer? _completeTimer;
-  bool _fadeOut = false;
+  late final Future<void> _bootstrapFuture;
 
   @override
   void initState() {
     super.initState();
     _setupAnimationControllers();
-    _scheduleSplashTimers();
+    _bootstrapFuture = _runBootstrapWithRetry();
+    unawaited(_startNavigationFlow());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: AnimatedOpacity(
-        opacity: _fadeOut ? 0 : 1,
-        duration: _fadeDuration,
-        curve: Curves.easeOut,
-        child: SplashVisual(
-          outerRingAnimation: _outerRingController,
-          middleRingAnimation: _middleRingController,
-          glowAnimation: _glowController,
-          dotAnimation: _dotController,
-        ),
+      body: SplashVisual(
+        outerRingAnimation: _outerRingController,
+        middleRingAnimation: _middleRingController,
+        glowAnimation: _glowController,
+        dotAnimation: _dotController,
       ),
     );
   }
@@ -75,30 +69,66 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     )..repeat();
   }
 
-  void _scheduleSplashTimers() {
-    _fadeTimer = Timer(_fadeStartDelay, _handleFadeStart);
-    _completeTimer = Timer(_completeDelay, _completeSplash);
+  Future<void> _startNavigationFlow() async {
+    await Future.wait<void>(<Future<void>>[
+      Future<void>.delayed(_minSplashDuration),
+      _bootstrapFuture,
+    ]);
+    if (!mounted) {
+      return;
+    }
+    await _navigateAfterSplash();
   }
 
-  void _handleFadeStart() {
+  Future<void> _runBootstrapWithRetry() async {
     if (!mounted) {
       return;
     }
-    setState(() {
-      _fadeOut = true;
-    });
+
+    final SupabaseOfflineCoordinator offlineCoordinator =
+        Get.find<SupabaseOfflineCoordinator>();
+    offlineCoordinator.beginLaunchGuard();
+    try {
+      while (mounted) {
+        offlineCoordinator.resetLaunchOfflineFlag();
+        Object? launchError;
+        StackTrace? launchStackTrace;
+        try {
+          await _prepareTimeLifeSnapshots();
+        } catch (error, stackTrace) {
+          launchError = error;
+          launchStackTrace = stackTrace;
+        }
+        if (!mounted) {
+          return;
+        }
+
+        if (!offlineCoordinator.didHitLaunchOfflineError) {
+          if (launchError != null) {
+            Error.throwWithStackTrace(
+              launchError,
+              launchStackTrace ?? StackTrace.current,
+            );
+          }
+          break;
+        }
+
+        final Completer<void> retryCompleter = Completer<void>();
+        await offlineCoordinator.showLaunchRetryPopup(
+          onRetry: () {
+            if (!retryCompleter.isCompleted) {
+              retryCompleter.complete();
+            }
+          },
+        );
+        await retryCompleter.future;
+      }
+    } finally {
+      offlineCoordinator.endLaunchGuard();
+    }
   }
 
-  Future<void> _completeSplash() async {
-    if (!mounted) {
-      return;
-    }
-
-    await _prepareTimeLifeSnapshots();
-    if (!mounted) {
-      return;
-    }
-
+  Future<void> _navigateAfterSplash() async {
     if (_shouldSkipOnboarding()) {
       Get.offNamed(AppPages.main);
       return;
@@ -136,12 +166,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             permanent: true,
           );
     await sessionBloc.initialize();
+    await Get.find<INumerologyContentRepository>().warmUp();
   }
 
   @override
   void dispose() {
-    _fadeTimer?.cancel();
-    _completeTimer?.cancel();
     _disposeAnimationControllers();
     super.dispose();
   }

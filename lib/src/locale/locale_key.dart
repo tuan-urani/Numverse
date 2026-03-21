@@ -26,6 +26,9 @@ class LocaleKey {
   static const String commonEdit = CommonLocaleKey.commonEdit;
   static const String commonComingSoon = CommonLocaleKey.commonComingSoon;
   static const String commonEmpty = CommonLocaleKey.commonEmpty;
+  static const String commonClose = CommonLocaleKey.commonClose;
+  static const String commonNoInternetConnection =
+      CommonLocaleKey.commonNoInternetConnection;
 
   static const String mainTabToday = MainLocaleKey.mainTabToday;
   static const String mainTabReading = MainLocaleKey.mainTabReading;

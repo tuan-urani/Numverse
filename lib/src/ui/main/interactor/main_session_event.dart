@@ -238,6 +238,10 @@ final class MainSessionCheckedIn extends MainSessionEvent {
   final Completer<void> completer;
 }
 
+final class MainSessionStartupAutoCheckInRequested extends MainSessionEvent {
+  const MainSessionStartupAutoCheckInRequested();
+}
+
 final class MainSessionCheckInCelebrationConsumed extends MainSessionEvent {
   const MainSessionCheckInCelebrationConsumed({required this.eventId});
 

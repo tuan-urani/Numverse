@@ -16,6 +16,8 @@ final Map<String, String> commonVi = <String, String>{
   CommonLocaleKey.commonEdit: 'Chỉnh sửa',
   CommonLocaleKey.commonComingSoon: 'Sắp ra mắt',
   CommonLocaleKey.commonEmpty: 'Chưa có dữ liệu',
+  CommonLocaleKey.commonClose: 'Đóng',
+  CommonLocaleKey.commonNoInternetConnection: 'Không có kết nối internet.',
   CommonLocaleKey.loginSessionExpires: 'Phiên đăng nhập đã hết hạn!',
   CommonLocaleKey.success: 'Thành công',
   CommonLocaleKey.error: 'Lỗi',

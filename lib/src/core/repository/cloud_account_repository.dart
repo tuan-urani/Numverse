@@ -17,6 +17,8 @@ import 'package:test/src/core/model/local_numai_guest_message.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
+import 'package:test/src/core/service/supabase_offline_coordinator.dart';
+import 'package:test/src/core/service/supabase_offline_interceptor.dart';
 import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/utils/app_shared.dart';
 import 'package:test/src/utils/app_supabase_config.dart';
@@ -26,6 +28,7 @@ class CloudAccountRepository implements ICloudAccountRepository {
     required AppShared appShared,
     Dio? dio,
     AppSupabaseConfig? supabaseConfig,
+    SupabaseOfflineCoordinator? offlineCoordinator,
   }) : _appShared = appShared,
        _dio =
            dio ??
@@ -35,11 +38,19 @@ class CloudAccountRepository implements ICloudAccountRepository {
                receiveTimeout: const Duration(seconds: 10),
              ),
            ),
-       _supabaseConfig = supabaseConfig ?? const AppSupabaseConfig();
+       _supabaseConfig = supabaseConfig ?? const AppSupabaseConfig(),
+       _offlineCoordinator =
+           offlineCoordinator ??
+           SupabaseOfflineCoordinator(dialogsEnabled: false) {
+    _dio.interceptors.add(
+      SupabaseOfflineInterceptor(dio: _dio, coordinator: _offlineCoordinator),
+    );
+  }
 
   final AppShared _appShared;
   final Dio _dio;
   final AppSupabaseConfig _supabaseConfig;
+  final SupabaseOfflineCoordinator _offlineCoordinator;
 
   @override
   bool get isConfigured => _supabaseConfig.isConfigured;

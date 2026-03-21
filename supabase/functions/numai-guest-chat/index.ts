@@ -22,19 +22,22 @@ class HttpError extends Error {
 const DEFAULT_LOCALE = "vi-VN";
 const NUMAI_SOUL_POINT_COST = 3;
 const DEFAULT_GUEST_MODEL = Deno.env.get("NUMAI_GUEST_MODEL") ??
-  "gemini-2.5-flash-lite";
+  "gpt-5-nano";
 const NUMAI_RECENT_MESSAGES_LIMIT = 4;
+const NUMAI_MAX_OUTPUT_TOKENS = 1000;
+const NUMAI_OPENAI_REASONING_EFFORT = "low";
 const NUMAI_TECHNICAL_FALLBACK_MESSAGE =
   "Oops, hệ thống đang gặp trục trặc nhỏ khi xử lý dữ liệu. Bạn thử lại ngay nhé.";
 const NUMAI_OUT_OF_SCOPE_FALLBACK_MESSAGE =
   "Mình chỉ hỗ trợ về thần số học.\nBạn có thể hỏi về con số, năm cá nhân hoặc ý nghĩa cuộc đời.";
 const NUMAI_TECHNICAL_ERROR_CODES = new Set<string>([
-  "gemini_provider_error",
-  "gemini_empty_output",
+  "openai_provider_error",
+  "openai_empty_output",
+  "openai_timeout",
   "invalid_json_output",
   "invalid_numai_output",
   "numai_empty_answer",
-  "missing_env_gemini_api_key",
+  "missing_env_openai_api_key",
 ]);
 
 const corsHeaders = {
@@ -88,6 +91,13 @@ function ensureObject(
   return value as JsonObject;
 }
 
+function asObject(value: unknown): JsonObject | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as JsonObject;
+}
+
 function ensureArrayOfStrings(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
@@ -109,6 +119,66 @@ function stripCodeFences(text: string): string {
     .replace(/^```[a-zA-Z]*\s*/, "")
     .replace(/\s*```$/, "")
     .trim();
+}
+
+function extractOpenAiOutputText(rawPayload: unknown): string {
+  const payload = asObject(rawPayload);
+  if (!payload) {
+    return "";
+  }
+
+  const directOutputText = payload.output_text;
+  if (typeof directOutputText === "string" && directOutputText.trim().length > 0) {
+    return directOutputText.trim();
+  }
+
+  const outputItems = payload.output;
+  if (!Array.isArray(outputItems)) {
+    return "";
+  }
+
+  const chunks: string[] = [];
+  for (const outputItem of outputItems) {
+    const outputObject = asObject(outputItem);
+    if (!outputObject) {
+      continue;
+    }
+
+    const contentItems = outputObject.content;
+    if (!Array.isArray(contentItems)) {
+      continue;
+    }
+
+    for (const contentItem of contentItems) {
+      const contentObject = asObject(contentItem);
+      if (!contentObject) {
+        continue;
+      }
+      if (contentObject.type !== "output_text") {
+        continue;
+      }
+
+      const textChunk = typeof contentObject.text === "string"
+        ? contentObject.text.trim()
+        : "";
+      if (textChunk.length > 0) {
+        chunks.push(textChunk);
+      }
+    }
+  }
+
+  return chunks.join("\n").trim();
+}
+
+function logStructuredError(functionName: string, error: unknown): void {
+  const payload: JsonObject = {
+    function: functionName,
+    error_code: resolveErrorCode(error),
+  };
+  if (error instanceof Error && error.stack) {
+    payload.stack = error.stack;
+  }
+  console.error(JSON.stringify(payload));
 }
 
 function isTruthyFlag(value: unknown): boolean {
@@ -463,12 +533,15 @@ async function grantSoulPoints(
   return nextBalance;
 }
 
-async function callGuestGeminiJson(
+async function callGuestOpenAiJson(
   messageText: string,
   locale: string,
   recentMessages: GuestRecentMessage[],
-): Promise<{ parsedOutput: JsonObject; rawTextOutput: string }> {
-  const geminiApiKey = getEnv("GEMINI_API_KEY");
+): Promise<{
+  parsedOutput: JsonObject;
+  rawTextOutput: string;
+}> {
+  const openAiApiKey = getEnv("OPENAI_API_KEY");
   const contextJson: JsonObject = {
     mode: "guest_no_profile",
     locale,
@@ -491,45 +564,94 @@ async function callGuestGeminiJson(
     JSON.stringify(contextJson, null, 2),
   ].join("\n");
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_GUEST_MODEL}:generateContent?key=${geminiApiKey}`,
-    {
+  const openAiTimeoutMs = 30_000;
+  const timeoutController = new AbortController();
+  let didTimeout = false;
+  const timeoutHandle = setTimeout(() => {
+    didTimeout = true;
+    timeoutController.abort();
+  }, openAiTimeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${openAiApiKey}`,
       },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
-        },
-        contents: [
+        model: DEFAULT_GUEST_MODEL,
+        input: [
+          {
+            role: "system",
+            content: [
+              {
+                type: "input_text",
+                text: systemPrompt,
+              },
+            ],
+          },
           {
             role: "user",
-            parts: [{ text: renderedPrompt }],
+            content: [
+              {
+                type: "input_text",
+                text: renderedPrompt,
+              },
+            ],
           },
         ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 700,
-          responseMimeType: "application/json",
+        text: {
+          format: {
+            type: "json_object",
+          },
         },
+        reasoning: {
+          effort: NUMAI_OPENAI_REASONING_EFFORT,
+        },
+        max_output_tokens: NUMAI_MAX_OUTPUT_TOKENS,
       }),
-    },
-  );
+      signal: timeoutController.signal,
+    });
+  } catch (error) {
+    if (didTimeout) {
+      throw new HttpError(504, "openai_timeout");
+    }
+    throw new HttpError(502, "openai_provider_error");
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
+  
   const rawPayload = await response.json();
 
-  if (!response.ok) {
-    throw new HttpError(502, "gemini_provider_error", rawPayload);
-  }
+  console.log("OpenAI JSON response:", rawPayload);
 
-  const textOutput = stripCodeFences(
-    rawPayload?.candidates?.[0]?.content?.parts
-      ?.map((part: { text?: string }) => part.text ?? "")
-      .join("") ?? "",
+  const textOutput = stripCodeFences(extractOpenAiOutputText(rawPayload));
+  console.log(
+    JSON.stringify({
+      event: "numai_guest_openai_fetch_response",
+      model: DEFAULT_GUEST_MODEL,
+      http_status: response.status,
+      response_ok: response.ok,
+      raw_payload: rawPayload,
+    }),
+  );
+  console.log(
+    JSON.stringify({
+      event: "numai_guest_openai_extract_result",
+      extracted_text_length: textOutput.length,
+      extracted_text: textOutput,
+      is_empty: textOutput.length === 0,
+    }),
   );
 
+  if (!response.ok) {
+    throw new HttpError(502, "openai_provider_error");
+  }
+
   if (!textOutput) {
-    throw new HttpError(502, "gemini_empty_output", rawPayload);
+    throw new HttpError(502, "openai_empty_output");
   }
 
   try {
@@ -537,15 +659,32 @@ async function callGuestGeminiJson(
       JSON.parse(textOutput),
       "invalid_json_output",
     );
+    console.log(
+      JSON.stringify({
+        event: "numai_guest_openai_parse_result",
+        parse_ok: true,
+        parsed_keys: Object.keys(parsedOutput),
+      }),
+    );
     return {
       parsedOutput,
       rawTextOutput: textOutput,
     };
   } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: "numai_guest_openai_parse_result",
+        parse_ok: false,
+        parse_error: error instanceof Error
+          ? error.message
+          : "unknown_parse_error",
+        extracted_text: textOutput,
+      }),
+    );
     if (error instanceof HttpError) {
       throw error;
     }
-    throw new HttpError(502, "invalid_json_output", { textOutput });
+    throw new HttpError(502, "invalid_json_output");
   }
 }
 
@@ -600,14 +739,14 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
     let requiresProfileInfo = false;
 
     try {
-      const geminiResult = await callGuestGeminiJson(
+      const openAiResult = await callGuestOpenAiJson(
         messageText,
         locale,
         recentMessages,
       );
-      rawOutput = geminiResult.rawTextOutput;
+      rawOutput = openAiResult.rawTextOutput;
       const output = ensureObject(
-        geminiResult.parsedOutput,
+        openAiResult.parsedOutput,
         "invalid_numai_output",
       );
       if (isTruthyFlag(output.is_out_of_scope)) {
@@ -630,23 +769,25 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
       }
       fallbackReason = "technical_error";
       originalErrorCode = resolveErrorCode(error);
+      logStructuredError("numai-guest-chat:handleGuestChat:technical_fallback", error);
       answer = NUMAI_TECHNICAL_FALLBACK_MESSAGE;
       suggestions = fallbackFollowUpSuggestions(locale);
       requiresProfileInfo = false;
     }
 
-    if (fallbackReason && charged) {
+    if (fallbackReason === "technical_error" && charged) {
+      const refundMetadata: JsonObject = {
+        reason: "guest_numai_generation_refund",
+        request_ref: requestRef,
+        refund_type: fallbackReason,
+        original_error_code: originalErrorCode,
+      };
       walletBalanceAfterCharge = await grantSoulPoints(
         admin,
         user.id,
         NUMAI_SOUL_POINT_COST,
         "manual_adjustment",
-        {
-          reason: "guest_numai_generation_refund",
-          request_ref: requestRef,
-          refund_type: fallbackReason,
-          original_error_code: originalErrorCode,
-        },
+        refundMetadata,
         requestRef,
       );
       charged = false;
@@ -684,19 +825,21 @@ async function handleGuestChat(req: Request): Promise<JsonObject> {
     };
   } catch (error) {
     if (charged) {
+      const refundMetadata: JsonObject = {
+        reason: "guest_numai_generation_refund",
+        request_ref: requestRef,
+        original_error_code: resolveErrorCode(error),
+      };
       await grantSoulPoints(
         admin,
         user.id,
         NUMAI_SOUL_POINT_COST,
         "manual_adjustment",
-        {
-          reason: "guest_numai_generation_refund",
-          request_ref: requestRef,
-          original_error_code: resolveErrorCode(error),
-        },
+        refundMetadata,
         requestRef,
       );
     }
+    logStructuredError("numai-guest-chat:handleGuestChat:unhandled", error);
     throw error;
   }
 }
@@ -721,7 +864,7 @@ Deno.serve(async (req: Request) => {
     }
     return jsonResponse(result);
   } catch (error) {
-    console.error(error);
+    logStructuredError("numai-guest-chat:route", error);
     return errorResponse(error);
   }
 });

@@ -31,10 +31,6 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
 
   static const int messageCost = 3;
   static const int _maxGuestLocalMessages = 80;
-  static const String _technicalFallbackMessage =
-      'Oops, hệ thống đang gặp trục trặc nhỏ khi xử lý dữ liệu. Bạn thử lại ngay nhé.';
-  static const String _outOfScopeFallbackMessage =
-      'Mình chỉ hỗ trợ về thần số học.\nBạn có thể hỏi về con số, năm cá nhân hoặc ý nghĩa cuộc đời.';
   final ICloudAccountRepository _cloudAccountRepository;
   final IAppSessionRepository _appSessionRepository;
 
@@ -223,68 +219,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       return;
     }
 
-    final bool canDeduct = await event.deductSoulPoints(messageCost);
-    if (!canDeduct) {
-      emit(state.copyWith(showInsufficientPointsWarning: true));
-      _completeBool(event.completer, false);
-      return;
-    }
-
-    final DateTime now = DateTime.now();
-    final NumAiChatMessage userMessage = NumAiChatMessage(
-      id: '${now.microsecondsSinceEpoch}-user',
-      role: NumAiChatMessageRole.user,
-      content: message,
-      timestamp: now,
-    );
-
-    final List<NumAiChatMessage> nextMessages = <NumAiChatMessage>[
-      ...state.messages,
-      userMessage,
-    ];
-
-    emit(
-      state.copyWith(
-        messages: nextMessages,
-        isLoading: true,
-        showInsufficientPointsWarning: false,
-        activeProfileId: profileId.isEmpty ? null : profileId,
-        clearThreadId: profileId.isEmpty,
-        clearActiveProfileId: profileId.isEmpty,
-        clearTypingMessageId: true,
-      ),
-    );
-
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-
-    final DateTime replyAt = DateTime.now();
-
-    final NumAiChatMessage assistantMessage = NumAiChatMessage(
-      id: '${replyAt.microsecondsSinceEpoch}-assistant',
-      role: NumAiChatMessageRole.assistant,
-      content: _technicalFallbackMessage,
-      timestamp: replyAt,
-      fallbackReason: 'technical_error',
-    );
-
-    emit(
-      state.copyWith(
-        messages: <NumAiChatMessage>[...nextMessages, assistantMessage],
-        isLoading: false,
-        clearPendingProfileQuestion: true,
-        activeProfileId: profileId.isEmpty ? null : profileId,
-        clearThreadId: profileId.isEmpty,
-        clearActiveProfileId: profileId.isEmpty,
-        typingMessageId: assistantMessage.id,
-      ),
-    );
-    if (profileId.isEmpty) {
-      await _persistGuestMessages(
-        guestUserKey: guestUserKey,
-        messages: <NumAiChatMessage>[...nextMessages, assistantMessage],
-      );
-    }
-    _completeBool(event.completer, true);
+    _completeBool(event.completer, false);
   }
 
   Future<void> _sendGuestCloudMessage({
@@ -388,36 +323,16 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         return;
       }
 
-      final DateTime now = DateTime.now();
-      final String fallbackReason = _resolveFallbackReason(errorCode);
-      final NumAiChatMessage assistantFallback = NumAiChatMessage(
-        id: '${now.microsecondsSinceEpoch}-assistant-fallback',
-        role: NumAiChatMessageRole.assistant,
-        content: _resolveFallbackMessage(errorCode),
-        timestamp: now,
-        fallbackReason: fallbackReason,
-      );
-      final List<NumAiChatMessage> fallbackMessages = <NumAiChatMessage>[
-        ...nextMessages,
-        assistantFallback,
-      ];
       emit(
         state.copyWith(
-          messages: fallbackMessages,
+          messages: previousMessages,
           isLoading: false,
-          clearPendingProfileQuestion: true,
           clearThreadId: true,
           clearActiveProfileId: true,
-          typingMessageId: assistantFallback.id,
+          clearTypingMessageId: true,
         ),
       );
-      try {
-        await _persistGuestMessages(
-          guestUserKey: guestUserKey,
-          messages: fallbackMessages,
-        );
-      } catch (_) {}
-      _completeBool(event.completer, true);
+      _completeBool(event.completer, false);
     }
   }
 
@@ -500,52 +415,15 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         return;
       }
 
-      if (errorCode == 'profile_not_found' ||
-          errorCode == 'primary_profile_not_found') {
-        final DateTime now = DateTime.now();
-        final NumAiChatMessage assistantMessage = NumAiChatMessage(
-          id: '${now.microsecondsSinceEpoch}-assistant-fallback',
-          role: NumAiChatMessageRole.assistant,
-          content: _technicalFallbackMessage,
-          timestamp: now,
-          fallbackReason: 'technical_error',
-        );
-        emit(
-          state.copyWith(
-            messages: <NumAiChatMessage>[
-              ...previousMessages,
-              userMessage,
-              assistantMessage,
-            ],
-            isLoading: false,
-            clearPendingProfileQuestion: true,
-            activeProfileId: profileId,
-            typingMessageId: assistantMessage.id,
-          ),
-        );
-        _completeBool(event.completer, true);
-        return;
-      }
-
-      final DateTime now = DateTime.now();
-      final String fallbackReason = _resolveFallbackReason(errorCode);
-      final NumAiChatMessage assistantFallback = NumAiChatMessage(
-        id: '${now.microsecondsSinceEpoch}-assistant-fallback',
-        role: NumAiChatMessageRole.assistant,
-        content: _resolveFallbackMessage(errorCode),
-        timestamp: now,
-        fallbackReason: fallbackReason,
-      );
       emit(
         state.copyWith(
-          messages: <NumAiChatMessage>[...nextMessages, assistantFallback],
+          messages: previousMessages,
           isLoading: false,
-          clearPendingProfileQuestion: true,
           activeProfileId: profileId,
-          typingMessageId: assistantFallback.id,
+          clearTypingMessageId: true,
         ),
       );
-      _completeBool(event.completer, true);
+      _completeBool(event.completer, false);
     }
   }
 
@@ -768,19 +646,5 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       firstId,
       lastId,
     ].join(':');
-  }
-
-  String _resolveFallbackReason(String errorCode) {
-    if (errorCode == 'numai_out_of_scope' || errorCode == 'out_of_scope') {
-      return 'out_of_scope';
-    }
-    return 'technical_error';
-  }
-
-  String _resolveFallbackMessage(String errorCode) {
-    if (_resolveFallbackReason(errorCode) == 'out_of_scope') {
-      return _outOfScopeFallbackMessage;
-    }
-    return _technicalFallbackMessage;
   }
 }
