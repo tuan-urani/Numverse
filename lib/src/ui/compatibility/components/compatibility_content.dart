@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -8,6 +9,7 @@ import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_state.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -64,7 +66,7 @@ class CompatibilityContent extends StatelessWidget {
             children: <Widget>[
               Text(
                 LocaleKey.compatibilityTitle.tr,
-                style: AppStyles.numberSmall(
+                style: AppStyles.titleLarge(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
@@ -141,10 +143,10 @@ class CompatibilityContent extends StatelessWidget {
                 18.height,
                 Text(
                   LocaleKey.compatibilityHistoryTitle.tr,
-                  style: AppStyles.caption(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w600,
-                  ).copyWith(letterSpacing: 0.8),
+                  style: AppStyles.h5(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 4.height,
                 Text(
@@ -643,14 +645,19 @@ class _SoulPointsCard extends StatelessWidget {
                 Container(
                   width: 38,
                   height: 38,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.richGold.withValues(alpha: 0.2),
                   ),
-                  child: const Icon(
-                    Icons.flash_on_rounded,
-                    size: 20,
-                    color: AppColors.richGold,
+                  child: SvgPicture.asset(
+                    AppAssets.iconCoinPng,
+                    width: 20,
+                    height: 20,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.richGold,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
                 10.width,
@@ -682,10 +689,14 @@ class _SoulPointsCard extends StatelessWidget {
               ),
               Row(
                 children: <Widget>[
-                  const Icon(
-                    Icons.flash_on_rounded,
-                    size: 15,
-                    color: AppColors.richGold,
+                  SvgPicture.asset(
+                    AppAssets.iconCoinPng,
+                    width: 15,
+                    height: 15,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.richGold,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   2.width,
                   Text(
@@ -832,7 +843,11 @@ class _CompareButtonState extends State<_CompareButton>
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             if (!emphasizeNeedMore) ...<Widget>[
-              Icon(Icons.favorite_rounded, size: 17, color: foregroundColor),
+              Icon(
+                Icons.compare_arrows_rounded,
+                size: 17,
+                color: foregroundColor,
+              ),
               8.width,
             ],
             Flexible(
@@ -856,12 +871,6 @@ class _CompareButtonState extends State<_CompareButton>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Icon(
-                      Icons.flash_on_rounded,
-                      size: 12,
-                      color: foregroundColor,
-                    ),
-                    2.width,
                     Text(
                       '${widget.comparisonCost}',
                       style: AppStyles.caption(
@@ -910,7 +919,10 @@ class _HistoryItemCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.card.withValues(alpha: 0.56),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
+          border: Border.all(
+            color: AppColors.border.withValues(alpha: 0.72),
+            width: 1.2,
+          ),
         ),
         child: Row(
           children: <Widget>[

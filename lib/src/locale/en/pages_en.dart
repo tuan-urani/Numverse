@@ -40,8 +40,7 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.compatibilityStartNeedMorePointsCta:
       'Need @points more points to compare. Earn more',
   PagesLocaleKey.compatibilityHistoryTitle: 'Comparison history',
-  PagesLocaleKey.compatibilityHistorySubtitle:
-      'Tap an item to view again without spending points.',
+  PagesLocaleKey.compatibilityHistorySubtitle: 'Tap to view details.',
   PagesLocaleKey.compatibilityHistoryEmpty:
       'No compatibility history yet. Start your first comparison.',
   PagesLocaleKey.compatibilityAddDialogTitle: 'Add new profile',
@@ -363,7 +362,7 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.settingsPushNotificationsTitle: 'Push notifications',
   PagesLocaleKey.settingsPushNotificationsSubtitle:
       'Receive reading updates and promotions',
-  PagesLocaleKey.settingsDailyAlarmTitle: '8:00 daily energy reminder',
+  PagesLocaleKey.settingsDailyAlarmTitle: 'Reminder',
   PagesLocaleKey.settingsDailyAlarmSubtitle:
       'Remind me at 8:00 to check today\'s energy',
   PagesLocaleKey.settingsOn: 'On',

@@ -88,6 +88,26 @@ class LocalAppSessionRepository implements IAppSessionRepository {
     await _appShared.clearNumAiGuestHistory(userKey);
   }
 
+  @override
+  Future<String?> loadLastNumAiGuestUserKey() async {
+    final String? raw = _appShared.getNumAiLastGuestUserKey();
+    final String normalized = (raw ?? '').trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return normalized;
+  }
+
+  @override
+  Future<void> saveLastNumAiGuestUserKey({required String userKey}) async {
+    await _appShared.setNumAiLastGuestUserKey(userKey);
+  }
+
+  @override
+  Future<void> clearLastNumAiGuestUserKey() async {
+    await _appShared.clearNumAiLastGuestUserKey();
+  }
+
   void _logSnapshotChanged(AppSessionSnapshot snapshot) {
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
     final String payload = encoder.convert(snapshot.toJson());

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:test/src/core/model/cloud_numai_thread_messages_result.dart';
@@ -26,16 +27,20 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     on<NumAiChatPendingQuestionAnswerAppended>(
       _onPendingQuestionAnswerAppended,
     );
+    on<NumAiChatTypingMessageCompleted>(_onTypingMessageCompleted);
     on<NumAiChatConversationReset>(_onConversationReset);
   }
 
   static const int messageCost = 3;
   static const int _maxGuestLocalMessages = 80;
+  static const String _canonicalGuestUserKey = 'local';
+  static const int _maxHistoryFetchAttempts = 3;
   final ICloudAccountRepository _cloudAccountRepository;
   final IAppSessionRepository _appSessionRepository;
 
   void loadCloudHistory({
     required bool hasCloudSession,
+    required bool isAnonymousUser,
     required String? profileId,
     required String? cloudUserId,
     bool forceRefresh = false,
@@ -43,6 +48,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     add(
       NumAiChatHistoryRequested(
         hasCloudSession: hasCloudSession,
+        isAnonymousUser: isAnonymousUser,
         profileId: profileId,
         cloudUserId: cloudUserId,
         forceRefresh: forceRefresh,
@@ -54,6 +60,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     required String rawMessage,
     required bool hasProfile,
     required bool hasCloudSession,
+    required bool isAnonymousUser,
     required String? profileId,
     required String? cloudUserId,
     required String? locale,
@@ -66,6 +73,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         rawMessage: rawMessage,
         hasProfile: hasProfile,
         hasCloudSession: hasCloudSession,
+        isAnonymousUser: isAnonymousUser,
         profileId: profileId,
         cloudUserId: cloudUserId,
         locale: locale,
@@ -82,9 +90,19 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     Emitter<NumAiChatState> emit,
   ) async {
     final String profileId = (event.profileId ?? '').trim();
+    final String previousProfileId = (state.activeProfileId ?? '').trim();
+    final List<NumAiChatMessage> previousMessages = state.messages;
     final String guestUserKey = _resolveGuestUserKey(event.cloudUserId);
     final bool sameProfileContext = state.activeProfileId == profileId;
     final bool shouldClearForContextChange = !sameProfileContext;
+    final bool isGuestToProfileTransition =
+        shouldClearForContextChange &&
+        previousProfileId.isEmpty &&
+        profileId.isNotEmpty;
+    final bool isProfileToProfileTransition =
+        shouldClearForContextChange &&
+        previousProfileId.isNotEmpty &&
+        profileId.isNotEmpty;
     final String? threadIdForProfile = sameProfileContext
         ? state.threadId
         : null;
@@ -95,14 +113,30 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       return;
     }
 
+    final List<String> guestCandidateKeys = await _resolveGuestCandidateKeys(
+      guestUserKey: guestUserKey,
+    );
+    final List<LocalNumAiGuestMessage> mergedGuestMessages =
+        await _loadMergedGuestMessages(candidateKeys: guestCandidateKeys);
+    final List<NumAiChatMessage> guestFallbackMessages =
+        _sortMessagesByTimestamp(
+          mergedGuestMessages.map(_toChatMessageFromGuest),
+        );
+    final bool shouldShowGuestFallback =
+        isGuestToProfileTransition && guestFallbackMessages.isNotEmpty;
+    final List<NumAiChatMessage> contextChangeBaseMessages =
+        shouldShowGuestFallback
+        ? guestFallbackMessages
+        : const <NumAiChatMessage>[];
+
     emit(
       state.copyWith(
         isLoading: true,
         showInsufficientPointsWarning: false,
         clearTypingMessageId: true,
         messages: shouldClearForContextChange
-            ? const <NumAiChatMessage>[]
-            : state.messages,
+            ? contextChangeBaseMessages
+            : previousMessages,
         clearThreadId: shouldClearForContextChange,
         activeProfileId: profileId.isEmpty ? null : profileId,
         clearActiveProfileId: profileId.isEmpty,
@@ -110,36 +144,33 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     );
 
     if (profileId.isEmpty) {
-      try {
-        final guestMessages = await _appSessionRepository
-            .loadNumAiGuestMessages(userKey: guestUserKey);
-        emit(
-          state.copyWith(
-            messages: _sortMessagesByTimestamp(
-              guestMessages.map(_toChatMessageFromGuest),
-            ),
-            isLoading: false,
-            clearThreadId: true,
-            clearActiveProfileId: true,
-            clearTypingMessageId: true,
-          ),
-        );
-      } catch (_) {
-        emit(
-          state.copyWith(
-            isLoading: false,
-            clearThreadId: true,
-            clearActiveProfileId: true,
-            clearTypingMessageId: true,
-          ),
-        );
-      }
+      emit(
+        state.copyWith(
+          messages: guestFallbackMessages,
+          isLoading: false,
+          clearThreadId: true,
+          clearActiveProfileId: true,
+          clearTypingMessageId: true,
+        ),
+      );
       return;
     }
 
     if (!event.hasCloudSession || !_cloudAccountRepository.isConfigured) {
+      final List<NumAiChatMessage> fallbackMessages;
+      if (sameProfileContext) {
+        fallbackMessages = previousMessages;
+      } else if (isGuestToProfileTransition &&
+          guestFallbackMessages.isNotEmpty) {
+        fallbackMessages = guestFallbackMessages;
+      } else if (isProfileToProfileTransition) {
+        fallbackMessages = const <NumAiChatMessage>[];
+      } else {
+        fallbackMessages = contextChangeBaseMessages;
+      }
       emit(
         state.copyWith(
+          messages: fallbackMessages,
           isLoading: false,
           activeProfileId: profileId,
           clearTypingMessageId: true,
@@ -151,11 +182,13 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     try {
       await _tryMigrateGuestHistoryToCloud(
         profileId: profileId,
-        guestUserKey: guestUserKey,
+        guestCandidateKeys: guestCandidateKeys,
+        isAnonymousUser: event.isAnonymousUser,
       );
-      final result = await _cloudAccountRepository.fetchNumAiThreadMessages(
+      final result = await _fetchCloudHistoryWithRetry(
         profileId: profileId,
         threadId: threadIdForProfile,
+        isAnonymousUser: event.isAnonymousUser,
       );
       emit(
         state.copyWith(
@@ -169,8 +202,20 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         ),
       );
     } catch (_) {
+      final List<NumAiChatMessage> fallbackMessages;
+      if (sameProfileContext) {
+        fallbackMessages = previousMessages;
+      } else if (isGuestToProfileTransition &&
+          guestFallbackMessages.isNotEmpty) {
+        fallbackMessages = guestFallbackMessages;
+      } else if (isProfileToProfileTransition) {
+        fallbackMessages = const <NumAiChatMessage>[];
+      } else {
+        fallbackMessages = contextChangeBaseMessages;
+      }
       emit(
         state.copyWith(
+          messages: fallbackMessages,
           isLoading: false,
           activeProfileId: profileId,
           clearTypingMessageId: true,
@@ -195,17 +240,22 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
 
     final String profileId = (event.profileId ?? '').trim();
     final String guestUserKey = _resolveGuestUserKey(event.cloudUserId);
+    final List<String> guestCandidateKeys = await _resolveGuestCandidateKeys(
+      guestUserKey: guestUserKey,
+    );
     if (event.hasCloudSession && _cloudAccountRepository.isConfigured) {
       if (profileId.isNotEmpty) {
         await _tryMigrateGuestHistoryToCloud(
           profileId: profileId,
-          guestUserKey: guestUserKey,
+          guestCandidateKeys: guestCandidateKeys,
+          isAnonymousUser: event.isAnonymousUser,
         );
         await _sendCloudMessage(
           event: event,
           emit: emit,
           message: message,
           profileId: profileId,
+          isAnonymousUser: event.isAnonymousUser,
         );
         return;
       }
@@ -215,6 +265,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         emit: emit,
         message: message,
         guestUserKey: guestUserKey,
+        guestCandidateKeys: guestCandidateKeys,
       );
       return;
     }
@@ -227,6 +278,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     required Emitter<NumAiChatState> emit,
     required String message,
     required String guestUserKey,
+    required List<String> guestCandidateKeys,
   }) async {
     final List<NumAiChatMessage> previousMessages = state.messages;
     final DateTime userSentAt = DateTime.now();
@@ -300,6 +352,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       try {
         await _persistGuestMessages(
           guestUserKey: guestUserKey,
+          guestCandidateKeys: guestCandidateKeys,
           messages: allMessages,
         );
       } catch (_) {}
@@ -341,6 +394,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     required Emitter<NumAiChatState> emit,
     required String message,
     required String profileId,
+    required bool isAnonymousUser,
   }) async {
     final String? threadIdForProfile = state.activeProfileId == profileId
         ? state.threadId
@@ -369,11 +423,16 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     );
 
     try {
-      final result = await _cloudAccountRepository.sendNumAiMessage(
-        profileId: profileId,
-        messageText: message,
-        threadId: threadIdForProfile,
-        locale: event.locale,
+      final result = await _runWithAnonymousAuthRecovery(
+        isAnonymousUser: isAnonymousUser,
+        action: () {
+          return _cloudAccountRepository.sendNumAiMessage(
+            profileId: profileId,
+            messageText: message,
+            threadId: threadIdForProfile,
+            locale: event.locale,
+          );
+        },
       );
       final DateTime assistantSentAt = DateTime.now();
       final NumAiChatMessage assistantMessage = NumAiChatMessage(
@@ -478,6 +537,14 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     add(const NumAiChatPendingQuestionAnswerAppended());
   }
 
+  void completeTypingMessage(String messageId) {
+    final String cleanMessageId = messageId.trim();
+    if (cleanMessageId.isEmpty) {
+      return;
+    }
+    add(NumAiChatTypingMessageCompleted(messageId: cleanMessageId));
+  }
+
   void resetConversation({required String? cloudUserId}) {
     add(NumAiChatConversationReset(cloudUserId: cloudUserId));
   }
@@ -492,14 +559,28 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     emit(state.copyWith(clearPendingProfileQuestion: true));
   }
 
+  void _onTypingMessageCompleted(
+    NumAiChatTypingMessageCompleted event,
+    Emitter<NumAiChatState> emit,
+  ) {
+    final String activeTypingId = (state.typingMessageId ?? '').trim();
+    if (activeTypingId.isEmpty || activeTypingId != event.messageId) {
+      return;
+    }
+    emit(state.copyWith(clearTypingMessageId: true));
+  }
+
   Future<void> _onConversationReset(
     NumAiChatConversationReset event,
     Emitter<NumAiChatState> emit,
   ) async {
     try {
-      await _appSessionRepository.clearNumAiGuestMessages(
-        userKey: _resolveGuestUserKey(event.cloudUserId),
+      final String guestUserKey = _resolveGuestUserKey(event.cloudUserId);
+      final List<String> candidateKeys = await _resolveGuestCandidateKeys(
+        guestUserKey: guestUserKey,
       );
+      await _clearGuestMessagesByKeys(candidateKeys);
+      await _appSessionRepository.clearLastNumAiGuestUserKey();
     } catch (_) {}
     emit(NumAiChatState.initial());
   }
@@ -511,9 +592,9 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
   }
 
   String _resolveGuestUserKey(String? cloudUserId) {
-    final String clean = (cloudUserId ?? '').trim();
+    final String clean = _normalizeGuestKey(cloudUserId);
     if (clean.isEmpty) {
-      return 'local';
+      return _canonicalGuestUserKey;
     }
     return clean;
   }
@@ -566,6 +647,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
 
   Future<void> _persistGuestMessages({
     required String guestUserKey,
+    required List<String> guestCandidateKeys,
     required List<NumAiChatMessage> messages,
   }) async {
     final List<NumAiChatMessage> cappedMessages =
@@ -593,42 +675,228 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     if (payload.isEmpty) {
       return;
     }
-    await _appSessionRepository.saveNumAiGuestMessages(
-      userKey: guestUserKey,
-      messages: payload,
-    );
+    final Set<String> saveKeys = <String>{
+      ...guestCandidateKeys.map(_normalizeGuestKey),
+      _canonicalGuestUserKey,
+      _normalizeGuestKey(guestUserKey),
+    }..removeWhere((String key) => key.isEmpty);
+    for (final String key in saveKeys) {
+      await _appSessionRepository.saveNumAiGuestMessages(
+        userKey: key,
+        messages: payload,
+      );
+    }
+
+    final String normalizedGuestKey = _normalizeGuestKey(guestUserKey);
+    if (normalizedGuestKey.isNotEmpty &&
+        normalizedGuestKey != _canonicalGuestUserKey) {
+      await _appSessionRepository.saveLastNumAiGuestUserKey(
+        userKey: normalizedGuestKey,
+      );
+    }
   }
 
   Future<void> _tryMigrateGuestHistoryToCloud({
     required String profileId,
-    required String guestUserKey,
+    required List<String> guestCandidateKeys,
+    required bool isAnonymousUser,
   }) async {
     if (profileId.isEmpty) {
       return;
     }
     try {
       final List<LocalNumAiGuestMessage> guestMessages =
-          await _appSessionRepository.loadNumAiGuestMessages(
-            userKey: guestUserKey,
-          );
+          await _loadMergedGuestMessages(candidateKeys: guestCandidateKeys);
       if (guestMessages.isEmpty) {
         return;
       }
 
+      final String requestSourceKey = guestCandidateKeys.isEmpty
+          ? _canonicalGuestUserKey
+          : guestCandidateKeys.join('|');
       final String requestId = _buildGuestImportRequestId(
-        guestUserKey: guestUserKey,
+        guestUserKey: requestSourceKey,
         profileId: profileId,
         messages: guestMessages,
       );
-      await _cloudAccountRepository.importGuestNumAiHistory(
-        profileId: profileId,
-        messages: guestMessages,
-        requestId: requestId,
+      await _runWithAnonymousAuthRecovery(
+        isAnonymousUser: isAnonymousUser,
+        action: () {
+          return _cloudAccountRepository.importGuestNumAiHistory(
+            profileId: profileId,
+            messages: guestMessages,
+            requestId: requestId,
+          );
+        },
       );
-      await _appSessionRepository.clearNumAiGuestMessages(
-        userKey: guestUserKey,
-      );
+      await _clearGuestMessagesByKeys(guestCandidateKeys);
+      await _appSessionRepository.clearLastNumAiGuestUserKey();
     } catch (_) {}
+  }
+
+  Future<CloudNumAiThreadMessagesResult> _fetchCloudHistoryWithRetry({
+    required String profileId,
+    required String? threadId,
+    required bool isAnonymousUser,
+  }) async {
+    Object? lastError;
+    for (int attempt = 0; attempt < _maxHistoryFetchAttempts; attempt += 1) {
+      try {
+        return await _runWithAnonymousAuthRecovery(
+          isAnonymousUser: isAnonymousUser,
+          action: () {
+            return _cloudAccountRepository.fetchNumAiThreadMessages(
+              profileId: profileId,
+              threadId: threadId,
+            );
+          },
+        );
+      } catch (error) {
+        lastError = error;
+        if (attempt >= _maxHistoryFetchAttempts - 1) {
+          break;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 250 * (attempt + 1)));
+      }
+    }
+    throw lastError ?? StateError('numai_history_fetch_failed');
+  }
+
+  Future<T> _runWithAnonymousAuthRecovery<T>({
+    required bool isAnonymousUser,
+    required Future<T> Function() action,
+  }) async {
+    try {
+      return await action();
+    } catch (error) {
+      if (!isAnonymousUser || !_isUnauthorizedError(error)) {
+        rethrow;
+      }
+      await _cloudAccountRepository.ensureAnonymousSession();
+      return action();
+    }
+  }
+
+  bool _isUnauthorizedError(Object error) {
+    if (error is DioException && error.response?.statusCode == 401) {
+      return true;
+    }
+    final String errorCode = _resolveErrorCode(error).toLowerCase();
+    if (errorCode.contains('unauthorized') ||
+        errorCode.contains('missing_authorization_header') ||
+        errorCode.contains('invalid_authorization_header') ||
+        errorCode.contains('supabase_missing_access_token') ||
+        errorCode == '401') {
+      return true;
+    }
+    final String message = error.toString().toLowerCase();
+    return message.contains(' 401') ||
+        message.contains('statuscode 401') ||
+        message.contains('unauthorized');
+  }
+
+  Future<List<String>> _resolveGuestCandidateKeys({
+    required String guestUserKey,
+  }) async {
+    final Set<String> keys = <String>{
+      _canonicalGuestUserKey,
+      _normalizeGuestKey(guestUserKey),
+    }..removeWhere((String key) => key.isEmpty);
+    try {
+      final String? lastKey = await _appSessionRepository
+          .loadLastNumAiGuestUserKey();
+      final String normalizedLast = _normalizeGuestKey(lastKey);
+      if (normalizedLast.isNotEmpty) {
+        keys.add(normalizedLast);
+      }
+    } catch (_) {}
+    return keys.toList();
+  }
+
+  Future<List<LocalNumAiGuestMessage>> _loadMergedGuestMessages({
+    required List<String> candidateKeys,
+  }) async {
+    final Set<String> normalizedKeys = candidateKeys
+        .map(_normalizeGuestKey)
+        .where((String key) => key.isNotEmpty)
+        .toSet();
+    if (normalizedKeys.isEmpty) {
+      normalizedKeys.add(_canonicalGuestUserKey);
+    }
+
+    final List<LocalNumAiGuestMessage> merged = <LocalNumAiGuestMessage>[];
+    for (final String key in normalizedKeys) {
+      try {
+        final List<LocalNumAiGuestMessage> part = await _appSessionRepository
+            .loadNumAiGuestMessages(userKey: key);
+        merged.addAll(part);
+      } catch (_) {}
+    }
+    return _dedupeGuestMessages(merged);
+  }
+
+  List<LocalNumAiGuestMessage> _dedupeGuestMessages(
+    List<LocalNumAiGuestMessage> messages,
+  ) {
+    if (messages.isEmpty) {
+      return const <LocalNumAiGuestMessage>[];
+    }
+
+    final List<LocalNumAiGuestMessage> sorted =
+        List<LocalNumAiGuestMessage>.from(messages)
+          ..sort((LocalNumAiGuestMessage left, LocalNumAiGuestMessage right) {
+            final int byTime = left.createdAt.compareTo(right.createdAt);
+            if (byTime != 0) {
+              return byTime;
+            }
+            return left.id.compareTo(right.id);
+          });
+
+    final Set<String> seenIds = <String>{};
+    final Set<String> seenFallbacks = <String>{};
+    final List<LocalNumAiGuestMessage> unique = <LocalNumAiGuestMessage>[];
+    for (final LocalNumAiGuestMessage item in sorted) {
+      final String id = item.id.trim();
+      if (id.isNotEmpty) {
+        if (seenIds.contains(id)) {
+          continue;
+        }
+        seenIds.add(id);
+        unique.add(item);
+        continue;
+      }
+      final String fallbackKey = _guestFallbackKey(item);
+      if (seenFallbacks.contains(fallbackKey)) {
+        continue;
+      }
+      seenFallbacks.add(fallbackKey);
+      unique.add(item);
+    }
+    return unique;
+  }
+
+  String _guestFallbackKey(LocalNumAiGuestMessage item) {
+    final String sender = item.senderType.trim().toLowerCase();
+    final String text = item.messageText.trim().toLowerCase();
+    final int roundedEpochMs =
+        (item.createdAt.millisecondsSinceEpoch ~/ 1000) * 1000;
+    return '$sender|$text|$roundedEpochMs';
+  }
+
+  Future<void> _clearGuestMessagesByKeys(List<String> keys) async {
+    final Set<String> uniqueKeys =
+        keys
+            .map(_normalizeGuestKey)
+            .where((String key) => key.isNotEmpty)
+            .toSet()
+          ..add(_canonicalGuestUserKey);
+    for (final String key in uniqueKeys) {
+      await _appSessionRepository.clearNumAiGuestMessages(userKey: key);
+    }
+  }
+
+  String _normalizeGuestKey(String? raw) {
+    return (raw ?? '').trim().toLowerCase();
   }
 
   String _buildGuestImportRequestId({

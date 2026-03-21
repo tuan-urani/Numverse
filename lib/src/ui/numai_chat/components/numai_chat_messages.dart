@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/ui/numai_chat/components/numai_chat_auto_scroll_policy.dart';
 import 'package:test/src/ui/numai_chat/components/numai_typewriter_text.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
 import 'package:test/src/ui/widgets/custom_circular_progress.dart';
@@ -14,6 +15,7 @@ class NumAiChatMessages extends StatefulWidget {
     required this.messages,
     required this.isLoading,
     required this.typingMessageId,
+    required this.onAssistantTypingCompleted,
     required this.onActionTap,
     required this.onQuickSuggestionTap,
     super.key,
@@ -22,6 +24,7 @@ class NumAiChatMessages extends StatefulWidget {
   final List<NumAiChatMessage> messages;
   final bool isLoading;
   final String? typingMessageId;
+  final ValueChanged<String> onAssistantTypingCompleted;
   final VoidCallback onActionTap;
   final ValueChanged<String> onQuickSuggestionTap;
 
@@ -30,7 +33,12 @@ class NumAiChatMessages extends StatefulWidget {
 }
 
 class _NumAiChatMessagesState extends State<NumAiChatMessages> {
+  static const double _nearBottomThreshold = 120;
+  static const double _bottomOffset = 48;
+
   late final ScrollController _scrollController;
+  bool _scrollScheduled = false;
+  NumAiChatAutoScrollMode _pendingScrollMode = NumAiChatAutoScrollMode.none;
 
   @override
   void initState() {
@@ -41,10 +49,26 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
   @override
   void didUpdateWidget(covariant NumAiChatMessages oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.messages.length != widget.messages.length ||
-        oldWidget.isLoading != widget.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-    }
+    final bool nearBottom = _isNearBottom();
+    final NumAiChatAutoScrollSnapshot previousSnapshot =
+        buildNumAiChatScrollSnapshot(
+          messages: oldWidget.messages,
+          isLoading: oldWidget.isLoading,
+          isNearBottom: nearBottom,
+          forceOnUserSend: true,
+        );
+    final NumAiChatAutoScrollSnapshot currentSnapshot =
+        buildNumAiChatScrollSnapshot(
+          messages: widget.messages,
+          isLoading: widget.isLoading,
+          isNearBottom: nearBottom,
+          forceOnUserSend: true,
+        );
+    final NumAiChatAutoScrollMode mode = decideNumAiChatAutoScroll(
+      previous: previousSnapshot,
+      current: currentSnapshot,
+    );
+    _queueScroll(mode);
   }
 
   @override
@@ -81,6 +105,7 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
             shouldAnimate:
                 message.role == NumAiChatMessageRole.assistant &&
                 message.id == widget.typingMessageId,
+            onAssistantTypingCompleted: widget.onAssistantTypingCompleted,
             onActionTap: widget.onActionTap,
             onSuggestionTap: widget.onQuickSuggestionTap,
           ),
@@ -89,12 +114,44 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
     );
   }
 
-  void _scrollToBottom() {
+  bool _isNearBottom() {
     if (!_scrollController.hasClients) {
+      return true;
+    }
+    final double distanceToBottom =
+        _scrollController.position.maxScrollExtent - _scrollController.offset;
+    return distanceToBottom <= _nearBottomThreshold;
+  }
+
+  void _queueScroll(NumAiChatAutoScrollMode mode) {
+    if (mode == NumAiChatAutoScrollMode.none) {
+      return;
+    }
+    _pendingScrollMode = mode;
+    if (_scrollScheduled) {
+      return;
+    }
+    _scrollScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollScheduled = false;
+      final NumAiChatAutoScrollMode pendingMode = _pendingScrollMode;
+      _pendingScrollMode = NumAiChatAutoScrollMode.none;
+      _applyScroll(pendingMode);
+    });
+  }
+
+  void _applyScroll(NumAiChatAutoScrollMode mode) {
+    if (!_scrollController.hasClients || mode == NumAiChatAutoScrollMode.none) {
+      return;
+    }
+    final double target =
+        _scrollController.position.maxScrollExtent + _bottomOffset;
+    if (mode == NumAiChatAutoScrollMode.jump) {
+      _scrollController.jumpTo(target);
       return;
     }
     _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent + 48,
+      target,
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
     );
@@ -233,12 +290,14 @@ class _MessageBubble extends StatefulWidget {
   const _MessageBubble({
     required this.message,
     required this.shouldAnimate,
+    required this.onAssistantTypingCompleted,
     required this.onActionTap,
     required this.onSuggestionTap,
   });
 
   final NumAiChatMessage message;
   final bool shouldAnimate;
+  final ValueChanged<String> onAssistantTypingCompleted;
   final VoidCallback onActionTap;
   final ValueChanged<String> onSuggestionTap;
 
@@ -271,6 +330,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
     if (_typingCompleted || !mounted) {
       return;
     }
+    widget.onAssistantTypingCompleted(widget.message.id);
     setState(() {
       _typingCompleted = true;
     });

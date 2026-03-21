@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -24,12 +26,16 @@ class SubscriptionBalanceCard extends StatelessWidget {
               color: AppColors.richGold.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(10),
-              child: Icon(
-                Icons.auto_awesome_rounded,
-                size: 21,
-                color: AppColors.richGold,
+              child: SvgPicture.asset(
+                AppAssets.iconCoinPng,
+                width: 21,
+                height: 21,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.richGold,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
           ),

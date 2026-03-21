@@ -4,8 +4,6 @@ import 'package:get/get.dart';
 
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/core/service/interface/i_daily_alarm_notification_service.dart';
-import 'package:test/src/locale/translation_manager.dart';
-import 'package:test/src/ui/settings/components/settings_appearance_card.dart';
 import 'package:test/src/ui/settings/components/settings_header.dart';
 import 'package:test/src/ui/settings/components/settings_sound_card.dart';
 import 'package:test/src/ui/settings/interactor/settings_bloc.dart';
@@ -46,25 +44,8 @@ class SettingsPage extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: Column(
                       children: <Widget>[
-                        SettingsAppearanceCard(
-                          state: state,
-                          onThemeChanged: (SettingsThemeMode mode) {
-                            bloc.add(SettingsThemeChanged(mode));
-                          },
-                          onLanguageChanged: (SettingsLanguage language) {
-                            bloc.add(SettingsLanguageChanged(language));
-                            _applyLocale(language);
-                          },
-                        ),
-                        const SizedBox(height: 16),
                         SettingsSoundCard(
                           state: state,
-                          onToggleSound: () {
-                            bloc.add(const SettingsSoundToggled());
-                          },
-                          onToggleNotifications: () {
-                            bloc.add(const SettingsNotificationsToggled());
-                          },
                           onToggleDailyAlarm: () {
                             bloc.add(const SettingsDailyAlarmToggled());
                           },
@@ -87,13 +68,5 @@ class SettingsPage extends StatelessWidget {
       return;
     }
     Get.offAllNamed(AppPages.main);
-  }
-
-  void _applyLocale(SettingsLanguage language) {
-    final Locale locale = switch (language) {
-      SettingsLanguage.vi => TranslationManager.appLocales[0],
-      SettingsLanguage.en => TranslationManager.appLocales[1],
-    };
-    Get.updateLocale(locale);
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
@@ -15,6 +15,7 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_dimensions.dart';
 import 'package:test/src/utils/app_pages.dart';
@@ -80,7 +81,7 @@ class TodayPersonalContent extends StatelessWidget {
             ),
             10.height,
             _InlineCtaRow(
-              icon: Icons.auto_awesome,
+              icon: Icons.lightbulb_outline_rounded,
               iconColor: AppColors.richGold.withValues(alpha: 0.65),
               lead: LocaleKey.todayPersonalInlineProfileLead.tr,
               action: LocaleKey.todayPersonalInlineProfileCta.tr,
@@ -533,6 +534,8 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
         );
         final double glowFactor = 0.82 + (0.38 * pulse);
         final double shimmerDx = (_ambientController.value * 2) - 1;
+        final double statsBorderAlpha = (0.22 + (0.26 * pulse)).clamp(0, 1);
+        final double statsGlowAlpha = (0.08 + (0.08 * pulse)).clamp(0, 1);
 
         return Stack(
           children: <Widget>[
@@ -603,143 +606,188 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                           padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
                           child: Column(
                             children: <Widget>[
-                              Row(
-                                children: <Widget>[
-                                  Expanded(
-                                    child: Row(
-                                      children: <Widget>[
-                                        _HeaderOrb(
-                                          size: 48,
-                                          glowColor: AppColors.richGold,
-                                          icon: Icons.bolt_rounded,
-                                          iconColor: AppColors.richGold,
-                                          glowFactor: glowFactor,
-                                        ),
-                                        10.width,
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            Text(
-                                              LocaleKey.todaySoulPoints.tr,
-                                              style: AppStyles.caption(
-                                                color: AppColors.textMuted,
-                                                fontWeight: FontWeight.w600,
-                                              ).copyWith(letterSpacing: 0.6),
-                                            ),
-                                            Text(
-                                              '${widget.soulPoints}',
-                                              style:
-                                                  AppStyles.h1(
-                                                    color: AppColors.richGold,
-                                                    fontWeight: FontWeight.w700,
-                                                  ).copyWith(
-                                                    height: 1,
-                                                    shadows: <Shadow>[
-                                                      Shadow(
-                                                        color: AppColors
-                                                            .richGold
-                                                            .withValues(
-                                                              alpha:
-                                                                  (0.32 +
-                                                                          (0.22 *
-                                                                              pulse))
-                                                                      .clamp(
-                                                                        0,
-                                                                        1,
-                                                                      ),
-                                                            ),
-                                                        blurRadius: 14,
-                                                      ),
-                                                    ],
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.fromLTRB(
+                                  10,
+                                  10,
+                                  10,
+                                  10,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.richGold.withValues(
+                                      alpha: statsBorderAlpha,
                                     ),
+                                    width: 1.2 + (0.4 * pulse),
                                   ),
-                                  Expanded(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: <Widget>[
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: <Widget>[
-                                            Text(
-                                              LocaleKey.todayDailyStreak.tr,
-                                              style: AppStyles.caption(
-                                                color: AppColors.textMuted,
-                                                fontWeight: FontWeight.w600,
-                                              ).copyWith(letterSpacing: 0.6),
-                                            ),
-                                            RichText(
-                                              text: TextSpan(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: <Color>[
+                                      AppColors.richGold.withValues(
+                                        alpha: 0.06 + (0.05 * pulse),
+                                      ),
+                                      AppColors.transparent,
+                                    ],
+                                  ),
+                                  boxShadow: <BoxShadow>[
+                                    BoxShadow(
+                                      color: AppColors.richGold.withValues(
+                                        alpha: statsGlowAlpha,
+                                      ),
+                                      blurRadius: 10 + (8 * pulse),
+                                      spreadRadius: 0.6,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: Row(
+                                        children: <Widget>[
+                                          _HeaderOrb(
+                                            size: 48,
+                                            glowColor: AppColors.richGold,
+                                            iconAsset: AppAssets.iconCoinPng,
+                                            iconSize: 22,
+                                            iconColor: AppColors.richGold,
+                                            glowFactor: glowFactor,
+                                          ),
+                                          10.width,
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Text(
+                                                LocaleKey.todaySoulPoints.tr,
+                                                style: AppStyles.caption(
+                                                  color: AppColors.textMuted,
+                                                  fontWeight: FontWeight.w600,
+                                                ).copyWith(letterSpacing: 0.6),
+                                              ),
+                                              Text(
+                                                '${widget.soulPoints}',
                                                 style:
                                                     AppStyles.h1(
-                                                      color:
-                                                          widget.currentStreak >
-                                                              0
-                                                          ? AppColors.richGold
-                                                          : AppColors.textMuted,
+                                                      color: AppColors.richGold,
                                                       fontWeight:
                                                           FontWeight.w700,
                                                     ).copyWith(
                                                       height: 1,
-                                                      shadows:
-                                                          widget.currentStreak >
-                                                              0
-                                                          ? <Shadow>[
-                                                              Shadow(
-                                                                color: AppColors
-                                                                    .richGold
-                                                                    .withValues(
-                                                                      alpha:
-                                                                          (0.3 +
-                                                                                  (0.2 * pulse))
-                                                                              .clamp(0, 1),
-                                                                    ),
-                                                                blurRadius: 12,
+                                                      shadows: <Shadow>[
+                                                        Shadow(
+                                                          color: AppColors
+                                                              .richGold
+                                                              .withValues(
+                                                                alpha:
+                                                                    (0.32 +
+                                                                            (0.22 * pulse))
+                                                                        .clamp(
+                                                                          0,
+                                                                          1,
+                                                                        ),
                                                               ),
-                                                            ]
-                                                          : null,
+                                                          blurRadius: 14,
+                                                        ),
+                                                      ],
                                                     ),
-                                                children: <TextSpan>[
-                                                  TextSpan(
-                                                    text:
-                                                        '${widget.currentStreak}',
-                                                  ),
-                                                  TextSpan(
-                                                    text:
-                                                        ' ${LocaleKey.todayCheckInDays.tr}',
-                                                    style: AppStyles.bodySmall(
-                                                      color:
-                                                          AppColors.textMuted,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        10.width,
-                                        _HeaderOrb(
-                                          size: 48,
-                                          glowColor: AppColors.energyOrange,
-                                          icon: Icons.local_fire_department,
-                                          iconColor: widget.currentStreak > 0
-                                              ? AppColors.energyOrange
-                                              : AppColors.textMuted,
-                                          active: widget.currentStreak > 0,
-                                          glowFactor: glowFactor,
-                                        ),
-                                      ],
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Expanded(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: <Widget>[
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: <Widget>[
+                                              Text(
+                                                LocaleKey.todayDailyStreak.tr,
+                                                style: AppStyles.caption(
+                                                  color: AppColors.textMuted,
+                                                  fontWeight: FontWeight.w600,
+                                                ).copyWith(letterSpacing: 0.6),
+                                              ),
+                                              RichText(
+                                                text: TextSpan(
+                                                  style:
+                                                      AppStyles.h1(
+                                                        color:
+                                                            widget.currentStreak >
+                                                                0
+                                                            ? AppColors.richGold
+                                                            : AppColors
+                                                                  .textMuted,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ).copyWith(
+                                                        height: 1,
+                                                        shadows:
+                                                            widget.currentStreak >
+                                                                0
+                                                            ? <Shadow>[
+                                                                Shadow(
+                                                                  color: AppColors
+                                                                      .richGold
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            (0.3 +
+                                                                                    (0.2 * pulse))
+                                                                                .clamp(
+                                                                                  0,
+                                                                                  1,
+                                                                                ),
+                                                                      ),
+                                                                  blurRadius: 12,
+                                                                ),
+                                                              ]
+                                                            : null,
+                                                      ),
+                                                  children: <TextSpan>[
+                                                    TextSpan(
+                                                      text:
+                                                          '${widget.currentStreak}',
+                                                    ),
+                                                    TextSpan(
+                                                      text:
+                                                          ' ${LocaleKey.todayCheckInDays.tr}',
+                                                      style:
+                                                          AppStyles.bodySmall(
+                                                            color: AppColors
+                                                                .textMuted,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          10.width,
+                                          _HeaderOrb(
+                                            size: 48,
+                                            glowColor: AppColors.energyOrange,
+                                            icon: Icons.local_fire_department,
+                                            iconColor:
+                                                widget.currentStreak > 0
+                                                ? AppColors.energyOrange
+                                                : AppColors.textMuted,
+                                            active: widget.currentStreak > 0,
+                                            glowFactor: glowFactor,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               10.height,
                               Material(
@@ -787,164 +835,141 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                           firstChild: const SizedBox.shrink(),
                           secondChild: Padding(
                             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.fromLTRB(
-                                    12,
-                                    10,
-                                    12,
-                                    10,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.richGold.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.richGold.withValues(
+                                    alpha: 0.2,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.richGold.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: AppColors.richGold.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Column(
+                                ),
+                              ),
+                              child: Column(
+                                children: <Widget>[
+                                  Row(
                                     children: <Widget>[
+                                      const Icon(
+                                        Icons.emoji_events_rounded,
+                                        size: 14,
+                                        color: AppColors.richGold,
+                                      ),
+                                      6.width,
+                                      Expanded(
+                                        child: Text(
+                                          '${LocaleKey.todayCheckInNextMilestone.tr}: ${nextMilestone.labelKey.tr}',
+                                          style: AppStyles.bodySmall(
+                                            color: AppColors.textPrimary
+                                                .withValues(alpha: 0.85),
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        '${widget.currentStreak}/${nextMilestone.day}',
+                                        style: AppStyles.bodySmall(
+                                          color: AppColors.richGold,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  8.height,
+                                  _ShimmerProgressBar(
+                                    progress: milestoneProgress,
+                                  ),
+                                  8.height,
+                                  Row(
+                                    children: <Widget>[
+                                      Expanded(
+                                        child: Text(
+                                          '${LocaleKey.todayCheckInDaysRemaining.tr} $daysUntilMilestone ${LocaleKey.todayCheckInDays.tr}',
+                                          style: AppStyles.caption(
+                                            color: AppColors.textMuted,
+                                          ),
+                                        ),
+                                      ),
                                       Row(
                                         children: <Widget>[
                                           const Icon(
-                                            Icons.emoji_events_rounded,
-                                            size: 14,
+                                            Icons.auto_awesome,
+                                            size: 12,
                                             color: AppColors.richGold,
                                           ),
-                                          6.width,
-                                          Expanded(
-                                            child: Text(
-                                              '${LocaleKey.todayCheckInNextMilestone.tr}: ${nextMilestone.labelKey.tr}',
-                                              style: AppStyles.bodySmall(
-                                                color: AppColors.textPrimary
-                                                    .withValues(alpha: 0.85),
-                                              ),
-                                            ),
-                                          ),
+                                          4.width,
                                           Text(
-                                            '${widget.currentStreak}/${nextMilestone.day}',
-                                            style: AppStyles.bodySmall(
+                                            '+${nextMilestone.reward} ${LocaleKey.todayRewardPointsSuffix.tr}',
+                                            style: AppStyles.caption(
                                               color: AppColors.richGold,
                                               fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      8.height,
-                                      _ShimmerProgressBar(
-                                        progress: milestoneProgress,
-                                      ),
-                                      8.height,
-                                      Row(
-                                        children: <Widget>[
-                                          Expanded(
-                                            child: Text(
-                                              '${LocaleKey.todayCheckInDaysRemaining.tr} $daysUntilMilestone ${LocaleKey.todayCheckInDays.tr}',
-                                              style: AppStyles.caption(
-                                                color: AppColors.textMuted,
-                                              ),
-                                            ),
+                                    ],
+                                  ),
+                                  10.height,
+                                  Container(
+                                    height: 1,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(999),
+                                      gradient: LinearGradient(
+                                        colors: <Color>[
+                                          AppColors.transparent,
+                                          AppColors.richGold.withValues(
+                                            alpha: 0.28,
                                           ),
-                                          Row(
-                                            children: <Widget>[
-                                              const Icon(
-                                                Icons.auto_awesome,
-                                                size: 12,
-                                                color: AppColors.richGold,
-                                              ),
-                                              4.width,
-                                              Text(
-                                                '+${nextMilestone.reward} ${LocaleKey.todayRewardPointsSuffix.tr}',
-                                                style: AppStyles.caption(
-                                                  color: AppColors.richGold,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                          AppColors.transparent,
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                10.height,
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    LocaleKey.todayCheckInMilestoneGridTitle.tr,
-                                    style: AppStyles.bodySmall(
-                                      color: AppColors.textPrimary.withValues(
-                                        alpha: 0.75,
-                                      ),
-                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                ),
-                                8.height,
-                                GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: _checkInMilestones.length,
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 4,
-                                        crossAxisSpacing: 8,
-                                        mainAxisSpacing: 8,
-                                        childAspectRatio: 0.95,
+                                  10.height,
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      LocaleKey.todayCheckInMilestoneGridTitle.tr,
+                                      style: AppStyles.bodySmall(
+                                        color: AppColors.textPrimary.withValues(
+                                          alpha: 0.75,
+                                        ),
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                  itemBuilder:
-                                      (BuildContext context, int index) {
-                                        final _CheckInMilestone milestone =
-                                            _checkInMilestones[index];
-                                        final bool isCompleted =
-                                            widget.currentStreak >=
-                                            milestone.day;
-                                        final bool isCurrent =
-                                            !isCompleted &&
-                                            milestone == nextMilestone;
-                                        return _MilestoneRewardTile(
-                                          milestone: milestone,
-                                          isCompleted: isCompleted,
-                                          isCurrent: isCurrent,
-                                        );
-                                      },
-                                ),
-                                10.height,
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.fromLTRB(
-                                    10,
-                                    10,
-                                    10,
-                                    10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.deepViolet.withValues(
-                                      alpha: 0.45,
                                     ),
-                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: Column(
-                                    children: <Widget>[
-                                      _TipRow(
-                                        text: LocaleKey
-                                            .todayCheckInTipKeepStreak
-                                            .tr,
-                                      ),
-                                      6.height,
-                                      _TipRow(
-                                        text: LocaleKey.todayCheckInTipReset.tr,
-                                      ),
-                                    ],
+                                  8.height,
+                                  GridView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: _checkInMilestones.length,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 8,
+                                          mainAxisSpacing: 8,
+                                          childAspectRatio: 2.1,
+                                        ),
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                          final _CheckInMilestone milestone =
+                                              _checkInMilestones[index];
+                                          final bool isCompleted =
+                                              widget.currentStreak >=
+                                              milestone.day;
+                                          final bool isCurrent =
+                                              !isCompleted &&
+                                              milestone == nextMilestone;
+                                          return _MilestoneRewardTile(
+                                            milestone: milestone,
+                                            isCompleted: isCompleted,
+                                            isCurrent: isCurrent,
+                                          );
+                                        },
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           crossFadeState: _isExpanded
@@ -969,16 +994,23 @@ class _HeaderOrb extends StatelessWidget {
   const _HeaderOrb({
     required this.size,
     required this.glowColor,
-    required this.icon,
-    required this.iconColor,
+    this.icon,
+    this.iconAsset,
+    this.iconColor = AppColors.richGold,
+    this.iconSize = 24,
     this.active = true,
     this.glowFactor = 1,
-  });
+  }) : assert(
+         icon != null || iconAsset != null,
+         '_HeaderOrb requires either icon or iconAsset.',
+       );
 
   final double size;
   final Color glowColor;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final Color iconColor;
+  final double iconSize;
   final bool active;
   final double glowFactor;
 
@@ -1006,6 +1038,7 @@ class _HeaderOrb extends StatelessWidget {
         Container(
           width: size,
           height: size,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
@@ -1023,7 +1056,14 @@ class _HeaderOrb extends StatelessWidget {
               width: 1.6,
             ),
           ),
-          child: Icon(icon, size: 24, color: iconColor),
+          child: iconAsset != null
+              ? SvgPicture.asset(
+                  iconAsset!,
+                  width: iconSize,
+                  height: iconSize,
+                  colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                )
+              : Icon(icon, size: iconSize, color: iconColor),
         ),
       ],
     );
@@ -1043,98 +1083,107 @@ class _MilestoneRewardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final BorderRadius borderRadius = BorderRadius.circular(12);
     final Color borderColor = isCompleted
-        ? AppColors.richGold.withValues(alpha: 0.4)
+        ? AppColors.richGold.withValues(alpha: 0.46)
         : isCurrent
-        ? AppColors.richGold.withValues(alpha: 0.35)
+        ? AppColors.goldBright.withValues(alpha: 0.58)
         : AppColors.border.withValues(alpha: 0.35);
-    final Color bgColor = isCompleted
-        ? AppColors.richGold.withValues(alpha: 0.1)
+    final Color startColor = isCompleted
+        ? AppColors.richGold.withValues(alpha: 0.16)
         : isCurrent
-        ? AppColors.richGold.withValues(alpha: 0.05)
+        ? AppColors.richGold.withValues(alpha: 0.11)
+        : AppColors.deepViolet.withValues(alpha: 0.3);
+    final Color endColor = isCompleted
+        ? AppColors.deepViolet.withValues(alpha: 0.42)
+        : isCurrent
+        ? AppColors.deepViolet.withValues(alpha: 0.36)
         : AppColors.deepViolet.withValues(alpha: 0.26);
+    final Color primaryTextColor = isCompleted || isCurrent
+        ? AppColors.textSecondary
+        : AppColors.textMuted;
+    final Color rewardColor = isCompleted || isCurrent
+        ? AppColors.richGold
+        : AppColors.textMuted;
+    final Color statusColor = isCompleted
+        ? AppColors.goldBright
+        : isCurrent
+        ? AppColors.richGold
+        : AppColors.textMuted;
+    final IconData statusIcon = isCompleted
+        ? Icons.check_rounded
+        : isCurrent
+        ? Icons.radio_button_checked_rounded
+        : Icons.lock_outline_rounded;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor, width: isCurrent ? 1.6 : 1),
+        borderRadius: borderRadius,
+        border: Border.all(color: borderColor, width: isCurrent ? 1.7 : 1),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[startColor, endColor],
+        ),
+        boxShadow: isCurrent
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.richGold.withValues(alpha: 0.14),
+                  blurRadius: 10,
+                  spreadRadius: 0.4,
+                ),
+              ]
+            : null,
       ),
-      child: Stack(
+      child: Row(
         children: <Widget>[
-          if (milestone.special)
-            const Positioned(
-              top: -2,
-              right: -2,
-              child: Icon(
-                Icons.auto_awesome,
-                size: 11,
-                color: AppColors.richGold,
-              ),
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: statusColor.withValues(alpha: 0.14),
+              border: Border.all(color: statusColor.withValues(alpha: 0.72)),
             ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                milestone.labelKey.tr,
-                textAlign: TextAlign.center,
-                style: AppStyles.caption(
-                  color: isCompleted ? AppColors.richGold : AppColors.textMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              4.height,
-              Text(
-                '+${milestone.reward}',
-                style: AppStyles.bodySmall(
-                  color: isCompleted || isCurrent
-                      ? AppColors.richGold
-                      : AppColors.textMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (isCompleted)
-                const Icon(Icons.check, size: 12, color: AppColors.richGold),
-            ],
+            child: Icon(statusIcon, size: 14, color: statusColor),
           ),
+          8.width,
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  milestone.labelKey.tr,
+                  style: AppStyles.bodySmall(
+                    color: primaryTextColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                2.height,
+                Text(
+                  '+${milestone.reward} ${LocaleKey.todayRewardPointsSuffix.tr}',
+                  style: AppStyles.caption(
+                    color: rewardColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (milestone.special)
+            const Icon(
+              Icons.auto_awesome_rounded,
+              size: 14,
+              color: AppColors.richGold,
+            ),
         ],
       ),
-    );
-  }
-}
-
-class _TipRow extends StatelessWidget {
-  const _TipRow({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Container(
-            width: 4,
-            height: 4,
-            decoration: const BoxDecoration(
-              color: AppColors.richGold,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-        8.width,
-        Expanded(
-          child: Text(
-            text,
-            style: AppStyles.caption(color: AppColors.textMuted),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1870,7 +1919,6 @@ class _LuckyAngelGrid extends StatelessWidget {
           child: _TeaserNumberCard(
             intro: LocaleKey.todayPersonalLuckyIntro.tr,
             value: '$luckyNumber',
-            valueFontSize: 30,
             hint: LocaleKey.todayPersonalLuckyHint.tr,
             cta: LocaleKey.todayPersonalLuckyCta.tr,
             onTap: onLuckyTap,
@@ -1896,7 +1944,6 @@ class _TeaserNumberCard extends StatelessWidget {
   const _TeaserNumberCard({
     required this.intro,
     required this.value,
-    this.valueFontSize = 40,
     required this.hint,
     required this.cta,
     required this.onTap,
@@ -1904,7 +1951,6 @@ class _TeaserNumberCard extends StatelessWidget {
 
   final String intro;
   final String value;
-  final double valueFontSize;
   final String hint;
   final String cta;
   final VoidCallback onTap;
@@ -1929,7 +1975,7 @@ class _TeaserNumberCard extends StatelessWidget {
           AppGlowText(
             text: value,
             style: AppStyles.numberMedium().copyWith(
-              fontSize: valueFontSize,
+              fontSize: 40,
               height: 1.06,
             ),
           ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
@@ -10,6 +11,7 @@ import 'package:test/src/ui/main/interactor/main_session_error_resolver.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -113,9 +115,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         children: <Widget>[
           const _OnboardingOrbIcon(
-            icon: Icons.auto_awesome_rounded,
+            iconAsset: AppAssets.iconCalendarSvg,
             size: 128,
-            iconSize: 62,
+            iconSize: 56,
           ),
           32.height,
           AppGlowText(
@@ -149,9 +151,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         children: <Widget>[
           const _OnboardingOrbIcon(
-            icon: Icons.tag_rounded,
+            iconAsset: AppAssets.iconSelfSvg,
             size: 104,
-            iconSize: 48,
+            iconSize: 40,
           ),
           26.height,
           Text(
@@ -161,19 +163,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
               fontWeight: FontWeight.w700,
             ).copyWith(fontSize: 30, height: 1.23),
           ),
-          12.height,
-          Text(
-            LocaleKey.onboardingValueSubtitle.tr,
-            textAlign: TextAlign.center,
-            style: AppStyles.bodyMedium(color: AppColors.textMuted),
-          ),
-          24.height,
+          20.height,
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
                 child: _OnboardingFeatureItem(
-                  icon: Icons.tag_rounded,
+                  iconText: '12',
                   label: LocaleKey.onboardingValueFeatureCore.tr,
                 ),
               ),
@@ -187,7 +183,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               10.width,
               Expanded(
                 child: _OnboardingFeatureItem(
-                  icon: Icons.auto_awesome_rounded,
+                  icon: Icons.bolt_rounded,
                   label: LocaleKey.onboardingValueFeatureEnergy.tr,
                 ),
               ),
@@ -215,15 +211,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               fontWeight: FontWeight.w700,
             ).copyWith(fontSize: 30, height: 1.23),
           ),
-          10.height,
-          Text(
-            LocaleKey.onboardingUseCaseSubtitle.tr,
-            textAlign: TextAlign.center,
-            style: AppStyles.bodyMedium(color: AppColors.textMuted),
-          ),
-          22.height,
+          20.height,
           _OnboardingUseCaseCard(
-            icon: Icons.favorite_rounded,
+            iconAsset: AppAssets.iconLoveSvg,
             iconColor: AppColors.energyPink,
             iconBackgroundColor: AppColors.energyPink.withValues(alpha: 0.16),
             iconBorderColor: AppColors.energyPink.withValues(alpha: 0.35),
@@ -232,7 +222,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           10.height,
           _OnboardingUseCaseCard(
-            icon: Icons.trending_up_rounded,
+            iconAsset: AppAssets.iconCareerSvg,
             iconColor: AppColors.energyBlue,
             iconBackgroundColor: AppColors.energyBlue.withValues(alpha: 0.16),
             iconBorderColor: AppColors.energyBlue.withValues(alpha: 0.35),
@@ -266,12 +256,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       key: const ValueKey<int>(3),
       child: Column(
         children: <Widget>[
-          const _OnboardingOrbIcon(
-            icon: Icons.auto_awesome_rounded,
-            size: 88,
-            iconSize: 42,
-          ),
-          24.height,
           Text(
             LocaleKey.onboardingProfileTitle.tr,
             textAlign: TextAlign.center,
@@ -701,12 +685,14 @@ class _OnboardingProgressDots extends StatelessWidget {
 
 class _OnboardingOrbIcon extends StatelessWidget {
   const _OnboardingOrbIcon({
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.size,
     required this.iconSize,
-  });
+  }) : assert(icon != null || iconAsset != null);
 
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final double size;
   final double iconSize;
 
@@ -749,7 +735,21 @@ class _OnboardingOrbIcon extends StatelessWidget {
                 color: AppColors.richGold.withValues(alpha: 0.25),
               ),
             ),
-            child: Icon(icon, size: iconSize, color: AppColors.richGold),
+            child: Center(
+              child: SizedBox.square(
+                dimension: iconSize,
+                child: iconAsset == null
+                    ? Icon(icon, size: iconSize, color: AppColors.richGold)
+                    : SvgPicture.asset(
+                        iconAsset!,
+                        fit: BoxFit.contain,
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.richGold,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+              ),
+            ),
           ),
         ],
       ),
@@ -833,9 +833,16 @@ class _OnboardingPrimaryButton extends StatelessWidget {
 }
 
 class _OnboardingFeatureItem extends StatelessWidget {
-  const _OnboardingFeatureItem({required this.icon, required this.label});
+  const _OnboardingFeatureItem({
+    this.icon,
+    this.iconAsset,
+    this.iconText,
+    required this.label,
+  }) : assert(icon != null || iconAsset != null || iconText != null);
 
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
+  final String? iconText;
   final String label;
 
   @override
@@ -859,7 +866,24 @@ class _OnboardingFeatureItem extends StatelessWidget {
               color: AppColors.richGold.withValues(alpha: 0.25),
             ),
           ),
-          child: Icon(icon, color: AppColors.richGold, size: 28),
+          child: iconText != null
+              ? Center(
+                  child: Text(
+                    iconText!,
+                    style: AppStyles.numberSmall(color: AppColors.richGold),
+                  ),
+                )
+              : iconAsset == null
+              ? Icon(icon, color: AppColors.richGold, size: 28)
+              : SvgPicture.asset(
+                  iconAsset!,
+                  width: 28,
+                  height: 28,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.richGold,
+                    BlendMode.srcIn,
+                  ),
+                ),
         ),
         8.height,
         Text(
@@ -874,15 +898,17 @@ class _OnboardingFeatureItem extends StatelessWidget {
 
 class _OnboardingUseCaseCard extends StatelessWidget {
   const _OnboardingUseCaseCard({
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.iconColor,
     required this.iconBackgroundColor,
     required this.iconBorderColor,
     required this.title,
     required this.subtitle,
-  });
+  }) : assert(icon != null || iconAsset != null);
 
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final Color iconColor;
   final Color iconBackgroundColor;
   final Color iconBorderColor;
@@ -917,7 +943,21 @@ class _OnboardingUseCaseCard extends StatelessWidget {
               child: SizedBox(
                 width: 46,
                 height: 46,
-                child: Icon(icon, color: iconColor, size: 24),
+                child: Center(
+                  child: SizedBox.square(
+                    dimension: 24,
+                    child: iconAsset == null
+                        ? Icon(icon, color: iconColor, size: 24)
+                        : SvgPicture.asset(
+                            iconAsset!,
+                            fit: BoxFit.contain,
+                            colorFilter: ColorFilter.mode(
+                              iconColor,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                  ),
+                ),
               ),
             ),
             12.width,
@@ -1003,8 +1043,8 @@ class _OnboardingTextField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: AppColors.border.withValues(alpha: 0.7),
-            width: 1.1,
+            color: AppColors.white.withValues(alpha: 0.34),
+            width: 1.2,
           ),
         ),
         enabledBorder: OutlineInputBorder(
@@ -1012,15 +1052,17 @@ class _OnboardingTextField extends StatelessWidget {
           borderSide: BorderSide(
             color: hasError
                 ? AppColors.error.withValues(alpha: 0.9)
-                : AppColors.border.withValues(alpha: 0.7),
-            width: 1.1,
+                : AppColors.white.withValues(alpha: 0.46),
+            width: 1.3,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: hasError ? AppColors.error : AppColors.richGold,
-            width: 1.4,
+            color: hasError
+                ? AppColors.error
+                : AppColors.white.withValues(alpha: 0.86),
+            width: 1.6,
           ),
         ),
       ),

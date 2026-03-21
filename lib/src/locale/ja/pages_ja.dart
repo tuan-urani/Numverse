@@ -33,7 +33,7 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.compatibilityStartNeedMorePointsCta:
       '比較にはあと @points ポイント必要です。さらに獲得',
   PagesLocaleKey.compatibilityHistoryTitle: '比較履歴',
-  PagesLocaleKey.compatibilityHistorySubtitle: '項目をタップするとポイント消費なしで再表示できます。',
+  PagesLocaleKey.compatibilityHistorySubtitle: 'タップして詳細を見る',
   PagesLocaleKey.compatibilityHistoryEmpty: 'まだ比較履歴がありません。最初の比較を始めましょう。',
   PagesLocaleKey.compatibilityAddDialogTitle: '新しいプロフィールを追加',
   PagesLocaleKey.compatibilityAddDialogNameLabel: '名前',
@@ -293,7 +293,7 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.settingsSoundEffectsTitle: '効果音',
   PagesLocaleKey.settingsPushNotificationsTitle: 'プッシュ通知',
   PagesLocaleKey.settingsPushNotificationsSubtitle: '鑑定更新とプロモーションを受け取る',
-  PagesLocaleKey.settingsDailyAlarmTitle: '8:00 毎日のエネルギー通知',
+  PagesLocaleKey.settingsDailyAlarmTitle: 'リマインダー',
   PagesLocaleKey.settingsDailyAlarmSubtitle: '8:00 にアプリを開いて今日のエネルギーを確認するリマインド',
   PagesLocaleKey.settingsOn: 'オン',
   PagesLocaleKey.settingsOff: 'オフ',

@@ -16,8 +16,6 @@ void main() {
         home: Scaffold(
           body: SettingsSoundCard(
             state: SettingsState.initial(),
-            onToggleSound: () {},
-            onToggleNotifications: () {},
             onToggleDailyAlarm: () {
               didToggleDailyAlarm = true;
             },
@@ -26,7 +24,8 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byType(InkWell).at(2));
+    expect(find.byType(InkWell), findsOneWidget);
+    await tester.tap(find.byType(InkWell).first);
     await tester.pumpAndSettle();
 
     expect(didToggleDailyAlarm, isTrue);

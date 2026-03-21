@@ -1,10 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_dimensions.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -12,13 +14,29 @@ import 'package:test/src/utils/app_styles.dart';
 class AppBottomNavItem {
   const AppBottomNavItem({
     required this.labelKey,
-    required this.icon,
-    required this.activeIcon,
-  });
+    this.icon,
+    this.activeIcon,
+    this.iconAsset,
+    this.activeIconAsset,
+  }) : assert(
+         icon != null || iconAsset != null,
+         'AppBottomNavItem requires icon or iconAsset.',
+       ),
+       assert(
+         activeIcon != null || activeIconAsset != null,
+         'AppBottomNavItem requires activeIcon or activeIconAsset.',
+       );
 
   final String labelKey;
-  final IconData icon;
-  final IconData activeIcon;
+  final IconData? icon;
+  final IconData? activeIcon;
+  final String? iconAsset;
+  final String? activeIconAsset;
+
+  IconData? iconData(bool isActive) => isActive ? (activeIcon ?? icon) : icon;
+
+  String? assetPath(bool isActive) =>
+      isActive ? (activeIconAsset ?? iconAsset) : iconAsset;
 }
 
 class AppBottomNavBar extends StatelessWidget {
@@ -94,9 +112,10 @@ class AppBottomNavBar extends StatelessWidget {
                         ) {
                           final bool isActive = entry.key == currentIndex;
                           final AppBottomNavItem item = entry.value;
-                          final IconData currentIcon = isActive
-                              ? item.activeIcon
-                              : item.icon;
+                          final IconData? currentIcon = item.iconData(isActive);
+                          final String? currentIconAsset = item.assetPath(
+                            isActive,
+                          );
 
                           return Expanded(
                             child: InkWell(
@@ -136,6 +155,27 @@ class AppBottomNavBar extends StatelessWidget {
                                                 ),
                                               ]
                                             : const <Shadow>[];
+                                        final Widget iconWidget =
+                                            currentIconAsset != null
+                                            ? SvgPicture.asset(
+                                                currentIconAsset,
+                                                width: AppDimensions.iconMedium,
+                                                height:
+                                                    AppDimensions.iconMedium,
+                                                colorFilter: ColorFilter.mode(
+                                                  foregroundColor,
+                                                  BlendMode.srcIn,
+                                                ),
+                                              )
+                                            : IconTheme(
+                                                data: IconThemeData(
+                                                  size:
+                                                      AppDimensions.iconMedium,
+                                                  color: foregroundColor,
+                                                  shadows: iconShadows,
+                                                ),
+                                                child: Icon(currentIcon),
+                                              );
 
                                         return Column(
                                           mainAxisAlignment:
@@ -163,15 +203,7 @@ class AppBottomNavBar extends StatelessWidget {
                                                         ),
                                                       ),
                                                     ),
-                                                  IconTheme(
-                                                    data: IconThemeData(
-                                                      size: AppDimensions
-                                                          .iconMedium,
-                                                      color: foregroundColor,
-                                                      shadows: iconShadows,
-                                                    ),
-                                                    child: Icon(currentIcon),
-                                                  ),
+                                                  iconWidget,
                                                 ],
                                               ),
                                             ),
@@ -232,13 +264,13 @@ class AppBottomNavBar extends StatelessWidget {
 List<AppBottomNavItem> buildMainBottomNavItems() => const <AppBottomNavItem>[
   AppBottomNavItem(
     labelKey: LocaleKey.mainTabToday,
-    icon: Icons.home_outlined,
-    activeIcon: Icons.home_outlined,
+    iconAsset: AppAssets.iconTodaySvg,
+    activeIconAsset: AppAssets.iconTodaySvg,
   ),
   AppBottomNavItem(
     labelKey: LocaleKey.mainTabCompatibility,
-    icon: Icons.favorite_border_rounded,
-    activeIcon: Icons.favorite_border_rounded,
+    iconAsset: AppAssets.iconCompatibilitySvg,
+    activeIconAsset: AppAssets.iconCompatibilitySvg,
   ),
   AppBottomNavItem(
     labelKey: LocaleKey.mainTabNumAi,

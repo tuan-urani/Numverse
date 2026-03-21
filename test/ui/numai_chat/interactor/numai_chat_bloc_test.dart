@@ -35,8 +35,11 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
         messages: <CloudNumAiThreadMessage>[],
       );
   Object? fetchThreadMessagesError;
+  final List<Object> fetchThreadMessagesErrorQueue = <Object>[];
+  int fetchThreadMessagesCallCount = 0;
   Object? importGuestHistoryError;
   int importGuestHistoryCallCount = 0;
+  int ensureAnonymousSessionCallCount = 0;
 
   @override
   bool get isConfigured => configured;
@@ -45,7 +48,9 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
   String? get currentUserId => currentUserIdValue;
 
   @override
-  Future<void> ensureAnonymousSession() async {}
+  Future<void> ensureAnonymousSession() async {
+    ensureAnonymousSessionCallCount += 1;
+  }
 
   @override
   Future<bool> refreshAccessTokenIfNeeded() async {
@@ -209,6 +214,10 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
     String? threadId,
     int limit = 50,
   }) async {
+    fetchThreadMessagesCallCount += 1;
+    if (fetchThreadMessagesErrorQueue.isNotEmpty) {
+      throw fetchThreadMessagesErrorQueue.removeAt(0);
+    }
     if (fetchThreadMessagesError != null) {
       throw fetchThreadMessagesError!;
     }
@@ -244,6 +253,7 @@ class _FakeAppSessionRepository implements IAppSessionRepository {
   int saveGuestMessagesCallCount = 0;
   int clearGuestMessagesCallCount = 0;
   String? lastClearedUserKey;
+  String? lastGuestUserKey;
 
   @override
   Future<AppSessionSnapshot> loadSnapshot() async {
@@ -283,6 +293,21 @@ class _FakeAppSessionRepository implements IAppSessionRepository {
   }
 
   @override
+  Future<String?> loadLastNumAiGuestUserKey() async {
+    return lastGuestUserKey;
+  }
+
+  @override
+  Future<void> saveLastNumAiGuestUserKey({required String userKey}) async {
+    lastGuestUserKey = userKey;
+  }
+
+  @override
+  Future<void> clearLastNumAiGuestUserKey() async {
+    lastGuestUserKey = null;
+  }
+
+  @override
   Future<void> clear() async {
     throw UnimplementedError();
   }
@@ -291,6 +316,7 @@ class _FakeAppSessionRepository implements IAppSessionRepository {
 Future<void> _loadHistoryAndWait({
   required NumAiChatBloc bloc,
   required bool hasCloudSession,
+  required bool isAnonymousUser,
   required String? profileId,
   required String? cloudUserId,
 }) async {
@@ -299,6 +325,7 @@ Future<void> _loadHistoryAndWait({
   );
   bloc.loadCloudHistory(
     hasCloudSession: hasCloudSession,
+    isAnonymousUser: isAnonymousUser,
     profileId: profileId,
     cloudUserId: cloudUserId,
     forceRefresh: true,
@@ -358,6 +385,7 @@ void main() {
           rawMessage: 'hello',
           hasProfile: false,
           hasCloudSession: true,
+          isAnonymousUser: true,
           profileId: null,
           cloudUserId: 'u1',
           locale: 'vi',
@@ -373,8 +401,138 @@ void main() {
         expect(bloc.state.messages.first.content, 'hello');
         expect(bloc.state.messages.last.role, NumAiChatMessageRole.assistant);
         expect(bloc.state.messages.last.content, 'assistant reply');
-        expect(appSessionRepository.saveGuestMessagesCallCount, 1);
+        expect(appSessionRepository.saveGuestMessagesCallCount, 2);
+        expect(appSessionRepository.lastGuestUserKey, 'u1');
         expect(syncedSoulPoints, 17);
+
+        await bloc.close();
+      },
+    );
+
+    test(
+      'completeTypingMessage clears typingMessageId when messageId matches',
+      () async {
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..guestSendResult = _buildSendResult(
+                assistantText: 'assistant reply',
+              );
+        final _FakeAppSessionRepository appSessionRepository =
+            _FakeAppSessionRepository();
+        final NumAiChatBloc bloc = NumAiChatBloc(
+          cloudAccountRepository: cloudRepository,
+          appSessionRepository: appSessionRepository,
+        );
+
+        final bool sent = await bloc.sendMessage(
+          rawMessage: 'hello',
+          hasProfile: false,
+          hasCloudSession: true,
+          isAnonymousUser: true,
+          profileId: null,
+          cloudUserId: 'u1',
+          locale: 'vi',
+          deductSoulPoints: _deductShouldNotBeCalled,
+          syncSoulPoints: _syncNoop,
+        );
+
+        expect(sent, isTrue);
+        final String typingMessageId = bloc.state.typingMessageId ?? '';
+        expect(typingMessageId, isNotEmpty);
+
+        final Future<NumAiChatState> clearedState = bloc.stream.firstWhere(
+          (NumAiChatState state) => state.typingMessageId == null,
+        );
+        bloc.completeTypingMessage(typingMessageId);
+        await clearedState;
+
+        expect(bloc.state.typingMessageId, isNull);
+
+        await bloc.close();
+      },
+    );
+
+    test(
+      'completeTypingMessage keeps state when messageId does not match',
+      () async {
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..guestSendResult = _buildSendResult(
+                assistantText: 'assistant reply',
+              );
+        final _FakeAppSessionRepository appSessionRepository =
+            _FakeAppSessionRepository();
+        final NumAiChatBloc bloc = NumAiChatBloc(
+          cloudAccountRepository: cloudRepository,
+          appSessionRepository: appSessionRepository,
+        );
+
+        final bool sent = await bloc.sendMessage(
+          rawMessage: 'hello',
+          hasProfile: false,
+          hasCloudSession: true,
+          isAnonymousUser: true,
+          profileId: null,
+          cloudUserId: 'u1',
+          locale: 'vi',
+          deductSoulPoints: _deductShouldNotBeCalled,
+          syncSoulPoints: _syncNoop,
+        );
+
+        expect(sent, isTrue);
+        final String typingMessageId = bloc.state.typingMessageId ?? '';
+        expect(typingMessageId, isNotEmpty);
+
+        bloc.completeTypingMessage('non-matching-id');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(bloc.state.typingMessageId, typingMessageId);
+
+        await bloc.close();
+      },
+    );
+
+    test(
+      'completeTypingMessage is idempotent when called multiple times',
+      () async {
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..guestSendResult = _buildSendResult(
+                assistantText: 'assistant reply',
+              );
+        final _FakeAppSessionRepository appSessionRepository =
+            _FakeAppSessionRepository();
+        final NumAiChatBloc bloc = NumAiChatBloc(
+          cloudAccountRepository: cloudRepository,
+          appSessionRepository: appSessionRepository,
+        );
+
+        final bool sent = await bloc.sendMessage(
+          rawMessage: 'hello',
+          hasProfile: false,
+          hasCloudSession: true,
+          isAnonymousUser: true,
+          profileId: null,
+          cloudUserId: 'u1',
+          locale: 'vi',
+          deductSoulPoints: _deductShouldNotBeCalled,
+          syncSoulPoints: _syncNoop,
+        );
+
+        expect(sent, isTrue);
+        final String typingMessageId = bloc.state.typingMessageId ?? '';
+        expect(typingMessageId, isNotEmpty);
+
+        final Future<NumAiChatState> clearedState = bloc.stream.firstWhere(
+          (NumAiChatState state) => state.typingMessageId == null,
+        );
+        bloc.completeTypingMessage(typingMessageId);
+        await clearedState;
+        expect(bloc.state.typingMessageId, isNull);
+
+        bloc.completeTypingMessage(typingMessageId);
+        await Future<void>.delayed(Duration.zero);
+        expect(bloc.state.typingMessageId, isNull);
 
         await bloc.close();
       },
@@ -406,6 +564,7 @@ void main() {
       await _loadHistoryAndWait(
         bloc: bloc,
         hasCloudSession: true,
+        isAnonymousUser: true,
         profileId: null,
         cloudUserId: 'u1',
       );
@@ -416,6 +575,7 @@ void main() {
         rawMessage: 'new message',
         hasProfile: false,
         hasCloudSession: true,
+        isAnonymousUser: true,
         profileId: null,
         cloudUserId: 'u1',
         locale: 'vi',
@@ -461,6 +621,7 @@ void main() {
       await _loadHistoryAndWait(
         bloc: bloc,
         hasCloudSession: true,
+        isAnonymousUser: false,
         profileId: 'profile-1',
         cloudUserId: 'u1',
       );
@@ -471,6 +632,7 @@ void main() {
         rawMessage: 'ask profile',
         hasProfile: true,
         hasCloudSession: true,
+        isAnonymousUser: false,
         profileId: 'profile-1',
         cloudUserId: 'u1',
         locale: 'vi',
@@ -502,6 +664,7 @@ void main() {
           rawMessage: 'ask',
           hasProfile: false,
           hasCloudSession: true,
+          isAnonymousUser: true,
           profileId: null,
           cloudUserId: 'u1',
           locale: 'vi',
@@ -541,13 +704,18 @@ void main() {
       await _loadHistoryAndWait(
         bloc: bloc,
         hasCloudSession: true,
+        isAnonymousUser: true,
         profileId: 'profile-1',
         cloudUserId: 'u1',
       );
 
       expect(cloudRepository.importGuestHistoryCallCount, 1);
-      expect(appSessionRepository.clearGuestMessagesCallCount, 1);
-      expect(appSessionRepository.lastClearedUserKey, 'u1');
+      expect(
+        appSessionRepository.clearGuestMessagesCallCount,
+        greaterThanOrEqualTo(2),
+      );
+      expect(appSessionRepository.guestMessagesByUserKey['u1'], isNull);
+      expect(appSessionRepository.guestMessagesByUserKey['local'], isNull);
 
       await bloc.close();
     });
@@ -577,6 +745,7 @@ void main() {
       await _loadHistoryAndWait(
         bloc: bloc,
         hasCloudSession: true,
+        isAnonymousUser: true,
         profileId: 'profile-1',
         cloudUserId: 'u1',
       );
@@ -605,6 +774,7 @@ void main() {
           rawMessage: 'blocked',
           hasProfile: false,
           hasCloudSession: true,
+          isAnonymousUser: true,
           profileId: null,
           cloudUserId: 'u1',
           locale: 'vi',
@@ -619,6 +789,189 @@ void main() {
         expect(deductCalled, isFalse);
         expect(bloc.state.messages, isEmpty);
         expect(appSessionRepository.saveGuestMessagesCallCount, 0);
+
+        await bloc.close();
+      },
+    );
+
+    test('guest history merges canonical local + last guest key', () async {
+      final DateTime now = DateTime.now();
+      final _FakeCloudAccountRepository cloudRepository =
+          _FakeCloudAccountRepository();
+      final _FakeAppSessionRepository appSessionRepository =
+          _FakeAppSessionRepository()
+            ..lastGuestUserKey = 'old-key'
+            ..guestMessagesByUserKey['local'] = <LocalNumAiGuestMessage>[
+              LocalNumAiGuestMessage(
+                id: 'm-local',
+                senderType: 'user',
+                messageText: 'from local',
+                createdAt: now.subtract(const Duration(minutes: 2)),
+                followUpSuggestions: const <String>[],
+                requiresProfileInfo: false,
+              ),
+            ]
+            ..guestMessagesByUserKey['old-key'] = <LocalNumAiGuestMessage>[
+              LocalNumAiGuestMessage(
+                id: 'm-old',
+                senderType: 'assistant',
+                messageText: 'from old key',
+                createdAt: now.subtract(const Duration(minutes: 1)),
+                followUpSuggestions: const <String>[],
+                requiresProfileInfo: false,
+              ),
+            ];
+      final NumAiChatBloc bloc = NumAiChatBloc(
+        cloudAccountRepository: cloudRepository,
+        appSessionRepository: appSessionRepository,
+      );
+
+      await _loadHistoryAndWait(
+        bloc: bloc,
+        hasCloudSession: true,
+        isAnonymousUser: true,
+        profileId: null,
+        cloudUserId: 'new-key',
+      );
+
+      expect(bloc.state.messages.length, 2);
+      expect(bloc.state.messages.first.content, 'from local');
+      expect(bloc.state.messages.last.content, 'from old key');
+
+      await bloc.close();
+    });
+
+    test(
+      'profile history keeps local fallback when cloud fetch fails',
+      () async {
+        final DateTime now = DateTime.now();
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..fetchThreadMessagesError = StateError('network_error');
+        final _FakeAppSessionRepository appSessionRepository =
+            _FakeAppSessionRepository()
+              ..guestMessagesByUserKey['local'] = <LocalNumAiGuestMessage>[
+                LocalNumAiGuestMessage(
+                  id: 'fallback-1',
+                  senderType: 'assistant',
+                  messageText: 'fallback local message',
+                  createdAt: now.subtract(const Duration(minutes: 1)),
+                  followUpSuggestions: const <String>[],
+                  requiresProfileInfo: false,
+                ),
+              ];
+        final NumAiChatBloc bloc = NumAiChatBloc(
+          cloudAccountRepository: cloudRepository,
+          appSessionRepository: appSessionRepository,
+        );
+
+        await _loadHistoryAndWait(
+          bloc: bloc,
+          hasCloudSession: true,
+          isAnonymousUser: true,
+          profileId: 'profile-1',
+          cloudUserId: 'u1',
+        );
+
+        expect(bloc.state.messages, isNotEmpty);
+        expect(bloc.state.messages.first.content, 'fallback local message');
+
+        await bloc.close();
+      },
+    );
+
+    test(
+      'anonymous profile history retries after unauthorized with ensureAnonymousSession',
+      () async {
+        final DateTime now = DateTime.now();
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..fetchThreadMessagesErrorQueue.add(StateError('unauthorized'))
+              ..fetchThreadMessagesResult = CloudNumAiThreadMessagesResult(
+                threadId: 'thread-ok',
+                messages: <CloudNumAiThreadMessage>[
+                  CloudNumAiThreadMessage(
+                    id: 'cloud-ok',
+                    senderType: 'assistant',
+                    messageText: 'cloud recovered',
+                    createdAt: now,
+                    followUpSuggestions: const <String>[],
+                    fallbackReason: null,
+                    requiresProfileInfo: false,
+                  ),
+                ],
+              );
+        final _FakeAppSessionRepository appSessionRepository =
+            _FakeAppSessionRepository();
+        final NumAiChatBloc bloc = NumAiChatBloc(
+          cloudAccountRepository: cloudRepository,
+          appSessionRepository: appSessionRepository,
+        );
+
+        await _loadHistoryAndWait(
+          bloc: bloc,
+          hasCloudSession: true,
+          isAnonymousUser: true,
+          profileId: 'profile-1',
+          cloudUserId: 'u1',
+        );
+
+        expect(cloudRepository.ensureAnonymousSessionCallCount, 1);
+        expect(cloudRepository.fetchThreadMessagesCallCount, 2);
+        expect(bloc.state.messages.last.content, 'cloud recovered');
+
+        await bloc.close();
+      },
+    );
+
+    test(
+      'profile to profile transition clears A history when B fetch fails',
+      () async {
+        final DateTime now = DateTime.now();
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..fetchThreadMessagesResult = CloudNumAiThreadMessagesResult(
+                threadId: 'thread-a',
+                messages: <CloudNumAiThreadMessage>[
+                  CloudNumAiThreadMessage(
+                    id: 'a-1',
+                    senderType: 'assistant',
+                    messageText: 'history of profile A',
+                    createdAt: now.subtract(const Duration(minutes: 1)),
+                    followUpSuggestions: const <String>[],
+                    fallbackReason: null,
+                    requiresProfileInfo: false,
+                  ),
+                ],
+              );
+        final _FakeAppSessionRepository appSessionRepository =
+            _FakeAppSessionRepository();
+        final NumAiChatBloc bloc = NumAiChatBloc(
+          cloudAccountRepository: cloudRepository,
+          appSessionRepository: appSessionRepository,
+        );
+
+        await _loadHistoryAndWait(
+          bloc: bloc,
+          hasCloudSession: true,
+          isAnonymousUser: false,
+          profileId: 'profile-a',
+          cloudUserId: 'u1',
+        );
+        expect(bloc.state.messages.length, 1);
+        expect(bloc.state.messages.first.content, 'history of profile A');
+
+        cloudRepository.fetchThreadMessagesError = StateError('network_error');
+        await _loadHistoryAndWait(
+          bloc: bloc,
+          hasCloudSession: true,
+          isAnonymousUser: false,
+          profileId: 'profile-b',
+          cloudUserId: 'u1',
+        );
+
+        expect(bloc.state.activeProfileId, 'profile-b');
+        expect(bloc.state.messages, isEmpty);
 
         await bloc.close();
       },

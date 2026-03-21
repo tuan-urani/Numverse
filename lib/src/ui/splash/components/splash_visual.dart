@@ -2,24 +2,22 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class SplashVisual extends StatelessWidget {
   const SplashVisual({
-    required this.outerRingAnimation,
-    required this.middleRingAnimation,
     required this.glowAnimation,
     required this.dotAnimation,
     super.key,
   });
 
-  final Animation<double> outerRingAnimation;
-  final Animation<double> middleRingAnimation;
   final Animation<double> glowAnimation;
   final Animation<double> dotAnimation;
 
@@ -50,8 +48,6 @@ class SplashVisual extends StatelessWidget {
         ),
         Center(
           child: _CenterBrandSection(
-            outerRingAnimation: outerRingAnimation,
-            middleRingAnimation: middleRingAnimation,
             glowAnimation: glowAnimation,
             dotAnimation: dotAnimation,
           ),
@@ -75,14 +71,15 @@ class _BackgroundGradient extends StatelessWidget {
     return const DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: <Color>[
             AppColors.midnight,
+            AppColors.cosmicIndigo,
             AppColors.deepViolet,
-            AppColors.midnight,
+            AppColors.midnightSoft,
           ],
-          stops: <double>[0, 0.5, 1],
+          stops: <double>[0, 0.36, 0.74, 1],
         ),
       ),
     );
@@ -100,14 +97,10 @@ class _PatternLayer extends StatelessWidget {
 
 class _CenterBrandSection extends StatelessWidget {
   const _CenterBrandSection({
-    required this.outerRingAnimation,
-    required this.middleRingAnimation,
     required this.glowAnimation,
     required this.dotAnimation,
   });
 
-  final Animation<double> outerRingAnimation;
-  final Animation<double> middleRingAnimation;
   final Animation<double> glowAnimation;
   final Animation<double> dotAnimation;
 
@@ -116,14 +109,10 @@ class _CenterBrandSection extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _LogoOrb(
-          outerRingAnimation: outerRingAnimation,
-          middleRingAnimation: middleRingAnimation,
-          glowAnimation: glowAnimation,
-        ),
-        32.height,
+        _LogoOrb(glowAnimation: glowAnimation),
+        16.height,
         Text(
-          'Numverse',
+          'NumVerse',
           style:
               AppStyles.h40(
                 color: AppColors.richGold,
@@ -158,110 +147,43 @@ class _CenterBrandSection extends StatelessWidget {
 }
 
 class _LogoOrb extends StatelessWidget {
-  const _LogoOrb({
-    required this.outerRingAnimation,
-    required this.middleRingAnimation,
-    required this.glowAnimation,
-  });
+  const _LogoOrb({required this.glowAnimation});
 
-  final Animation<double> outerRingAnimation;
-  final Animation<double> middleRingAnimation;
   final Animation<double> glowAnimation;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 128,
-      height: 128,
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          AnimatedBuilder(
-            animation: outerRingAnimation,
-            builder: (BuildContext context, Widget? child) {
-              return Transform.rotate(
-                angle: outerRingAnimation.value * math.pi * 2,
-                child: child,
-              );
-            },
-            child: Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.richGold.withValues(alpha: 0.3),
-                  width: 2,
-                ),
-              ),
-            ),
-          ),
-          AnimatedBuilder(
-            animation: middleRingAnimation,
-            builder: (BuildContext context, Widget? child) {
-              return Transform.rotate(
-                angle: -middleRingAnimation.value * math.pi * 2,
-                child: child,
-              );
-            },
-            child: Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.richGold.withValues(alpha: 0.5),
-                  width: 2,
-                ),
-              ),
-            ),
-          ),
-          AnimatedBuilder(
-            animation: glowAnimation,
-            builder: (BuildContext context, Widget? child) {
-              final double pulse = 0.94 + (glowAnimation.value * 0.12);
-              return Transform.scale(scale: pulse, child: child);
-            },
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.richGold.withValues(alpha: 0.2),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.richGold.withValues(alpha: 0.35),
-                    blurRadius: 28,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AnimatedBuilder(
-            animation: glowAnimation,
-            builder: (BuildContext context, Widget? child) {
-              final double intensity = 0.45 + (glowAnimation.value * 0.55);
-              return Icon(
-                Icons.auto_awesome,
-                size: 48,
-                color: AppColors.richGold,
-                shadows: <Shadow>[
-                  Shadow(
-                    color: AppColors.richGold.withValues(alpha: intensity),
-                    blurRadius: 20,
-                  ),
-                  Shadow(
-                    color: AppColors.richGold.withValues(
-                      alpha: intensity * 0.7,
-                    ),
-                    blurRadius: 34,
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
+    return AnimatedBuilder(
+      animation: glowAnimation,
+      child: SvgPicture.asset(
+        AppAssets.iconNumerologySvg,
+        width: 136,
+        height: 136,
+        fit: BoxFit.contain,
+        colorFilter: const ColorFilter.mode(
+          AppColors.richGold,
+          BlendMode.srcIn,
+        ),
       ),
+      builder: (BuildContext context, Widget? child) {
+        final double scale = 1.02 + (glowAnimation.value * 0.14);
+        final double glowAlpha = 0.08 + (glowAnimation.value * 0.08);
+        return Transform.scale(
+          scale: scale,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.richGold.withValues(alpha: glowAlpha),
+                  blurRadius: 12,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }
@@ -350,24 +272,62 @@ class _BottomGlyphDivider extends StatelessWidget {
 }
 
 class _SplashPatternPainter extends CustomPainter {
+  static const int _starCount = 96;
+
   @override
   void paint(Canvas canvas, Size size) {
     final Rect fullRect = Offset.zero & size;
-    final Paint leftPaint = Paint()
-      ..shader = const RadialGradient(
-        center: Alignment(-0.6, 0),
-        radius: 0.6,
-        colors: <Color>[Color(0x1AD4AF37), AppColors.transparent],
+    final Paint topLeftNebulaPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.72, -0.78),
+        radius: 0.96,
+        colors: <Color>[
+          AppColors.cosmicPurple.withValues(alpha: 0.24),
+          AppColors.transparent,
+        ],
       ).createShader(fullRect);
-    final Paint rightPaint = Paint()
-      ..shader = const RadialGradient(
-        center: Alignment(0.6, 0),
-        radius: 0.6,
-        colors: <Color>[Color(0x1A1E1438), AppColors.transparent],
+    final Paint topRightNebulaPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(0.84, -0.2),
+        radius: 0.86,
+        colors: <Color>[
+          AppColors.deepViolet.withValues(alpha: 0.3),
+          AppColors.transparent,
+        ],
+      ).createShader(fullRect);
+    final Paint bottomNebulaPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.16, 1.05),
+        radius: 0.98,
+        colors: <Color>[
+          AppColors.cosmicIndigo.withValues(alpha: 0.34),
+          AppColors.transparent,
+        ],
       ).createShader(fullRect);
 
-    canvas.drawRect(fullRect, leftPaint);
-    canvas.drawRect(fullRect, rightPaint);
+    canvas.drawRect(fullRect, topLeftNebulaPaint);
+    canvas.drawRect(fullRect, topRightNebulaPaint);
+    canvas.drawRect(fullRect, bottomNebulaPaint);
+
+    final Paint starPaint = Paint()..style = PaintingStyle.fill;
+    final Paint glowPaint = Paint()..style = PaintingStyle.fill;
+    for (int index = 0; index < _starCount; index++) {
+      final double dx =
+          (((index * 41) + (index * index * 9)) % 1000) / 1000 * size.width;
+      final double dy =
+          (((index * 79) + (index * index * 5)) % 1000) / 1000 * size.height;
+      final bool accentStar = index % 12 == 0;
+      final double radius = accentStar ? 1.1 : 0.56;
+
+      starPaint.color = (accentStar ? AppColors.starlight : AppColors.white)
+          .withValues(alpha: accentStar ? 0.74 : 0.4);
+      canvas.drawCircle(Offset(dx, dy), radius, starPaint);
+
+      if (accentStar) {
+        glowPaint.color = AppColors.richGold.withValues(alpha: 0.16);
+        canvas.drawCircle(Offset(dx, dy), radius * 5.2, glowPaint);
+      }
+    }
   }
 
   @override

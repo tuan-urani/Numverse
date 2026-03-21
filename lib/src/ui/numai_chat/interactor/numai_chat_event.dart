@@ -12,12 +12,14 @@ sealed class NumAiChatEvent extends Equatable {
 final class NumAiChatHistoryRequested extends NumAiChatEvent {
   const NumAiChatHistoryRequested({
     required this.hasCloudSession,
+    required this.isAnonymousUser,
     required this.profileId,
     required this.cloudUserId,
     required this.forceRefresh,
   });
 
   final bool hasCloudSession;
+  final bool isAnonymousUser;
   final String? profileId;
   final String? cloudUserId;
   final bool forceRefresh;
@@ -25,6 +27,7 @@ final class NumAiChatHistoryRequested extends NumAiChatEvent {
   @override
   List<Object?> get props => <Object?>[
     hasCloudSession,
+    isAnonymousUser,
     profileId,
     cloudUserId,
     forceRefresh,
@@ -36,6 +39,7 @@ final class NumAiChatMessageSent extends NumAiChatEvent {
     required this.rawMessage,
     required this.hasProfile,
     required this.hasCloudSession,
+    required this.isAnonymousUser,
     required this.profileId,
     required this.cloudUserId,
     required this.locale,
@@ -47,6 +51,7 @@ final class NumAiChatMessageSent extends NumAiChatEvent {
   final String rawMessage;
   final bool hasProfile;
   final bool hasCloudSession;
+  final bool isAnonymousUser;
   final String? profileId;
   final String? cloudUserId;
   final String? locale;
@@ -59,6 +64,7 @@ final class NumAiChatMessageSent extends NumAiChatEvent {
     rawMessage,
     hasProfile,
     hasCloudSession,
+    isAnonymousUser,
     profileId,
     cloudUserId,
     locale,
@@ -93,6 +99,15 @@ final class NumAiChatPendingQuestionAnswerAppended extends NumAiChatEvent {
 
   @override
   List<Object?> get props => <Object?>[];
+}
+
+final class NumAiChatTypingMessageCompleted extends NumAiChatEvent {
+  const NumAiChatTypingMessageCompleted({required this.messageId});
+
+  final String messageId;
+
+  @override
+  List<Object?> get props => <Object?>[messageId];
 }
 
 final class NumAiChatConversationReset extends NumAiChatEvent {

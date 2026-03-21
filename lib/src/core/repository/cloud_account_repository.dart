@@ -411,19 +411,33 @@ class CloudAccountRepository implements ICloudAccountRepository {
       return;
     }
 
-    final Uri syncNumaiRpcUri = _supabaseConfig.rpcUri('sync_numai_snapshots');
+    final Uri syncNumaiUri = _supabaseConfig.edgeFunctionUri(
+      'numverse-api',
+      queryParameters: const <String, String>{'action': 'sync-numai-snapshots'},
+    );
 
     try {
-      await _ensureAuthenticatedRequest((String token) {
+      final Response<dynamic> response = await _ensureAuthenticatedRequest((
+        String token,
+      ) {
         return _dio.postUri(
-          syncNumaiRpcUri,
-          data: <String, dynamic>{'p_snapshots': snapshotPayloads},
+          syncNumaiUri,
+          data: <String, dynamic>{'snapshots': snapshotPayloads},
           options: Options(
             headers: _authHeaders(accessToken: token),
             receiveTimeout: const Duration(seconds: 30),
           ),
         );
       }, initialAccessToken: accessToken);
+      final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+      if (payload['ok'] != true) {
+        final String serverErrorCode = (payload['error'] as String? ?? '')
+            .trim();
+        if (serverErrorCode.isNotEmpty) {
+          throw StateError(serverErrorCode);
+        }
+        throw StateError('supabase_invalid_numai_snapshot_sync_response');
+      }
     } on DioException catch (error) {
       final String? serverErrorCode = extractCloudErrorCode(error);
       if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
@@ -1097,19 +1111,21 @@ class CloudAccountRepository implements ICloudAccountRepository {
     }
 
     final int sanitizedLimit = limit.clamp(1, 100);
-    final Uri rpcUri = _supabaseConfig.rpcUri('list_numai_messages');
+    final Uri functionUri = _supabaseConfig.edgeFunctionUri(
+      'numverse-api',
+      queryParameters: const <String, String>{'action': 'list-numai-messages'},
+    );
 
     try {
       final Response<dynamic> response = await _ensureAuthenticatedRequest((
         String token,
       ) {
         return _dio.postUri(
-          rpcUri,
+          functionUri,
           data: <String, dynamic>{
-            if (cleanProfileId.isNotEmpty)
-              'p_primary_profile_id': cleanProfileId,
-            if (cleanThreadId.isNotEmpty) 'p_thread_id': cleanThreadId,
-            'p_limit': sanitizedLimit,
+            if (cleanProfileId.isNotEmpty) 'primary_profile_id': cleanProfileId,
+            if (cleanThreadId.isNotEmpty) 'thread_id': cleanThreadId,
+            'limit': sanitizedLimit,
           },
           options: Options(
             headers: _authHeaders(accessToken: token),
@@ -1120,6 +1136,11 @@ class CloudAccountRepository implements ICloudAccountRepository {
 
       final Map<String, dynamic> payload = _ensureJsonMap(response.data);
       if (payload['ok'] != true) {
+        final String serverErrorCode = (payload['error'] as String? ?? '')
+            .trim();
+        if (serverErrorCode.isNotEmpty) {
+          throw StateError(serverErrorCode);
+        }
         throw StateError('supabase_invalid_numai_history_response');
       }
       return CloudNumAiThreadMessagesResult.fromEnvelope(payload);
@@ -1178,18 +1199,23 @@ class CloudAccountRepository implements ICloudAccountRepository {
       );
     }
 
-    final Uri rpcUri = _supabaseConfig.rpcUri('import_guest_numai_history');
+    final Uri functionUri = _supabaseConfig.edgeFunctionUri(
+      'numverse-api',
+      queryParameters: const <String, String>{
+        'action': 'import-guest-numai-history',
+      },
+    );
 
     try {
       final Response<dynamic> response = await _ensureAuthenticatedRequest((
         String token,
       ) {
         return _dio.postUri(
-          rpcUri,
+          functionUri,
           data: <String, dynamic>{
-            'p_primary_profile_id': cleanProfileId,
-            if (cleanRequestId.isNotEmpty) 'p_request_id': cleanRequestId,
-            'p_messages': payloadMessages,
+            'primary_profile_id': cleanProfileId,
+            if (cleanRequestId.isNotEmpty) 'request_id': cleanRequestId,
+            'messages': payloadMessages,
           },
           options: Options(
             headers: _authHeaders(accessToken: token),
@@ -1200,6 +1226,11 @@ class CloudAccountRepository implements ICloudAccountRepository {
 
       final Map<String, dynamic> payload = _ensureJsonMap(response.data);
       if (payload['ok'] != true) {
+        final String serverErrorCode = (payload['error'] as String? ?? '')
+            .trim();
+        if (serverErrorCode.isNotEmpty) {
+          throw StateError(serverErrorCode);
+        }
         throw StateError('supabase_invalid_numai_import_response');
       }
       return CloudNumAiImportGuestHistoryResult.fromEnvelope(payload);

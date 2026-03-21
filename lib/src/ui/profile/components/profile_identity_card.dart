@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
@@ -7,6 +8,7 @@ import 'package:test/src/helper/numerology_helper.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -217,10 +219,14 @@ class _TopProfileSection extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 12,
-                          color: AppColors.richGold,
+                        SvgPicture.asset(
+                          AppAssets.iconCoinPng,
+                          width: 12,
+                          height: 12,
+                          colorFilter: const ColorFilter.mode(
+                            AppColors.richGold,
+                            BlendMode.srcIn,
+                          ),
                         ),
                         4.width,
                         Text(

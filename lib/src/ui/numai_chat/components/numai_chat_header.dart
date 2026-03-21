@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -97,10 +99,14 @@ class NumAiChatHeader extends StatelessWidget {
             ),
             child: Row(
               children: <Widget>[
-                const Icon(
-                  Icons.stars_rounded,
-                  size: 15,
-                  color: AppColors.richGold,
+                SvgPicture.asset(
+                  AppAssets.iconCoinPng,
+                  width: 15,
+                  height: 15,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.richGold,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 4.width,
                 Text(

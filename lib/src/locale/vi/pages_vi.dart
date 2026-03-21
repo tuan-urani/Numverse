@@ -39,8 +39,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.compatibilityStartNeedMorePointsCta:
       'Cần thêm @points point để so sánh. Kiếm thêm',
   PagesLocaleKey.compatibilityHistoryTitle: 'Lịch sử tương hợp',
-  PagesLocaleKey.compatibilityHistorySubtitle:
-      'Nhấn vào từng mục để xem lại mà không tốn thêm điểm.',
+  PagesLocaleKey.compatibilityHistorySubtitle: 'Nhấn vào để xem chi tiết',
   PagesLocaleKey.compatibilityHistoryEmpty:
       'Chưa có lịch sử tương hợp. Hãy bắt đầu lần so sánh đầu tiên.',
   PagesLocaleKey.compatibilityAddDialogTitle: 'Thêm hồ sơ mới',
@@ -356,7 +355,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.settingsPushNotificationsTitle: 'Thông báo đẩy',
   PagesLocaleKey.settingsPushNotificationsSubtitle:
       'Nhận thông báo luận giải và gói khuyến mãi',
-  PagesLocaleKey.settingsDailyAlarmTitle: 'Nhắc xem năng lượng 8:00',
+  PagesLocaleKey.settingsDailyAlarmTitle: 'Nhắc nhở',
   PagesLocaleKey.settingsDailyAlarmSubtitle:
       'Nhắc bạn mở app lúc 8:00 để xem năng lượng hôm nay',
   PagesLocaleKey.settingsOn: 'Bật',

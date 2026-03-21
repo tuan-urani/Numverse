@@ -27,7 +27,7 @@ class AppStyles {
     FontWeight weight,
     Color color,
     double height,
-  ) => GoogleFonts.playfairDisplay(
+  ) => GoogleFonts.beVietnamPro(
     fontSize: size,
     fontWeight: weight,
     color: color,

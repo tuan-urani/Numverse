@@ -99,6 +99,8 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     // Startup path ưu tiên cloud snapshot để tránh phụ thuộc local backup khi boot.
     try {
       emit(state.copyWith(viewState: AppViewStateStatus.loading));
+      final AppSessionSnapshot localSnapshot = await _sessionRepository
+          .loadSnapshot();
       AppSessionSnapshot effectiveSnapshot;
       if (_cloudAccountRepository.isConfigured) {
         await _cloudAccountRepository.ensureAnonymousSession();
@@ -117,9 +119,17 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
           cloudUserId: resolvedCloudUserId.isEmpty ? null : resolvedCloudUserId,
           clearCloudUserId: resolvedCloudUserId.isEmpty,
         );
+        final List<CompatibilityHistoryItem> bootCompatibilityHistory =
+            _resolveBootCompatibilityHistory(
+              localSnapshot: localSnapshot,
+              cloudSnapshot: effectiveSnapshot,
+            );
+        effectiveSnapshot = effectiveSnapshot.copyWith(
+          compatibilityHistory: bootCompatibilityHistory,
+        );
       } else {
         // Dev fallback khi Supabase chưa cấu hình.
-        effectiveSnapshot = await _sessionRepository.loadSnapshot();
+        effectiveSnapshot = localSnapshot;
       }
 
       final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
@@ -163,6 +173,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
       await _normalizeAdRewardStateIfNeeded(emit);
       await _ensureLifeBasedForCurrentProfile(emit);
       await _refreshTimeLifeForCurrentProfile(emit);
+      await _tryRefreshCompatibilityHistoryFromCloud(emit);
       _triggerStartupAutoCheckInIfEligible();
     } catch (_) {
       emit(
@@ -1598,6 +1609,34 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  List<CompatibilityHistoryItem> _resolveBootCompatibilityHistory({
+    required AppSessionSnapshot localSnapshot,
+    required AppSessionSnapshot cloudSnapshot,
+  }) {
+    if (!_shouldMergeLocalCompatibilityHistory(
+      localSnapshot: localSnapshot,
+      cloudSnapshot: cloudSnapshot,
+    )) {
+      return cloudSnapshot.compatibilityHistory;
+    }
+    return _mergeCompatibilityHistory(
+      localSnapshot.compatibilityHistory,
+      cloudSnapshot.compatibilityHistory,
+    );
+  }
+
+  bool _shouldMergeLocalCompatibilityHistory({
+    required AppSessionSnapshot localSnapshot,
+    required AppSessionSnapshot cloudSnapshot,
+  }) {
+    final String localCloudUserId = (localSnapshot.cloudUserId ?? '').trim();
+    final String cloudCloudUserId = (cloudSnapshot.cloudUserId ?? '').trim();
+    if (localCloudUserId.isEmpty || cloudCloudUserId.isEmpty) {
+      return false;
+    }
+    return localCloudUserId == cloudCloudUserId;
   }
 
   List<CompatibilityHistoryItem> _upsertCompatibilityHistory(

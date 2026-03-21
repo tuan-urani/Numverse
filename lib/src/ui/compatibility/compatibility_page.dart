@@ -39,52 +39,55 @@ class CompatibilityPage extends StatelessWidget {
     }
 
     return AppMysticalScaffold(
-      child: SafeArea(
-        bottom: false,
-        child: BlocBuilder<MainSessionBloc, MainSessionState>(
-          bloc: sessionCubit,
-          builder: (BuildContext context, MainSessionState sessionState) {
-            final CompatibilityState compatibilityState = CompatibilityState(
-              compareProfiles: sessionState.compareProfiles,
-              selectedProfileId: sessionState.selectedCompareProfileId,
-            );
-            return AppStateView(
-              status: sessionState.viewState,
-              onRetry: sessionCubit.initialize,
-              success: SingleChildScrollView(
-                child: CompatibilityContent(
-                  state: compatibilityState,
-                  currentProfile: sessionState.currentProfile,
-                  soulPoints: sessionState.soulPoints,
-                  comparisonCost: kCompatibilityComparisonCost,
-                  onAddProfileTap: () =>
-                      _onAddProfileTap(context, sessionCubit),
-                  onSelectProfile: (String profileId) {
-                    sessionCubit.selectCompareProfile(profileId);
-                  },
-                  onCompareTap: () => _onCompareTap(
-                    context,
-                    sessionCubit: sessionCubit,
-                    adMobRewardedAdService: adMobRewardedAdService,
-                    sessionState: sessionState,
-                    compatibilityState: compatibilityState,
+      child: SizedBox.expand(
+        child: SafeArea(
+          bottom: false,
+          child: BlocBuilder<MainSessionBloc, MainSessionState>(
+            bloc: sessionCubit,
+            builder: (BuildContext context, MainSessionState sessionState) {
+              final CompatibilityState compatibilityState = CompatibilityState(
+                compareProfiles: sessionState.compareProfiles,
+                selectedProfileId: sessionState.selectedCompareProfileId,
+              );
+              return AppStateView(
+                status: sessionState.viewState,
+                onRetry: sessionCubit.initialize,
+                success: SingleChildScrollView(
+                  child: CompatibilityContent(
+                    state: compatibilityState,
+                    currentProfile: sessionState.currentProfile,
+                    soulPoints: sessionState.soulPoints,
+                    comparisonCost: kCompatibilityComparisonCost,
+                    onAddProfileTap: () =>
+                        _onAddProfileTap(context, sessionCubit),
+                    onSelectProfile: (String profileId) {
+                      sessionCubit.selectCompareProfile(profileId);
+                    },
+                    onCompareTap: () => _onCompareTap(
+                      context,
+                      sessionCubit: sessionCubit,
+                      adMobRewardedAdService: adMobRewardedAdService,
+                      sessionState: sessionState,
+                      compatibilityState: compatibilityState,
+                    ),
+                    onNeedMorePointsTap: () => _showSoulPointsActionDialog(
+                      context,
+                      sessionCubit: sessionCubit,
+                      adMobRewardedAdService: adMobRewardedAdService,
+                    ),
+                    historyItems:
+                        sessionState.compatibilityHistoryForCurrentProfile,
+                    onHistoryTap: (CompatibilityHistoryItem item) async {
+                      await TabNavigationHelper.pushCommonRoute(
+                        AppPages.comparisonResult,
+                        arguments: item.toJson(),
+                      );
+                    },
                   ),
-                  onNeedMorePointsTap: () => _showSoulPointsActionDialog(
-                    context,
-                    sessionCubit: sessionCubit,
-                    adMobRewardedAdService: adMobRewardedAdService,
-                  ),
-                  historyItems: sessionState.compatibilityHistory,
-                  onHistoryTap: (CompatibilityHistoryItem item) async {
-                    await TabNavigationHelper.pushCommonRoute(
-                      AppPages.comparisonResult,
-                      arguments: item.toJson(),
-                    );
-                  },
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

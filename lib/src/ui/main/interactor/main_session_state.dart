@@ -105,6 +105,16 @@ class MainSessionState extends Equatable {
   final String? selectedCompareProfileId;
   final List<CompatibilityHistoryItem> compatibilityHistory;
 
+  List<CompatibilityHistoryItem> get compatibilityHistoryForCurrentProfile {
+    final String currentProfileId = (currentProfile?.id ?? '').trim();
+    if (currentProfileId.isEmpty) {
+      return const <CompatibilityHistoryItem>[];
+    }
+    return compatibilityHistory.where((CompatibilityHistoryItem item) {
+      return item.primaryProfileId.trim() == currentProfileId;
+    }).toList();
+  }
+
   bool get hasAnyProfile => profiles.isNotEmpty;
   bool get hasCompareProfiles => compareProfiles.isNotEmpty;
   bool get isAnonymousUser => authMode == SessionAuthMode.anonymous;

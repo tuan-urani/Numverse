@@ -12,5 +12,8 @@ abstract class IAppSessionRepository {
     required List<LocalNumAiGuestMessage> messages,
   });
   Future<void> clearNumAiGuestMessages({required String userKey});
+  Future<String?> loadLastNumAiGuestUserKey();
+  Future<void> saveLastNumAiGuestUserKey({required String userKey});
+  Future<void> clearLastNumAiGuestUserKey();
   Future<void> clear();
 }

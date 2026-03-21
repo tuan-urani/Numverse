@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
@@ -12,11 +13,13 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_bloc.dart';
 import 'package:test/src/ui/numai_chat/interactor/numai_chat_state.dart';
+import 'package:test/src/ui/numai_chat/components/numai_chat_auto_scroll_policy.dart';
 import 'package:test/src/ui/numai_chat/components/numai_typewriter_text.dart';
 import 'package:test/src/ui/profile/components/profile_soul_points_actions_dialog.dart';
 import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/ui/widgets/custom_circular_progress.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -31,6 +34,8 @@ class NumAiPage extends StatefulWidget {
 
 class _NumAiPageState extends State<NumAiPage> {
   static const int _adRewardPointsPerWatch = 5;
+  static const double _nearBottomThreshold = 120;
+  static const double _bottomOffset = 42;
 
   late final MainSessionBloc _sessionBloc;
   late final AdMobRewardedAdService _adMobRewardedAdService;
@@ -41,6 +46,9 @@ class _NumAiPageState extends State<NumAiPage> {
 
   String? _activeDomainId;
   String? _lastHydratedContextKey;
+  NumAiChatState? _lastChatStateForScroll;
+  bool _scrollScheduled = false;
+  NumAiChatAutoScrollMode _pendingScrollMode = NumAiChatAutoScrollMode.none;
 
   @override
   void initState() {
@@ -58,6 +66,7 @@ class _NumAiPageState extends State<NumAiPage> {
     _controller = TextEditingController();
     _scrollController = ScrollController();
     _visibleDomainSuggestions = _domains.take(3).toList();
+    _lastChatStateForScroll = _chatBloc.state;
 
     if (_sessionBloc.state.viewState == AppViewStateStatus.loading) {
       _sessionBloc.initialize();
@@ -87,7 +96,12 @@ class _NumAiPageState extends State<NumAiPage> {
                 return previous.messages.length != current.messages.length ||
                     previous.isLoading != current.isLoading;
               },
-              listener: _onChatStateChanged,
+              listener: (BuildContext _, NumAiChatState current) {
+                final NumAiChatState previous =
+                    _lastChatStateForScroll ?? NumAiChatState.initial();
+                _lastChatStateForScroll = current;
+                _onChatStateChanged(previous, current);
+              },
               child: BlocBuilder<NumAiChatBloc, NumAiChatState>(
                 bloc: _chatBloc,
                 builder: (BuildContext context, NumAiChatState chatState) {
@@ -138,6 +152,8 @@ class _NumAiPageState extends State<NumAiPage> {
                             typingMessageId: chatState.typingMessageId,
                             emptyHint: emptyHint,
                             scrollController: _scrollController,
+                            onAssistantTypingCompleted:
+                                _chatBloc.completeTypingMessage,
                             onActionTap: _onProfileActionTap,
                             onSuggestionTap: (String suggestion) {
                               _sendMessage(messageText: suggestion);
@@ -204,6 +220,7 @@ class _NumAiPageState extends State<NumAiPage> {
       }
       _chatBloc.loadCloudHistory(
         hasCloudSession: sessionState.hasCloudSession,
+        isAnonymousUser: sessionState.isAnonymousUser,
         profileId: profileId.isEmpty ? null : profileId,
         cloudUserId: sessionState.cloudUserId,
         forceRefresh: true,
@@ -245,6 +262,7 @@ class _NumAiPageState extends State<NumAiPage> {
       rawMessage: resolvedMessage,
       hasProfile: hasProfile,
       hasCloudSession: _sessionBloc.state.hasCloudSession,
+      isAnonymousUser: _sessionBloc.state.isAnonymousUser,
       profileId: _sessionBloc.state.currentProfile?.id,
       cloudUserId: _sessionBloc.state.cloudUserId,
       locale: null,
@@ -307,6 +325,20 @@ class _NumAiPageState extends State<NumAiPage> {
     if (!mounted || _sessionBloc.state.currentProfile == null) {
       return;
     }
+    final MainSessionState refreshedState = _sessionBloc.state;
+    final String refreshedProfileId = (refreshedState.currentProfile?.id ?? '')
+        .trim();
+    if (refreshedProfileId.isEmpty) {
+      return;
+    }
+    _lastHydratedContextKey = 'profile:$refreshedProfileId';
+    _chatBloc.loadCloudHistory(
+      hasCloudSession: refreshedState.hasCloudSession,
+      isAnonymousUser: refreshedState.isAnonymousUser,
+      profileId: refreshedProfileId,
+      cloudUserId: refreshedState.cloudUserId,
+      forceRefresh: true,
+    );
   }
 
   Future<void> _showSoulPointsInsufficientModal() async {
@@ -342,21 +374,73 @@ class _NumAiPageState extends State<NumAiPage> {
     });
   }
 
-  void _scheduleScrollToBottom() {
+  void _onChatStateChanged(NumAiChatState previous, NumAiChatState current) {
+    final bool nearBottom = _isNearBottom();
+    final NumAiChatAutoScrollSnapshot previousSnapshot =
+        buildNumAiChatScrollSnapshot(
+          messages: previous.messages,
+          isLoading: previous.isLoading,
+          isNearBottom: nearBottom,
+          forceOnUserSend: true,
+        );
+    final NumAiChatAutoScrollSnapshot currentSnapshot =
+        buildNumAiChatScrollSnapshot(
+          messages: current.messages,
+          isLoading: current.isLoading,
+          isNearBottom: nearBottom,
+          forceOnUserSend: true,
+        );
+    final NumAiChatAutoScrollMode mode = decideNumAiChatAutoScroll(
+      previous: previousSnapshot,
+      current: currentSnapshot,
+    );
+    _queueScroll(mode);
+  }
+
+  bool _isNearBottom() {
+    if (!_scrollController.hasClients) {
+      return true;
+    }
+    final double distanceToBottom =
+        _scrollController.position.maxScrollExtent - _scrollController.offset;
+    return distanceToBottom <= _nearBottomThreshold;
+  }
+
+  void _queueScroll(NumAiChatAutoScrollMode mode) {
+    if (mode == NumAiChatAutoScrollMode.none) {
+      return;
+    }
+    _pendingScrollMode = mode;
+    if (_scrollScheduled) {
+      return;
+    }
+    _scrollScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollController.hasClients) {
-        return;
-      }
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent + 42,
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-      );
+      _scrollScheduled = false;
+      final NumAiChatAutoScrollMode pendingMode = _pendingScrollMode;
+      _pendingScrollMode = NumAiChatAutoScrollMode.none;
+      _applyScroll(pendingMode);
     });
   }
 
-  void _onChatStateChanged(BuildContext context, NumAiChatState state) {
-    _scheduleScrollToBottom();
+  void _applyScroll(NumAiChatAutoScrollMode mode) {
+    if (!mounted || !_scrollController.hasClients) {
+      return;
+    }
+    final double target =
+        _scrollController.position.maxScrollExtent + _bottomOffset;
+    if (mode == NumAiChatAutoScrollMode.jump) {
+      _scrollController.jumpTo(target);
+      return;
+    }
+    if (mode == NumAiChatAutoScrollMode.animate) {
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
   }
 
   _NumAiDomain? _domainById(String? id) {
@@ -400,7 +484,7 @@ class _NumAiHeaderBar extends StatelessWidget {
                 6.width,
                 Text(
                   LocaleKey.numaiTitle.tr,
-                  style: AppStyles.numberSmall(
+                  style: AppStyles.titleLarge(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
@@ -459,10 +543,14 @@ class _NumAiHeaderBar extends StatelessWidget {
             ),
             child: Row(
               children: <Widget>[
-                const Icon(
-                  Icons.star_rounded,
-                  size: 14,
-                  color: AppColors.richGold,
+                SvgPicture.asset(
+                  AppAssets.iconCoinPng,
+                  width: 14,
+                  height: 14,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.richGold,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 4.width,
                 Text(
@@ -488,6 +576,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
     required this.typingMessageId,
     required this.emptyHint,
     required this.scrollController,
+    required this.onAssistantTypingCompleted,
     required this.onActionTap,
     required this.onSuggestionTap,
     required this.showFollowupSuggestions,
@@ -500,6 +589,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
   final String? typingMessageId;
   final String emptyHint;
   final ScrollController scrollController;
+  final ValueChanged<String> onAssistantTypingCompleted;
   final Future<void> Function() onActionTap;
   final ValueChanged<String> onSuggestionTap;
   final bool showFollowupSuggestions;
@@ -556,6 +646,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
                   shouldAnimate:
                       messages[index].role == NumAiChatMessageRole.assistant &&
                       messages[index].id == typingMessageId,
+                  onAssistantTypingCompleted: onAssistantTypingCompleted,
                   onActionTap: onActionTap,
                   onSuggestionTap: onSuggestionTap,
                 ),
@@ -664,6 +755,7 @@ class _NumAiMessageBubble extends StatefulWidget {
     required this.message,
     required this.maxWidth,
     required this.shouldAnimate,
+    required this.onAssistantTypingCompleted,
     required this.onActionTap,
     required this.onSuggestionTap,
   });
@@ -671,6 +763,7 @@ class _NumAiMessageBubble extends StatefulWidget {
   final NumAiChatMessage message;
   final double maxWidth;
   final bool shouldAnimate;
+  final ValueChanged<String> onAssistantTypingCompleted;
   final Future<void> Function() onActionTap;
   final ValueChanged<String> onSuggestionTap;
 
@@ -703,6 +796,7 @@ class _NumAiMessageBubbleState extends State<_NumAiMessageBubble> {
     if (_typingCompleted || !mounted) {
       return;
     }
+    widget.onAssistantTypingCompleted(widget.message.id);
     setState(() {
       _typingCompleted = true;
     });

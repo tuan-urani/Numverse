@@ -441,30 +441,11 @@ function sanitizeGuestMessagesForImport(rawMessages: unknown): ImportableGuestMe
   return sanitized;
 }
 
-function createClients(req: Request): {
+function createClients(_req: Request): {
   admin: SupabaseClient;
-  userClient: SupabaseClient;
 } {
   const supabaseUrl = getEnv("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ??
-    Deno.env.get("SB_PUBLISHABLE_KEY");
   const serviceRoleKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
-
-  if (!anonKey) {
-    throw new HttpError(500, "missing_env_supabase_anon_key");
-  }
-
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: {
-      headers: {
-        Authorization: req.headers.get("Authorization") ?? "",
-      },
-    },
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
 
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
@@ -473,7 +454,7 @@ function createClients(req: Request): {
     },
   });
 
-  return { admin, userClient };
+  return { admin };
 }
 
 function getBearerToken(req: Request): string {
@@ -492,10 +473,10 @@ function getBearerToken(req: Request): string {
 
 async function requireUser(
   req: Request,
-  userClient: SupabaseClient,
+  admin: SupabaseClient,
 ): Promise<{ id: string; email?: string | null }> {
   const token = getBearerToken(req);
-  const { data, error } = await userClient.auth.getUser(token);
+  const { data, error } = await admin.auth.getUser(token);
 
   if (error || !data.user) {
     throw new HttpError(401, "unauthorized");
@@ -1099,8 +1080,8 @@ async function grantSoulPoints(
 }
 
 async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
-  const { admin, userClient } = createClients(req);
-  const user = await requireUser(req, userClient);
+  const { admin } = createClients(req);
+  const user = await requireUser(req, admin);
 
   const body = await parseJsonBody<{
     thread_id?: string;
@@ -1492,8 +1473,8 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
 }
 
 async function handleListNumaiMessages(req: Request): Promise<JsonObject> {
-  const { admin, userClient } = createClients(req);
-  const user = await requireUser(req, userClient);
+  const { admin } = createClients(req);
+  const user = await requireUser(req, admin);
 
   const body = await parseJsonBody<{
     thread_id?: string;
@@ -1562,8 +1543,8 @@ async function handleListNumaiMessages(req: Request): Promise<JsonObject> {
 }
 
 async function handleImportGuestNumaiHistory(req: Request): Promise<JsonObject> {
-  const { admin, userClient } = createClients(req);
-  const user = await requireUser(req, userClient);
+  const { admin } = createClients(req);
+  const user = await requireUser(req, admin);
 
   const body = await parseJsonBody<{
     primary_profile_id?: string;
@@ -1709,8 +1690,8 @@ async function handleImportGuestNumaiHistory(req: Request): Promise<JsonObject> 
 }
 
 async function handleSyncNumaiSnapshots(req: Request): Promise<JsonObject> {
-  const { admin, userClient } = createClients(req);
-  const user = await requireUser(req, userClient);
+  const { admin } = createClients(req);
+  const user = await requireUser(req, admin);
 
   const body = await parseJsonBody<{
     snapshots?: unknown;

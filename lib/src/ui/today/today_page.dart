@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
+import 'package:test/src/ui/today/components/today_cosmic_overlay.dart';
 import 'package:test/src/ui/today/components/today_header.dart';
 import 'package:test/src/ui/today/components/today_personal_content.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
@@ -25,29 +26,34 @@ class TodayPage extends StatelessWidget {
         return AppStateView(
           status: sessionState.viewState,
           onRetry: sessionBloc.initialize,
-          success: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const TodayHeader(),
-                  14.height,
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const <Widget>[
-                          TodayPersonalContent(),
-                          SizedBox(height: 84),
-                        ],
+          success: Stack(
+            children: <Widget>[
+              const Positioned.fill(child: TodayCosmicOverlay()),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const TodayHeader(),
+                      14.height,
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const <Widget>[
+                              TodayPersonalContent(),
+                              SizedBox(height: 84),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         );
       },

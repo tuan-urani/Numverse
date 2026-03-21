@@ -12,6 +12,8 @@ class AppShared {
       'numverse_supabase_refresh_token';
   static const String _keyNumAiGuestHistoryPrefix =
       'numverse_numai_guest_history_';
+  static const String _keyNumAiLastGuestUserKey =
+      'numverse_numai_last_guest_user_key';
   static const String _keyDailyAlarmEnabled = 'numverse_daily_alarm_enabled';
   static const String _keyDailyAlarmTemplatePrefix =
       'numverse_daily_alarm_template_';
@@ -79,6 +81,23 @@ class AppShared {
 
   Future<void> clearNumAiGuestHistory(String userKey) async {
     await _prefs.remove(_numAiGuestHistoryKey(userKey));
+  }
+
+  String? getNumAiLastGuestUserKey() {
+    return _prefs.getString(_keyNumAiLastGuestUserKey);
+  }
+
+  Future<void> setNumAiLastGuestUserKey(String userKey) async {
+    final String normalized = userKey.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      await _prefs.remove(_keyNumAiLastGuestUserKey);
+      return;
+    }
+    await _prefs.setString(_keyNumAiLastGuestUserKey, normalized);
+  }
+
+  Future<void> clearNumAiLastGuestUserKey() async {
+    await _prefs.remove(_keyNumAiLastGuestUserKey);
   }
 
   bool getDailyAlarmEnabled() {

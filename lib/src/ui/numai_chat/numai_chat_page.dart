@@ -101,6 +101,8 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
                           messages: state.messages,
                           isLoading: state.isLoading,
                           typingMessageId: state.typingMessageId,
+                          onAssistantTypingCompleted:
+                              bloc.completeTypingMessage,
                           onActionTap: () => _onActionTap(
                             context,
                             bloc: bloc,
@@ -166,6 +168,7 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       }
       bloc.loadCloudHistory(
         hasCloudSession: sessionState.hasCloudSession,
+        isAnonymousUser: sessionState.isAnonymousUser,
         profileId: profileId.isEmpty ? null : profileId,
         cloudUserId: sessionState.cloudUserId,
         forceRefresh: true,
@@ -198,6 +201,7 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       rawMessage: text,
       hasProfile: sessionState.currentProfile != null,
       hasCloudSession: sessionState.hasCloudSession,
+      isAnonymousUser: sessionState.isAnonymousUser,
       profileId: sessionState.currentProfile?.id,
       cloudUserId: sessionState.cloudUserId,
       locale: null,
@@ -231,6 +235,21 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
     if (!mounted || sessionCubit.state.currentProfile == null) {
       return;
     }
+
+    final MainSessionState refreshedState = sessionCubit.state;
+    final String refreshedProfileId = (refreshedState.currentProfile?.id ?? '')
+        .trim();
+    if (refreshedProfileId.isEmpty) {
+      return;
+    }
+    _lastHydratedContextKey = 'profile:$refreshedProfileId';
+    bloc.loadCloudHistory(
+      hasCloudSession: refreshedState.hasCloudSession,
+      isAnonymousUser: refreshedState.isAnonymousUser,
+      profileId: refreshedProfileId,
+      cloudUserId: refreshedState.cloudUserId,
+      forceRefresh: true,
+    );
   }
 
   void _onBackTap(BuildContext context) {

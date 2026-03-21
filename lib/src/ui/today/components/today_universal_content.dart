@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
@@ -12,6 +13,7 @@ import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
 import 'package:test/src/ui/widgets/app_primary_button.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -180,108 +182,185 @@ class _SoulPointsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppMysticalCard(
-      child: Stack(
-        children: <Widget>[
-          const Positioned(top: -18, right: -12, child: _PulseOrb(size: 96)),
-          Positioned(
-            bottom: -42,
-            left: -20,
-            child: Container(
-              width: 126,
-              height: 126,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.richGold.withValues(alpha: 0.09),
-              ),
-            ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.richGold.withValues(alpha: 0.18),
+            blurRadius: 26,
+            spreadRadius: 0.8,
+            offset: const Offset(0, 8),
           ),
-          Column(
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.richGold.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.richGold.withValues(alpha: 0.42),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.bolt,
-                      color: AppColors.richGold,
-                      size: 22,
-                    ),
-                  ),
-                  12.width,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          LocaleKey.todaySoulPoints.tr,
-                          style: AppStyles.bodySmall(
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                        AppGlowText(
-                          text: '$soulPoints',
-                          style: AppStyles.numberMedium(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.richGold.withValues(alpha: 0.12),
-                      border: Border.all(
-                        color: AppColors.richGold.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const Icon(
-                          Icons.local_fire_department,
-                          size: 15,
-                          color: AppColors.richGold,
-                        ),
-                        6.width,
-                        Text(
-                          streakLabel,
-                          style: AppStyles.bodySmall(
-                            color: AppColors.richGold,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              12.height,
-              _ProgressInfo(
-                headLabel:
-                    '${LocaleKey.todayDailyStreakLabel.tr}: $streakCurrent/$streakTarget',
-                progress: streakProgress,
-                leftCaption:
-                    '${LocaleKey.todayRemainingPrefix.tr} '
-                    '${(streakTarget - streakCurrent).clamp(0, streakTarget)} '
-                    '${LocaleKey.todayStreakDaysRemaining.tr}',
-                rightCaption:
-                    '+${TodayUniversalContent._streakReward} ${LocaleKey.todayRewardPointsSuffix.tr}',
-              ),
-            ],
+          BoxShadow(
+            color: AppColors.energyOrange.withValues(alpha: 0.1),
+            blurRadius: 34,
+            spreadRadius: 1.2,
           ),
         ],
+      ),
+      child: AppMysticalCard(
+        borderColor: AppColors.richGold.withValues(alpha: 0.34),
+        child: Stack(
+          children: <Widget>[
+            const Positioned(
+              top: -18,
+              right: -12,
+              child: _PulseOrb(
+                size: 102,
+                color: AppColors.goldSoft,
+                alpha: 0.15,
+              ),
+            ),
+            Positioned(
+              bottom: -42,
+              left: -20,
+              child: Container(
+                width: 126,
+                height: 126,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.violetAccent.withValues(alpha: 0.24),
+                ),
+              ),
+            ),
+            Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.richGold.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.richGold.withValues(alpha: 0.42),
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: AppColors.richGold.withValues(alpha: 0.22),
+                            blurRadius: 14,
+                            spreadRadius: 0.6,
+                          ),
+                        ],
+                      ),
+                      child: SvgPicture.asset(
+                        AppAssets.iconCoinPng,
+                        width: 22,
+                        height: 22,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.goldBright,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                    12.width,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            LocaleKey.todaySoulPoints.tr,
+                            style: AppStyles.caption(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ).copyWith(letterSpacing: 0.5),
+                          ),
+                          2.height,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: AppGlowText(
+                              text: '$soulPoints',
+                              style: AppStyles.numberLarge().copyWith(
+                                fontSize: 44,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: <Color>[
+                                  AppColors.energyOrange.withValues(
+                                    alpha: 0.24,
+                                  ),
+                                  AppColors.richGold.withValues(alpha: 0.2),
+                                ],
+                              ),
+                              border: Border.all(
+                                color: AppColors.energyOrange.withValues(
+                                  alpha: 0.42,
+                                ),
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: AppColors.energyOrange.withValues(
+                                    alpha: 0.18,
+                                  ),
+                                  blurRadius: 12,
+                                  spreadRadius: 0.4,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                const Icon(
+                                  Icons.local_fire_department,
+                                  size: 15,
+                                  color: AppColors.energyOrange,
+                                ),
+                                6.width,
+                                Text(
+                                  streakLabel,
+                                  style: AppStyles.bodySmall(
+                                    color: AppColors.energyOrange,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                12.height,
+                _ProgressInfo(
+                  headLabel:
+                      '${LocaleKey.todayDailyStreakLabel.tr}: $streakCurrent/$streakTarget',
+                  progress: streakProgress,
+                  leftCaption:
+                      '${LocaleKey.todayRemainingPrefix.tr} '
+                      '${(streakTarget - streakCurrent).clamp(0, streakTarget)} '
+                      '${LocaleKey.todayStreakDaysRemaining.tr}',
+                  rightCaption:
+                      '+${TodayUniversalContent._streakReward} ${LocaleKey.todayRewardPointsSuffix.tr}',
+                  rightCaptionColor: AppColors.richGold,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -468,12 +547,14 @@ class _ProgressInfo extends StatelessWidget {
     required this.progress,
     required this.leftCaption,
     this.rightCaption,
+    this.rightCaptionColor = AppColors.richGold,
   });
 
   final String headLabel;
   final double progress;
   final String leftCaption;
   final String? rightCaption;
+  final Color rightCaptionColor;
 
   @override
   Widget build(BuildContext context) {
@@ -494,7 +575,7 @@ class _ProgressInfo extends StatelessWidget {
               Text(
                 rightCaption!,
                 style: AppStyles.caption(
-                  color: AppColors.richGold,
+                  color: rightCaptionColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -546,10 +627,10 @@ class _ShimmerProgressBarState extends State<_ShimmerProgressBar>
 
     return SizedBox(
       width: double.infinity,
-      height: 8,
+      height: 10,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.deepViolet.withValues(alpha: 0.8),
+          color: AppColors.deepViolet.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(999),
         ),
         child: ClipRRect(
@@ -907,9 +988,15 @@ class _UnlockCard extends StatelessWidget {
 }
 
 class _PulseOrb extends StatefulWidget {
-  const _PulseOrb({required this.size});
+  const _PulseOrb({
+    required this.size,
+    this.color = AppColors.richGold,
+    this.alpha = 0.14,
+  });
 
   final double size;
+  final Color color;
+  final double alpha;
 
   @override
   State<_PulseOrb> createState() => _PulseOrbState();
@@ -941,7 +1028,7 @@ class _PulseOrbState extends State<_PulseOrb>
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.richGold.withValues(alpha: 0.14),
+              color: widget.color.withValues(alpha: widget.alpha),
             ),
           ),
         );

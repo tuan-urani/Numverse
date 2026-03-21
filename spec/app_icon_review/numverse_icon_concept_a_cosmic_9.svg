@@ -1,0 +1,44 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A0318"/>
+      <stop offset="55%" stop-color="#12072B"/>
+      <stop offset="100%" stop-color="#1E1438"/>
+    </linearGradient>
+    <radialGradient id="auraA" cx="50%" cy="46%" r="46%">
+      <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.45"/>
+      <stop offset="40%" stop-color="#D4AF37" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#D4AF37" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDE9A9"/>
+      <stop offset="50%" stop-color="#F4D03F"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </linearGradient>
+    <filter id="glowA" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#bgA)"/>
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#auraA)"/>
+
+  <circle cx="512" cy="512" r="320" fill="none" stroke="url(#goldA)" stroke-width="22" opacity="0.9"/>
+  <circle cx="512" cy="512" r="250" fill="none" stroke="#D4AF37" stroke-width="7" opacity="0.55"/>
+  <circle cx="512" cy="512" r="188" fill="none" stroke="#F4D03F" stroke-width="3" opacity="0.4"/>
+
+  <g opacity="0.9" filter="url(#glowA)">
+    <path d="M512 224 L540 300 L620 300 L554 350 L578 424 L512 378 L446 424 L470 350 L404 300 L484 300 Z" fill="url(#goldA)"/>
+  </g>
+
+  <text x="512" y="690" text-anchor="middle" font-size="430" font-family="Times New Roman, serif" font-weight="700" fill="url(#goldA)" filter="url(#glowA)">9</text>
+
+  <circle cx="286" cy="282" r="6" fill="#FDE9A9" opacity="0.8"/>
+  <circle cx="746" cy="346" r="4" fill="#FDE9A9" opacity="0.8"/>
+  <circle cx="698" cy="768" r="5" fill="#FDE9A9" opacity="0.75"/>
+  <circle cx="338" cy="762" r="4" fill="#FDE9A9" opacity="0.7"/>
+</svg>

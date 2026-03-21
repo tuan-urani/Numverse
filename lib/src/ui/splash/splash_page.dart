@@ -24,8 +24,6 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   static const Duration _minSplashDuration = Duration(seconds: 3);
 
-  late final AnimationController _outerRingController;
-  late final AnimationController _middleRingController;
   late final AnimationController _glowController;
   late final AnimationController _dotController;
   late final Future<void> _bootstrapFuture;
@@ -43,8 +41,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SplashVisual(
-        outerRingAnimation: _outerRingController,
-        middleRingAnimation: _middleRingController,
         glowAnimation: _glowController,
         dotAnimation: _dotController,
       ),
@@ -52,14 +48,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _setupAnimationControllers() {
-    _outerRingController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
-    _middleRingController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..repeat();
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -187,8 +175,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _disposeAnimationControllers() {
-    _outerRingController.dispose();
-    _middleRingController.dispose();
     _glowController.dispose();
     _dotController.dispose();
   }
