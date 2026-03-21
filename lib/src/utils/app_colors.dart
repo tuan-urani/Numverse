@@ -7,12 +7,16 @@ class AppColors {
 
   static const Color midnight = Color(0xFF0A0318);
   static const Color midnightSoft = Color(0xFF0F0620);
+  static const Color cosmicIndigo = Color(0xFF12072B);
+  static const Color cosmicPurple = Color(0xFF2C1361);
+  static const Color nebulaMagenta = Color(0xFF5A2B87);
   static const Color deepViolet = Color(0xFF1E1438);
   static const Color violetAccent = Color(0xFF2A1F4A);
 
   static const Color richGold = Color(0xFFD4AF37);
   static const Color goldBright = Color(0xFFF4D03F);
   static const Color goldSoft = Color(0xFFE8C578);
+  static const Color starlight = Color(0xFFFDE9A9);
 
   static const Color textPrimary = Color(0xFFF5F3ED);
   static const Color textSecondary = Color(0xFFE8D7B8);
@@ -41,7 +45,7 @@ class AppColors {
   static const Color transparent = Color(0x00000000);
 
   static const Color background = midnight;
-  static const Color card = midnightSoft;
+  static const Color card = cosmicIndigo;
   static const Color border = Color(0xFF2A1F4A);
   static const Color colorF8F1DD = Color(0xFFF8F1DD);
   static const Color colorF1D2BC = Color(0xFFF1D2BC);
@@ -61,16 +65,62 @@ class AppColors {
   static const Color borderDark = deepViolet;
 
   static LinearGradient appBackgroundGradient() => const LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: <Color>[midnight, midnight, deepViolet],
-    stops: <double>[0, 0.7, 1],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[midnight, cosmicIndigo, deepViolet, midnight],
+    stops: <double>[0, 0.36, 0.78, 1],
   );
 
   static LinearGradient mysticalCardGradient() => const LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xEE0F0620), Color(0xCC1A1030)],
+    colors: <Color>[Color(0xF113082C), Color(0xE01B0E38), Color(0xD12B1450)],
+    stops: <double>[0, 0.62, 1],
+  );
+
+  static LinearGradient mysticalCardHighlightGradient() => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      white.withOpacityX(0.12),
+      transparent,
+      richGold.withOpacityX(0.08),
+    ],
+    stops: const <double>[0, 0.44, 1],
+  );
+
+  static LinearGradient nebulaOverlayGradient() => const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[
+      Color(0x2E5A2B87),
+      Color(0x145A2B87),
+      Color(0x2212072B),
+      Color(0x0012072B),
+    ],
+    stops: <double>[0, 0.34, 0.7, 1],
+  );
+
+  static LinearGradient navigationGradient() => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      cosmicPurple.withOpacityX(0.52),
+      cosmicIndigo.withOpacityX(0.88),
+      midnight.withOpacityX(0.92),
+    ],
+    stops: const <double>[0, 0.55, 1],
+  );
+
+  static RadialGradient cosmicAuraGradient() => RadialGradient(
+    center: const Alignment(0, -0.2),
+    radius: 0.8,
+    colors: <Color>[
+      richGold.withOpacityX(0.34),
+      richGold.withOpacityX(0.16),
+      transparent,
+    ],
+    stops: const <double>[0, 0.34, 1],
   );
 
   static LinearGradient goldTextGradient() => const LinearGradient(

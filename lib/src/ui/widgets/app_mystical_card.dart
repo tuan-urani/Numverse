@@ -27,20 +27,24 @@ class AppMysticalCard extends StatelessWidget {
         gradient: AppColors.mysticalCardGradient(),
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(
-          color: borderColor ?? AppColors.richGold.withValues(alpha: 0.28),
+          color: borderColor ?? AppColors.richGold.withValues(alpha: 0.24),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: AppColors.richGold.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 1,
+            color: AppColors.richGold.withValues(alpha: 0.12),
+            blurRadius: 22,
+            spreadRadius: 0.5,
           ),
           BoxShadow(
-            color: AppColors.deepViolet.withValues(alpha: 0.5),
-            blurRadius: 30,
-            spreadRadius: 1,
+            color: AppColors.deepViolet.withValues(alpha: 0.6),
+            blurRadius: 28,
+            spreadRadius: 1.2,
           ),
         ],
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        gradient: AppColors.mysticalCardHighlightGradient(),
       ),
       child: Padding(padding: padding, child: child),
     );

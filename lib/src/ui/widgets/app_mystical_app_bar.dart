@@ -26,8 +26,25 @@ class AppMysticalAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       automaticallyImplyLeading: false,
       elevation: 0,
-      backgroundColor: AppColors.card.withValues(alpha: 0.82),
+      backgroundColor: AppColors.transparent,
       surfaceTintColor: Colors.transparent,
+      flexibleSpace: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              AppColors.card.withValues(alpha: 0.92),
+              AppColors.deepViolet.withValues(alpha: 0.74),
+            ],
+          ),
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.richGold.withValues(alpha: 0.2),
+            ),
+          ),
+        ),
+      ),
       titleSpacing: AppDimensions.pageHorizontal,
       title: Row(
         children: <Widget>[
