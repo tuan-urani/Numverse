@@ -10,6 +10,8 @@ class SettingsState extends Equatable {
     required this.language,
     required this.soundEnabled,
     required this.pushNotificationsEnabled,
+    required this.dailyAlarmEnabled,
+    required this.dailyAlarmSyncing,
   });
 
   factory SettingsState.initial() {
@@ -18,6 +20,8 @@ class SettingsState extends Equatable {
       language: SettingsLanguage.vi,
       soundEnabled: true,
       pushNotificationsEnabled: true,
+      dailyAlarmEnabled: true,
+      dailyAlarmSyncing: false,
     );
   }
 
@@ -25,12 +29,16 @@ class SettingsState extends Equatable {
   final SettingsLanguage language;
   final bool soundEnabled;
   final bool pushNotificationsEnabled;
+  final bool dailyAlarmEnabled;
+  final bool dailyAlarmSyncing;
 
   SettingsState copyWith({
     SettingsThemeMode? theme,
     SettingsLanguage? language,
     bool? soundEnabled,
     bool? pushNotificationsEnabled,
+    bool? dailyAlarmEnabled,
+    bool? dailyAlarmSyncing,
   }) {
     return SettingsState(
       theme: theme ?? this.theme,
@@ -38,6 +46,8 @@ class SettingsState extends Equatable {
       soundEnabled: soundEnabled ?? this.soundEnabled,
       pushNotificationsEnabled:
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      dailyAlarmEnabled: dailyAlarmEnabled ?? this.dailyAlarmEnabled,
+      dailyAlarmSyncing: dailyAlarmSyncing ?? this.dailyAlarmSyncing,
     );
   }
 
@@ -47,5 +57,7 @@ class SettingsState extends Equatable {
     language,
     soundEnabled,
     pushNotificationsEnabled,
+    dailyAlarmEnabled,
+    dailyAlarmSyncing,
   ];
 }

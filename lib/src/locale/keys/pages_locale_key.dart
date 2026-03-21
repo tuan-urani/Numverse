@@ -411,6 +411,9 @@ class PagesLocaleKey {
       'settings_push_notifications_title';
   static const String settingsPushNotificationsSubtitle =
       'settings_push_notifications_subtitle';
+  static const String settingsDailyAlarmTitle = 'settings_daily_alarm_title';
+  static const String settingsDailyAlarmSubtitle =
+      'settings_daily_alarm_subtitle';
   static const String settingsOn = 'settings_on';
   static const String settingsOff = 'settings_off';
   static const String notificationsTitle = 'notifications_title';

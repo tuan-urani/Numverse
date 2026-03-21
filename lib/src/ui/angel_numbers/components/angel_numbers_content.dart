@@ -375,6 +375,7 @@ class _ActionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SoftCard(
+      backgroundColor: AppColors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -948,16 +949,21 @@ class _TipsCard extends StatelessWidget {
 }
 
 class _SoftCard extends StatelessWidget {
-  const _SoftCard({required this.child, this.highlighted = false});
+  const _SoftCard({
+    required this.child,
+    this.highlighted = false,
+    this.backgroundColor,
+  });
 
   final Widget child;
   final bool highlighted;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.56),
+        color: backgroundColor ?? AppColors.card.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: highlighted

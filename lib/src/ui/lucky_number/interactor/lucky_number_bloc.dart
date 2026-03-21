@@ -19,10 +19,10 @@ class LuckyNumberBloc extends Bloc<LuckyNumberEvent, LuckyNumberState> {
          _buildState(
            now: (nowProvider ?? DateTime.now)(),
            contentRepository: contentRepository,
-            languageCode: languageCode,
-            luckyNumber: luckyNumberProvider(),
-          ),
-        ) {
+           languageCode: languageCode,
+           luckyNumber: luckyNumberProvider(),
+         ),
+       ) {
     on<LuckyNumberRefreshed>(_onRefreshed);
   }
 

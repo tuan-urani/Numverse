@@ -62,7 +62,8 @@ class MonthDetailPage extends StatelessWidget {
   int _resolvePersonalMonthNumber(MainSessionState state) {
     final String profileId =
         state.currentProfile?.id ?? MainSessionBloc.guestProfileId;
-    final ProfileTimeLifeSnapshot? snapshot = state.timeLifeByProfileId[profileId];
+    final ProfileTimeLifeSnapshot? snapshot =
+        state.timeLifeByProfileId[profileId];
     final profile = state.currentProfile;
     if (profile == null) {
       final int? universalNumber = snapshot?.valueOf(

@@ -8,6 +8,8 @@ import 'package:test/src/core/model/cloud_numai_import_guest_history_result.dart
 import 'package:test/src/core/model/cloud_numai_send_message_result.dart';
 import 'package:test/src/core/model/cloud_numai_thread_messages_result.dart';
 import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
+import 'package:test/src/core/model/daily_alarm_settings.dart';
+import 'package:test/src/core/model/daily_alarm_template.dart';
 import 'package:test/src/core/model/local_numai_guest_message.dart';
 
 abstract class ICloudAccountRepository {
@@ -49,6 +51,16 @@ abstract class ICloudAccountRepository {
   });
 
   Future<void> syncSessionSnapshot({required AppSessionSnapshot snapshot});
+
+  Future<DailyAlarmSettings> fetchDailyAlarmSettings();
+
+  Future<DailyAlarmSettings> updateDailyAlarmSettings({
+    required bool enabled,
+    required String time,
+    required String timezone,
+  });
+
+  Future<DailyAlarmTemplate> fetchDailyAlarmTemplate({required String locale});
 
   Future<CompatibilityHistoryItem> saveCompatibilityHistory({
     required CompatibilityHistoryItem item,

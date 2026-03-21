@@ -356,6 +356,9 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.settingsPushNotificationsTitle: 'Thông báo đẩy',
   PagesLocaleKey.settingsPushNotificationsSubtitle:
       'Nhận thông báo luận giải và gói khuyến mãi',
+  PagesLocaleKey.settingsDailyAlarmTitle: 'Nhắc xem năng lượng 8:00',
+  PagesLocaleKey.settingsDailyAlarmSubtitle:
+      'Nhắc bạn mở app lúc 8:00 để xem năng lượng hôm nay',
   PagesLocaleKey.settingsOn: 'Bật',
   PagesLocaleKey.settingsOff: 'Tắt',
   PagesLocaleKey.notificationsTitle: 'Thông báo',

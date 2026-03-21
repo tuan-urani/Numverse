@@ -13,12 +13,14 @@ class SettingsSoundCard extends StatelessWidget {
     required this.state,
     required this.onToggleSound,
     required this.onToggleNotifications,
+    required this.onToggleDailyAlarm,
     super.key,
   });
 
   final SettingsState state;
   final VoidCallback onToggleSound;
   final VoidCallback onToggleNotifications;
+  final VoidCallback onToggleDailyAlarm;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,17 @@ class SettingsSoundCard extends StatelessWidget {
             enabled: state.pushNotificationsEnabled,
             onTap: onToggleNotifications,
           ),
+          14.height,
+          Container(height: 1, color: AppColors.border.withValues(alpha: 0.48)),
+          14.height,
+          _SettingSwitchRow(
+            icon: Icons.alarm_on_outlined,
+            title: LocaleKey.settingsDailyAlarmTitle.tr,
+            subtitle: LocaleKey.settingsDailyAlarmSubtitle.tr,
+            enabled: state.dailyAlarmEnabled,
+            isLoading: state.dailyAlarmSyncing,
+            onTap: onToggleDailyAlarm,
+          ),
         ],
       ),
     );
@@ -66,6 +79,7 @@ class _SettingSwitchRow extends StatelessWidget {
     required this.subtitle,
     required this.enabled,
     required this.onTap,
+    this.isLoading = false,
   });
 
   final IconData icon;
@@ -73,6 +87,7 @@ class _SettingSwitchRow extends StatelessWidget {
   final String subtitle;
   final bool enabled;
   final VoidCallback onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +116,7 @@ class _SettingSwitchRow extends StatelessWidget {
           ),
         ),
         InkWell(
-          onTap: onTap,
+          onTap: isLoading ? null : onTap,
           borderRadius: BorderRadius.circular(999),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),

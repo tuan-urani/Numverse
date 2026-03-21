@@ -6,6 +6,13 @@ sealed class SettingsEvent extends Equatable {
   const SettingsEvent();
 }
 
+final class SettingsInitialized extends SettingsEvent {
+  const SettingsInitialized();
+
+  @override
+  List<Object?> get props => <Object?>[];
+}
+
 final class SettingsThemeChanged extends SettingsEvent {
   const SettingsThemeChanged(this.mode);
 
@@ -33,6 +40,13 @@ final class SettingsSoundToggled extends SettingsEvent {
 
 final class SettingsNotificationsToggled extends SettingsEvent {
   const SettingsNotificationsToggled();
+
+  @override
+  List<Object?> get props => <Object?>[];
+}
+
+final class SettingsDailyAlarmToggled extends SettingsEvent {
+  const SettingsDailyAlarmToggled();
 
   @override
   List<Object?> get props => <Object?>[];

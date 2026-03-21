@@ -13,6 +13,8 @@ import 'package:test/src/core/model/cloud_numai_import_guest_history_result.dart
 import 'package:test/src/core/model/cloud_numai_send_message_result.dart';
 import 'package:test/src/core/model/cloud_numai_thread_messages_result.dart';
 import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
+import 'package:test/src/core/model/daily_alarm_settings.dart';
+import 'package:test/src/core/model/daily_alarm_template.dart';
 import 'package:test/src/core/model/local_numai_guest_message.dart';
 import 'package:test/src/core/model/profile_life_based_snapshot.dart';
 import 'package:test/src/core/model/user_profile.dart';
@@ -409,22 +411,137 @@ class CloudAccountRepository implements ICloudAccountRepository {
       return;
     }
 
-    final Uri functionUri = _supabaseConfig.edgeFunctionUri(
-      'numverse-api',
-      queryParameters: const <String, String>{'action': 'sync-numai-snapshots'},
-    );
+    final Uri syncNumaiRpcUri = _supabaseConfig.rpcUri('sync_numai_snapshots');
 
     try {
       await _ensureAuthenticatedRequest((String token) {
         return _dio.postUri(
-          functionUri,
-          data: <String, dynamic>{'snapshots': snapshotPayloads},
+          syncNumaiRpcUri,
+          data: <String, dynamic>{'p_snapshots': snapshotPayloads},
           options: Options(
             headers: _authHeaders(accessToken: token),
             receiveTimeout: const Duration(seconds: 30),
           ),
         );
       }, initialAccessToken: accessToken);
+    } on DioException catch (error) {
+      final String? serverErrorCode = extractCloudErrorCode(error);
+      if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
+        throw StateError(serverErrorCode);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DailyAlarmSettings> fetchDailyAlarmSettings() async {
+    if (!isConfigured) {
+      return DailyAlarmSettings.defaults();
+    }
+    final String accessToken = _requireAccessToken();
+    final Uri rpcUri = _supabaseConfig.rpcUri('get_daily_alarm_settings');
+    try {
+      final Response<dynamic> response = await _ensureAuthenticatedRequest((
+        String token,
+      ) {
+        return _dio.postUri(
+          rpcUri,
+          data: const <String, dynamic>{},
+          options: Options(headers: _authHeaders(accessToken: token)),
+        );
+      }, initialAccessToken: accessToken);
+      final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+      if (payload.isEmpty) {
+        return DailyAlarmSettings.defaults();
+      }
+      return DailyAlarmSettings.fromJson(payload);
+    } on DioException catch (error) {
+      final String? serverErrorCode = extractCloudErrorCode(error);
+      if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
+        throw StateError(serverErrorCode);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DailyAlarmSettings> updateDailyAlarmSettings({
+    required bool enabled,
+    required String time,
+    required String timezone,
+  }) async {
+    if (!isConfigured) {
+      return DailyAlarmSettings.defaults().copyWith(
+        enabled: enabled,
+        time: time,
+        timezone: timezone,
+      );
+    }
+    final String accessToken = _requireAccessToken();
+    final Uri rpcUri = _supabaseConfig.rpcUri('update_daily_alarm_settings');
+    final String cleanedTime = time.trim().isEmpty
+        ? DailyAlarmSettings.defaultTime
+        : time.trim();
+    final String cleanedTimezone = timezone.trim().isEmpty
+        ? DailyAlarmSettings.defaultTimezone
+        : timezone.trim();
+    try {
+      final Response<dynamic> response = await _ensureAuthenticatedRequest((
+        String token,
+      ) {
+        return _dio.postUri(
+          rpcUri,
+          data: <String, dynamic>{
+            'p_enabled': enabled,
+            'p_time': cleanedTime,
+            'p_timezone': cleanedTimezone,
+          },
+          options: Options(headers: _authHeaders(accessToken: token)),
+        );
+      }, initialAccessToken: accessToken);
+      final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+      if (payload.isEmpty) {
+        return DailyAlarmSettings.defaults().copyWith(
+          enabled: enabled,
+          time: cleanedTime,
+          timezone: cleanedTimezone,
+        );
+      }
+      return DailyAlarmSettings.fromJson(payload);
+    } on DioException catch (error) {
+      final String? serverErrorCode = extractCloudErrorCode(error);
+      if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
+        throw StateError(serverErrorCode);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DailyAlarmTemplate> fetchDailyAlarmTemplate({
+    required String locale,
+  }) async {
+    if (!isConfigured) {
+      return DailyAlarmTemplate.fallback(locale);
+    }
+    final String accessToken = _requireAccessToken();
+    final Uri rpcUri = _supabaseConfig.rpcUri('get_daily_alarm_template');
+    final String cleanLocale = locale.trim().isEmpty ? 'vi' : locale.trim();
+    try {
+      final Response<dynamic> response = await _ensureAuthenticatedRequest((
+        String token,
+      ) {
+        return _dio.postUri(
+          rpcUri,
+          data: <String, dynamic>{'p_locale': cleanLocale},
+          options: Options(headers: _authHeaders(accessToken: token)),
+        );
+      }, initialAccessToken: accessToken);
+      final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+      if (payload.isEmpty) {
+        return DailyAlarmTemplate.fallback(cleanLocale);
+      }
+      return DailyAlarmTemplate.fromJson(payload);
     } on DioException catch (error) {
       final String? serverErrorCode = extractCloudErrorCode(error);
       if (serverErrorCode != null && serverErrorCode.isNotEmpty) {
@@ -980,21 +1097,19 @@ class CloudAccountRepository implements ICloudAccountRepository {
     }
 
     final int sanitizedLimit = limit.clamp(1, 100);
-    final Uri functionUri = _supabaseConfig.edgeFunctionUri(
-      'numverse-api',
-      queryParameters: const <String, String>{'action': 'list-numai-messages'},
-    );
+    final Uri rpcUri = _supabaseConfig.rpcUri('list_numai_messages');
 
     try {
       final Response<dynamic> response = await _ensureAuthenticatedRequest((
         String token,
       ) {
         return _dio.postUri(
-          functionUri,
+          rpcUri,
           data: <String, dynamic>{
-            if (cleanProfileId.isNotEmpty) 'primary_profile_id': cleanProfileId,
-            if (cleanThreadId.isNotEmpty) 'thread_id': cleanThreadId,
-            'limit': sanitizedLimit,
+            if (cleanProfileId.isNotEmpty)
+              'p_primary_profile_id': cleanProfileId,
+            if (cleanThreadId.isNotEmpty) 'p_thread_id': cleanThreadId,
+            'p_limit': sanitizedLimit,
           },
           options: Options(
             headers: _authHeaders(accessToken: token),
@@ -1063,20 +1178,18 @@ class CloudAccountRepository implements ICloudAccountRepository {
       );
     }
 
-    final Uri functionUri = _supabaseConfig.edgeFunctionUri(
-      'numai-import-guest-history',
-    );
+    final Uri rpcUri = _supabaseConfig.rpcUri('import_guest_numai_history');
 
     try {
       final Response<dynamic> response = await _ensureAuthenticatedRequest((
         String token,
       ) {
         return _dio.postUri(
-          functionUri,
+          rpcUri,
           data: <String, dynamic>{
-            'primary_profile_id': cleanProfileId,
-            if (cleanRequestId.isNotEmpty) 'request_id': cleanRequestId,
-            'messages': payloadMessages,
+            'p_primary_profile_id': cleanProfileId,
+            if (cleanRequestId.isNotEmpty) 'p_request_id': cleanRequestId,
+            'p_messages': payloadMessages,
           },
           options: Options(
             headers: _authHeaders(accessToken: token),

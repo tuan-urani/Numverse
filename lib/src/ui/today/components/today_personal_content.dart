@@ -531,8 +531,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
         final double pulse = Curves.easeInOut.transform(
           _ambientController.value,
         );
-        final double orbScale = 0.92 + (0.16 * pulse);
-        final double orbAlpha = 0.14 + (0.1 * pulse);
         final double glowFactor = 0.82 + (0.38 * pulse);
         final double shimmerDx = (_ambientController.value * 2) - 1;
 
@@ -572,37 +570,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                 borderRadius: BorderRadius.circular(18),
                 child: Stack(
                   children: <Widget>[
-                    Positioned(
-                      top: -26,
-                      right: -18,
-                      child: Transform.scale(
-                        scale: orbScale,
-                        child: Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.richGold.withValues(
-                              alpha: orbAlpha,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -22,
-                      left: -16,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.richGold.withValues(
-                            alpha: (0.08 + (0.04 * pulse)).clamp(0, 1),
-                          ),
-                        ),
-                      ),
-                    ),
                     Positioned.fill(
                       child: IgnorePointer(
                         child: Opacity(
@@ -1361,70 +1328,20 @@ class _PersonalHeroCard extends StatelessWidget {
                 Center(
                   child: Column(
                     children: <Widget>[
-                      SizedBox(
-                        width: 118,
-                        height: 118,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: <Widget>[
-                            const _HeroPulseAura(),
-                            Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: <Color>[
-                                    AppColors.richGold.withValues(alpha: 0.3),
-                                    AppColors.energyViolet.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: AppColors.richGold.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                  width: 2,
-                                ),
-                                boxShadow: <BoxShadow>[
-                                  BoxShadow(
-                                    color: AppColors.richGold.withValues(
-                                      alpha: 0.28,
-                                    ),
-                                    blurRadius: 22,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: AppGlowText(
-                                  text: displayNumber,
-                                  style: AppStyles.numberLarge().copyWith(
-                                    fontSize: 60,
-                                    height: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      8.height,
+                      _HeroNumberGalaxy(numberText: displayNumber),
+                      10.height,
                       Text(
                         rhythmText,
                         textAlign: TextAlign.center,
-                        style: AppStyles.bodyMedium(
+                        style: AppStyles.h4(
                           color: AppColors.richGold,
-                          fontWeight: FontWeight.w600,
-                        ),
+                          fontWeight: FontWeight.w700,
+                        ).copyWith(height: 1.24),
                       ),
                     ],
                   ),
                 ),
-                12.height,
+                14.height,
                 Stack(
                   children: <Widget>[
                     Positioned(
@@ -1487,6 +1404,144 @@ class _PersonalHeroCard extends StatelessWidget {
   }
 }
 
+class _HeroNumberGalaxy extends StatelessWidget {
+  const _HeroNumberGalaxy({required this.numberText});
+
+  final String numberText;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 132,
+      child: CustomPaint(
+        painter: const _HeroNumberSkyPainter(),
+        child: Center(
+          child: AppGlowText(
+            text: numberText,
+            style: AppStyles.numberLarge().copyWith(
+              fontSize: 98,
+              height: 0.9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroNumberSkyPainter extends CustomPainter {
+  const _HeroNumberSkyPainter();
+
+  static const List<Offset> _stars = <Offset>[
+    Offset(0.08, 0.28),
+    Offset(0.16, 0.2),
+    Offset(0.22, 0.34),
+    Offset(0.32, 0.16),
+    Offset(0.42, 0.26),
+    Offset(0.56, 0.18),
+    Offset(0.68, 0.22),
+    Offset(0.8, 0.14),
+    Offset(0.9, 0.26),
+    Offset(0.12, 0.58),
+    Offset(0.2, 0.66),
+    Offset(0.32, 0.56),
+    Offset(0.4, 0.72),
+    Offset(0.58, 0.64),
+    Offset(0.72, 0.58),
+    Offset(0.84, 0.7),
+    Offset(0.18, 0.86),
+    Offset(0.36, 0.9),
+    Offset(0.64, 0.88),
+    Offset(0.82, 0.84),
+  ];
+
+  static const List<Offset> _goldStars = <Offset>[
+    Offset(0.18, 0.22),
+    Offset(0.38, 0.2),
+    Offset(0.64, 0.3),
+    Offset(0.78, 0.24),
+    Offset(0.28, 0.62),
+    Offset(0.72, 0.7),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Offset center = Offset(size.width * 0.5, size.height * 0.48);
+
+    final Paint glowPaint = Paint()
+      ..shader =
+          RadialGradient(
+            colors: <Color>[
+              AppColors.goldBright.withValues(alpha: 0.34),
+              AppColors.richGold.withValues(alpha: 0.18),
+              AppColors.transparent,
+            ],
+            stops: const <double>[0, 0.34, 1],
+          ).createShader(
+            Rect.fromCircle(center: center, radius: size.shortestSide * 0.58),
+          );
+    canvas.drawCircle(center, size.shortestSide * 0.58, glowPaint);
+
+    final Paint hazePaint = Paint()
+      ..shader =
+          RadialGradient(
+            colors: <Color>[
+              AppColors.goldSoft.withValues(alpha: 0.14),
+              AppColors.energyViolet.withValues(alpha: 0.06),
+              AppColors.transparent,
+            ],
+            stops: const <double>[0, 0.58, 1],
+          ).createShader(
+            Rect.fromCenter(
+              center: center,
+              width: size.width * 0.86,
+              height: size.height * 0.66,
+            ),
+          );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: center,
+        width: size.width * 0.86,
+        height: size.height * 0.66,
+      ),
+      hazePaint,
+    );
+
+    final Paint starPaint = Paint()..style = PaintingStyle.fill;
+    for (int i = 0; i < _stars.length; i++) {
+      final Offset star = _stars[i];
+      final bool anchor = i % 6 == 0;
+      starPaint.color = (anchor ? AppColors.goldSoft : AppColors.white)
+          .withValues(alpha: anchor ? 0.52 : 0.28);
+      canvas.drawCircle(
+        Offset(size.width * star.dx, size.height * star.dy),
+        anchor ? 1.8 : 1.05,
+        starPaint,
+      );
+    }
+
+    final Paint goldPaint = Paint()..style = PaintingStyle.fill;
+    for (final Offset star in _goldStars) {
+      final Offset position = Offset(
+        size.width * star.dx,
+        size.height * star.dy,
+      );
+      canvas.drawCircle(
+        position,
+        3.8,
+        Paint()..color = AppColors.goldBright.withValues(alpha: 0.16),
+      );
+      goldPaint.color = AppColors.goldBright.withValues(alpha: 0.84);
+      canvas.drawCircle(position, 1.3, goldPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeroNumberSkyPainter oldDelegate) => false;
+}
+
 class _PersonalHeroCosmicBackground extends StatelessWidget {
   const _PersonalHeroCosmicBackground();
 
@@ -1501,19 +1556,66 @@ class _PersonalHeroCosmicBackground extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                     colors: <Color>[
-                      AppColors.energyViolet.withValues(alpha: 0.2),
-                      AppColors.deepViolet.withValues(alpha: 0.12),
-                      AppColors.midnight.withValues(alpha: 0.04),
+                      AppColors.energyViolet.withValues(alpha: 0.3),
+                      AppColors.deepViolet.withValues(alpha: 0.22),
+                      AppColors.midnight.withValues(alpha: 0.12),
                     ],
                   ),
                 ),
               ),
             ),
+            Positioned(
+              left: -86,
+              top: -52,
+              child: _CosmicGlowOrb(
+                size: 210,
+                color: AppColors.richGold.withValues(alpha: 0.16),
+              ),
+            ),
+            Positioned(
+              right: -74,
+              top: 26,
+              child: _CosmicGlowOrb(
+                size: 150,
+                color: AppColors.energyViolet.withValues(alpha: 0.2),
+              ),
+            ),
+            Positioned(
+              right: -52,
+              bottom: -66,
+              child: _CosmicGlowOrb(
+                size: 190,
+                color: AppColors.energyPink.withValues(alpha: 0.14),
+              ),
+            ),
             const Positioned.fill(child: _AnimatedPersonalHeroConstellation()),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CosmicGlowOrb extends StatelessWidget {
+  const _CosmicGlowOrb({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: <Color>[color, AppColors.transparent],
+          ),
         ),
       ),
     );
@@ -1685,58 +1787,6 @@ class _PersonalHeroConstellationPainter extends CustomPainter {
   }
 }
 
-class _HeroPulseAura extends StatefulWidget {
-  const _HeroPulseAura();
-
-  @override
-  State<_HeroPulseAura> createState() => _HeroPulseAuraState();
-}
-
-class _HeroPulseAuraState extends State<_HeroPulseAura>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2100),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (BuildContext context, Widget? child) {
-        final double pulse = Curves.easeInOut.transform(_controller.value);
-        final double scale = 0.9 + (0.24 * pulse);
-        return Transform.scale(
-          scale: scale,
-          child: Opacity(
-            opacity: 0.25 + (0.2 * (1 - pulse)),
-            child: Container(
-              width: 118,
-              height: 118,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.richGold.withValues(alpha: 0.32),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-}
-
 class _InlineCtaRow extends StatelessWidget {
   const _InlineCtaRow({
     required this.icon,
@@ -1820,6 +1870,7 @@ class _LuckyAngelGrid extends StatelessWidget {
           child: _TeaserNumberCard(
             intro: LocaleKey.todayPersonalLuckyIntro.tr,
             value: '$luckyNumber',
+            valueFontSize: 30,
             hint: LocaleKey.todayPersonalLuckyHint.tr,
             cta: LocaleKey.todayPersonalLuckyCta.tr,
             onTap: onLuckyTap,
@@ -1845,6 +1896,7 @@ class _TeaserNumberCard extends StatelessWidget {
   const _TeaserNumberCard({
     required this.intro,
     required this.value,
+    this.valueFontSize = 40,
     required this.hint,
     required this.cta,
     required this.onTap,
@@ -1852,6 +1904,7 @@ class _TeaserNumberCard extends StatelessWidget {
 
   final String intro;
   final String value;
+  final double valueFontSize;
   final String hint;
   final String cta;
   final VoidCallback onTap;
@@ -1876,7 +1929,7 @@ class _TeaserNumberCard extends StatelessWidget {
           AppGlowText(
             text: value,
             style: AppStyles.numberMedium().copyWith(
-              fontSize: 40,
+              fontSize: valueFontSize,
               height: 1.06,
             ),
           ),
@@ -2152,24 +2205,24 @@ class _PrimaryGlowButtonState extends State<_PrimaryGlowButton>
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: AnimatedBuilder(
         animation: _controller,
         builder: (BuildContext context, Widget? child) {
           return InkWell(
             onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(999),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(999),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: _animatedGradient(_controller.value),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: AppColors.richGold.withValues(alpha: 0.2),
-                      blurRadius: 18,
+                      color: AppColors.richGold.withValues(alpha: 0.28),
+                      blurRadius: 22,
                       spreadRadius: 0,
-                      offset: const Offset(0, 4),
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -2179,7 +2232,7 @@ class _PrimaryGlowButtonState extends State<_PrimaryGlowButton>
           );
         },
         child: Padding(
-          padding: 14.paddingAll,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[

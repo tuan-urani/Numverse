@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/core/repository/interface/i_numerology_content_repository.dart';
+import 'package:test/src/core/service/interface/i_daily_alarm_notification_service.dart';
 import 'package:test/src/core/service/supabase_offline_coordinator.dart';
 import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/splash/components/splash_visual.dart';
@@ -143,6 +144,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       return;
     }
 
+    final IDailyAlarmNotificationService dailyAlarmService =
+        Get.find<IDailyAlarmNotificationService>();
+    if (dailyAlarmService.consumeOpenTodayIntent()) {
+      Get.offNamed(AppPages.today);
+      return;
+    }
+
     Get.offNamed(AppPages.main);
   }
 
@@ -167,6 +175,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           );
     await sessionBloc.initialize();
     await Get.find<INumerologyContentRepository>().warmUp();
+    await Get.find<IDailyAlarmNotificationService>().bootstrap(
+      localeCode: Get.locale?.languageCode,
+    );
   }
 
   @override

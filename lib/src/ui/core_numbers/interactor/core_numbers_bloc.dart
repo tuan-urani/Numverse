@@ -42,10 +42,14 @@ class CoreNumbersBloc extends Bloc<CoreNumbersEvent, CoreNumbersState> {
     }
 
     final int lifePathNumber =
-        event.lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.lifePathMetric) ??
+        event.lifeBasedSnapshot?.valueOf(
+          ProfileLifeBasedSnapshot.lifePathMetric,
+        ) ??
         NumerologyHelper.getLifePathNumber(profile.birthDate);
     final int soulUrgeNumber =
-        event.lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.soulUrgeMetric) ??
+        event.lifeBasedSnapshot?.valueOf(
+          ProfileLifeBasedSnapshot.soulUrgeMetric,
+        ) ??
         NumerologyHelper.getSoulUrgeNumber(profile.name);
     final int expressionNumber =
         event.lifeBasedSnapshot?.valueOf(
@@ -53,7 +57,9 @@ class CoreNumbersBloc extends Bloc<CoreNumbersEvent, CoreNumbersState> {
         ) ??
         NumerologyHelper.getExpressionNumber(profile.name);
     final int missionNumber =
-        event.lifeBasedSnapshot?.valueOf(ProfileLifeBasedSnapshot.missionMetric) ??
+        event.lifeBasedSnapshot?.valueOf(
+          ProfileLifeBasedSnapshot.missionMetric,
+        ) ??
         NumerologyHelper.getMissionNumber(profile.birthDate, profile.name);
 
     emit(

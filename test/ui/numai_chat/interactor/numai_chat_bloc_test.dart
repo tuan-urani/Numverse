@@ -11,6 +11,8 @@ import 'package:test/src/core/model/cloud_numai_send_message_result.dart';
 import 'package:test/src/core/model/cloud_numai_thread_messages_result.dart';
 import 'package:test/src/core/model/cloud_spend_soul_points_result.dart';
 import 'package:test/src/core/model/compatibility_history_item.dart';
+import 'package:test/src/core/model/daily_alarm_settings.dart';
+import 'package:test/src/core/model/daily_alarm_template.dart';
 import 'package:test/src/core/model/local_numai_guest_message.dart';
 import 'package:test/src/core/repository/interface/i_app_session_repository.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
@@ -100,6 +102,27 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
     required AppSessionSnapshot snapshot,
   }) async {
     throw UnimplementedError();
+  }
+
+  @override
+  Future<DailyAlarmSettings> fetchDailyAlarmSettings() async {
+    return DailyAlarmSettings.defaults();
+  }
+
+  @override
+  Future<DailyAlarmSettings> updateDailyAlarmSettings({
+    required bool enabled,
+    required String time,
+    required String timezone,
+  }) async {
+    return DailyAlarmSettings(enabled: enabled, time: time, timezone: timezone);
+  }
+
+  @override
+  Future<DailyAlarmTemplate> fetchDailyAlarmTemplate({
+    required String locale,
+  }) async {
+    return DailyAlarmTemplate.fallback(locale);
   }
 
   @override

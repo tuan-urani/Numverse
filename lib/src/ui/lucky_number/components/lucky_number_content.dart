@@ -19,14 +19,11 @@ class LuckyNumberContent extends StatefulWidget {
 }
 
 class _LuckyNumberContentState extends State<LuckyNumberContent> {
-  int _expandedSectionIndex = 0;
+  int? _expandedSectionIndex = 0;
 
   void _expandSection(int index) {
-    if (_expandedSectionIndex == index) {
-      return;
-    }
     setState(() {
-      _expandedSectionIndex = index;
+      _expandedSectionIndex = _expandedSectionIndex == index ? null : index;
     });
   }
 

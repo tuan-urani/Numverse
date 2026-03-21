@@ -91,8 +91,9 @@ class _TodayDetailContentState extends State<TodayDetailContent> {
           child: _ActionSectionCard(
             title: LocaleKey.todayActionAvoid.tr,
             items: shouldAvoid,
-            accentColor: AppColors.energyPink,
-            icon: Icons.block_rounded,
+            accentColor: AppColors.energyRed,
+            icon: Icons.warning_amber_rounded,
+            isCautionStyle: true,
             isExpanded: _expandedSectionIndex == shouldAvoidIndex,
             onToggle: () => _toggleSection(shouldAvoidIndex),
           ),
@@ -169,7 +170,12 @@ class _PersonalDayCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: AppColors.mysticalCardGradient(),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[AppColors.cosmicIndigo, AppColors.deepViolet],
+          stops: <double>[0, 1],
+        ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.richGold.withValues(alpha: 0.3)),
         boxShadow: <BoxShadow>[
@@ -365,7 +371,10 @@ class _InterpretationCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     LocaleKey.todayDetailInterpretationTitle.tr,
-                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                    style: AppStyles.h5(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 AnimatedRotation(
@@ -458,7 +467,10 @@ class _SuggestionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     LocaleKey.todayDetailSuggestionTitle.tr,
-                    style: AppStyles.h5(fontWeight: FontWeight.w600),
+                    style: AppStyles.h5(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 AnimatedRotation(
@@ -536,6 +548,7 @@ class _ActionSectionCard extends StatelessWidget {
     required this.items,
     required this.accentColor,
     required this.icon,
+    this.isCautionStyle = false,
     required this.isExpanded,
     required this.onToggle,
   });
@@ -544,6 +557,7 @@ class _ActionSectionCard extends StatelessWidget {
   final List<String> items;
   final Color accentColor;
   final IconData icon;
+  final bool isCautionStyle;
   final bool isExpanded;
   final VoidCallback onToggle;
 
@@ -553,9 +567,23 @@ class _ActionSectionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.52),
+        color: isCautionStyle ? null : AppColors.card.withValues(alpha: 0.52),
+        gradient: isCautionStyle
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  AppColors.error.withValues(alpha: 0.14),
+                  AppColors.error.withValues(alpha: 0.08),
+                ],
+              )
+            : null,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accentColor.withValues(alpha: 0.34)),
+        border: Border.all(
+          color: isCautionStyle
+              ? AppColors.error.withValues(alpha: 0.3)
+              : accentColor.withValues(alpha: 0.34),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,7 +599,7 @@ class _ActionSectionCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: AppStyles.h5(
-                      color: accentColor,
+                      color: AppColors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -601,31 +629,64 @@ class _ActionSectionCard extends StatelessWidget {
                     index++
                   ) ...<Widget>[
                     if (index > 0) 10.height,
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          margin: const EdgeInsets.only(top: 7),
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: accentColor.withValues(alpha: 0.95),
-                          ),
-                        ),
-                        10.width,
-                        Expanded(
-                          child: Text(
-                            items[index],
-                            style: AppStyles.bodyMedium(
-                              color: AppColors.textPrimary.withValues(
-                                alpha: 0.92,
+                    isCautionStyle
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.error.withValues(alpha: 0.2),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '!',
+                                  style: AppStyles.bodySmall(
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
-                            ),
+                              10.width,
+                              Expanded(
+                                child: Text(
+                                  items[index],
+                                  style: AppStyles.bodyMedium(
+                                    color: AppColors.textPrimary.withValues(
+                                      alpha: 0.9,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Container(
+                                margin: const EdgeInsets.only(top: 7),
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: accentColor.withValues(alpha: 0.95),
+                                ),
+                              ),
+                              10.width,
+                              Expanded(
+                                child: Text(
+                                  items[index],
+                                  style: AppStyles.bodyMedium(
+                                    color: AppColors.textPrimary.withValues(
+                                      alpha: 0.92,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ],
                 ],
               ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
+import 'package:test/src/core/service/interface/i_daily_alarm_notification_service.dart';
 import 'package:test/src/locale/translation_manager.dart';
 import 'package:test/src/ui/settings/components/settings_appearance_card.dart';
 import 'package:test/src/ui/settings/components/settings_header.dart';
@@ -11,6 +13,7 @@ import 'package:test/src/ui/settings/interactor/settings_event.dart';
 import 'package:test/src/ui/settings/interactor/settings_state.dart';
 import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/utils/app_pages.dart';
+import 'package:test/src/utils/app_shared.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -19,7 +22,15 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final SettingsBloc bloc = Get.isRegistered<SettingsBloc>()
         ? Get.find<SettingsBloc>()
-        : Get.put<SettingsBloc>(SettingsBloc());
+        : Get.put<SettingsBloc>(
+            SettingsBloc(
+              cloudAccountRepository: Get.find<ICloudAccountRepository>(),
+              appShared: Get.find<AppShared>(),
+              dailyAlarmNotificationService:
+                  Get.find<IDailyAlarmNotificationService>(),
+              localeCodeProvider: () => Get.locale?.languageCode ?? 'vi',
+            ),
+          );
 
     return AppMysticalScaffold(
       child: SafeArea(
@@ -53,6 +64,9 @@ class SettingsPage extends StatelessWidget {
                           },
                           onToggleNotifications: () {
                             bloc.add(const SettingsNotificationsToggled());
+                          },
+                          onToggleDailyAlarm: () {
+                            bloc.add(const SettingsDailyAlarmToggled());
                           },
                         ),
                       ],

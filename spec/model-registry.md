@@ -69,3 +69,15 @@
 - **Type**: UI/Domain model
 - **Purpose**: Encapsulates server-authoritative reward grant response (`granted/idempotent`, `rewardAwarded`, `todayEarned`, `dailyLimit`, `soulPoints`) after an ad reward claim.
 - **Source**: Supabase RPC `grant_ad_reward`.
+
+## DailyAlarmSettings
+- **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/daily_alarm_settings.dart`
+- **Type**: UI/Domain model
+- **Purpose**: Encapsulates daily alarm preference payload (`enabled`, `time`, `timezone`) used by Settings and local notification scheduling flow.
+- **Source**: Supabase RPCs `get_daily_alarm_settings` and `update_daily_alarm_settings`, with local cache fallback from `AppShared`.
+
+## DailyAlarmTemplate
+- **Path**: `/Users/uranidev/Documents/Numverse/lib/src/core/model/daily_alarm_template.dart`
+- **Type**: UI/Domain model
+- **Purpose**: Encapsulates server-configurable localized notification copy (`locale`, `title`, `body`) for daily 8:00 reminder.
+- **Source**: Supabase RPC `get_daily_alarm_template`, with cached/local fallback.

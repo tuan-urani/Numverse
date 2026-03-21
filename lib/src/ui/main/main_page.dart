@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/enums/bottom_navigation_page.dart';
+import 'package:test/src/core/service/interface/i_daily_alarm_notification_service.dart';
 import 'package:test/src/ui/main/bloc/main_bloc.dart';
 import 'package:test/src/ui/main/bloc/main_event.dart';
 import 'package:test/src/ui/main/bloc/main_state.dart';
@@ -40,6 +43,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       _sessionBloc.refreshTimeLifeForCurrentProfile();
+      unawaited(
+        Get.find<IDailyAlarmNotificationService>().bootstrap(
+          localeCode: Get.locale?.languageCode,
+        ),
+      );
     }
   }
 

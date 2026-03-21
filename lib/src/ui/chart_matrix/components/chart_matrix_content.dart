@@ -428,9 +428,7 @@ class _BirthChartAnalysisCard extends StatelessWidget {
               10.height,
               const Divider(color: AppColors.border),
               10.height,
-              _ArrowInsightsCard(
-                activeArrows: resolved.activeArrows,
-              ),
+              _ArrowInsightsCard(activeArrows: resolved.activeArrows),
             ],
           ],
         ),
@@ -592,7 +590,10 @@ class _SectionTitle extends StatelessWidget {
         8.width,
         Text(
           title,
-          style: AppStyles.bodyMedium(color: color, fontWeight: FontWeight.w700),
+          style: AppStyles.bodyMedium(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -622,7 +623,10 @@ class _MeaningLine extends StatelessWidget {
         children: <Widget>[
           Text(
             '$leading: ',
-            style: AppStyles.bodySmall(color: color, fontWeight: FontWeight.w700),
+            style: AppStyles.bodySmall(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           Expanded(
             child: Text(
@@ -656,7 +660,10 @@ class _ArrowMeaningItem extends StatelessWidget {
         children: <Widget>[
           Text(
             title,
-            style: AppStyles.bodySmall(color: color, fontWeight: FontWeight.w700),
+            style: AppStyles.bodySmall(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           2.height,
           Text(

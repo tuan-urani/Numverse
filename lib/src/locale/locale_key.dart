@@ -836,6 +836,10 @@ class LocaleKey {
       PagesLocaleKey.settingsPushNotificationsTitle;
   static const String settingsPushNotificationsSubtitle =
       PagesLocaleKey.settingsPushNotificationsSubtitle;
+  static const String settingsDailyAlarmTitle =
+      PagesLocaleKey.settingsDailyAlarmTitle;
+  static const String settingsDailyAlarmSubtitle =
+      PagesLocaleKey.settingsDailyAlarmSubtitle;
   static const String settingsOn = PagesLocaleKey.settingsOn;
   static const String settingsOff = PagesLocaleKey.settingsOff;
   static const String notificationsTitle = PagesLocaleKey.notificationsTitle;

@@ -363,6 +363,9 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.settingsPushNotificationsTitle: 'Push notifications',
   PagesLocaleKey.settingsPushNotificationsSubtitle:
       'Receive reading updates and promotions',
+  PagesLocaleKey.settingsDailyAlarmTitle: '8:00 daily energy reminder',
+  PagesLocaleKey.settingsDailyAlarmSubtitle:
+      'Remind me at 8:00 to check today\'s energy',
   PagesLocaleKey.settingsOn: 'On',
   PagesLocaleKey.settingsOff: 'Off',
   PagesLocaleKey.notificationsTitle: 'Notifications',

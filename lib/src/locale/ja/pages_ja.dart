@@ -293,6 +293,8 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.settingsSoundEffectsTitle: '効果音',
   PagesLocaleKey.settingsPushNotificationsTitle: 'プッシュ通知',
   PagesLocaleKey.settingsPushNotificationsSubtitle: '鑑定更新とプロモーションを受け取る',
+  PagesLocaleKey.settingsDailyAlarmTitle: '8:00 毎日のエネルギー通知',
+  PagesLocaleKey.settingsDailyAlarmSubtitle: '8:00 にアプリを開いて今日のエネルギーを確認するリマインド',
   PagesLocaleKey.settingsOn: 'オン',
   PagesLocaleKey.settingsOff: 'オフ',
   PagesLocaleKey.notificationsTitle: '通知',

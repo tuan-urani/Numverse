@@ -253,6 +253,44 @@ Features:
 - Animated result stack (number orb, meaning, guidance).
 - Fallback tips card before first lookup.
 
+## [Settings Daily Alarm]
+**Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/settings
+
+### 1. Description
+Goal: Add daily 8:00 reminder toggle to bring users back to Today flow.
+Features:
+- Dedicated toggle in Settings (separate from Push notifications).
+- Cloud-backed preference via Supabase RPC (`daily_notification_enabled`).
+- Local cache fallback with optimistic UI updates.
+- Daily local notification scheduling at 8:00 (device timezone).
+
+### 2. UI Structure
+- `settings_page.dart`
+- `components/settings_sound_card.dart` (new alarm switch row)
+- `interactor/settings_bloc.dart` (load/sync/toggle alarm state)
+
+### 3. User Flow & Logic
+1) User opens Settings.
+2) `SettingsBloc` loads cached alarm state, then tries cloud settings.
+3) Toggle ON:
+- persist local cache,
+- sync cloud setting,
+- schedule local notification with server-provided message.
+4) Toggle OFF:
+- persist local cache,
+- sync cloud setting,
+- cancel scheduled local notification.
+5) Tap notification opens app into Today tab.
+
+### 4. Key Dependencies
+- `ICloudAccountRepository` (new alarm RPC methods)
+- `IDailyAlarmNotificationService`
+- `AppShared` for local cache
+
+### 5. Notes & Known Issues (Optional)
+- V1 uses local notifications only (not remote push campaign).
+- Notification message is fetched from server template with locale fallback.
+
 ### 2. UI Structure
 - `angel_numbers_page.dart` (composition only)
 - Components:

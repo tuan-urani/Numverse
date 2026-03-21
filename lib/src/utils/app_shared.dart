@@ -12,6 +12,9 @@ class AppShared {
       'numverse_supabase_refresh_token';
   static const String _keyNumAiGuestHistoryPrefix =
       'numverse_numai_guest_history_';
+  static const String _keyDailyAlarmEnabled = 'numverse_daily_alarm_enabled';
+  static const String _keyDailyAlarmTemplatePrefix =
+      'numverse_daily_alarm_template_';
 
   final SharedPreferences _prefs;
 
@@ -78,6 +81,25 @@ class AppShared {
     await _prefs.remove(_numAiGuestHistoryKey(userKey));
   }
 
+  bool getDailyAlarmEnabled() {
+    return _prefs.getBool(_keyDailyAlarmEnabled) ?? true;
+  }
+
+  Future<void> setDailyAlarmEnabled(bool value) async {
+    await _prefs.setBool(_keyDailyAlarmEnabled, value);
+  }
+
+  String? getDailyAlarmTemplate(String localeCode) {
+    return _prefs.getString(_dailyAlarmTemplateKey(localeCode));
+  }
+
+  Future<void> setDailyAlarmTemplate({
+    required String localeCode,
+    required String value,
+  }) async {
+    await _prefs.setString(_dailyAlarmTemplateKey(localeCode), value);
+  }
+
   Future<void> clearAll() async {
     await _prefs.clear();
   }
@@ -86,5 +108,14 @@ class AppShared {
     final String normalized = userKey.trim().toLowerCase();
     final String safeKey = normalized.isEmpty ? 'local' : normalized;
     return '$_keyNumAiGuestHistoryPrefix$safeKey';
+  }
+
+  String _dailyAlarmTemplateKey(String localeCode) {
+    final String normalized = localeCode.trim().toLowerCase().replaceAll(
+      '-',
+      '_',
+    );
+    final String safeKey = normalized.isEmpty ? 'vi' : normalized;
+    return '$_keyDailyAlarmTemplatePrefix$safeKey';
   }
 }
