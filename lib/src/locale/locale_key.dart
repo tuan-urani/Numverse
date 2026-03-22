@@ -775,6 +775,18 @@ class LocaleKey {
       PagesLocaleKey.profileLogoutConfirmTitle;
   static const String profileLogoutConfirmBody =
       PagesLocaleKey.profileLogoutConfirmBody;
+  static const String profileDeleteUserDataTitle =
+      PagesLocaleKey.profileDeleteUserDataTitle;
+  static const String profileDeleteUserDataSubtitle =
+      PagesLocaleKey.profileDeleteUserDataSubtitle;
+  static const String profileDeleteUserDataConfirmTitle =
+      PagesLocaleKey.profileDeleteUserDataConfirmTitle;
+  static const String profileDeleteUserDataConfirmBody =
+      PagesLocaleKey.profileDeleteUserDataConfirmBody;
+  static const String profileDeleteUserDataProcessing =
+      PagesLocaleKey.profileDeleteUserDataProcessing;
+  static const String profileDeleteUserDataPlanActiveError =
+      PagesLocaleKey.profileDeleteUserDataPlanActiveError;
 
   static const String myProfileTitle = PagesLocaleKey.myProfileTitle;
   static const String savedProfilesTitle = PagesLocaleKey.savedProfilesTitle;

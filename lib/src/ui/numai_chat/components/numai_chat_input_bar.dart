@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -152,10 +154,14 @@ class NumAiChatInputBar extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.send_rounded,
-                      size: 20,
-                      color: AppColors.midnight,
+                    child: SvgPicture.asset(
+                      AppAssets.iconSendSvg,
+                      width: 20,
+                      height: 20,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.midnight,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                 ),

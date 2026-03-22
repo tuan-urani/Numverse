@@ -1245,6 +1245,50 @@ class CloudAccountRepository implements ICloudAccountRepository {
   }
 
   @override
+  Future<void> deleteMyAccount() async {
+    if (!isConfigured) {
+      throw StateError('supabase_not_configured');
+    }
+
+    final String accessToken = _requireAccessToken();
+    final Uri functionUri = _supabaseConfig.edgeFunctionUri(
+      'delete-my-account',
+    );
+
+    try {
+      final Response<dynamic> response = await _ensureAuthenticatedRequest((
+        String token,
+      ) {
+        return _dio.postUri(
+          functionUri,
+          data: const <String, dynamic>{},
+          options: Options(
+            headers: _authHeaders(accessToken: token),
+            receiveTimeout: const Duration(seconds: 20),
+          ),
+        );
+      }, initialAccessToken: accessToken);
+
+      final Map<String, dynamic> payload = _ensureJsonMap(response.data);
+      if (payload['ok'] != true) {
+        final String serverErrorCode = (payload['error'] as String? ?? '')
+            .trim();
+        if (serverErrorCode.isNotEmpty) {
+          throw StateError(serverErrorCode);
+        }
+        throw StateError('supabase_invalid_delete_account_response');
+      }
+    } on DioException catch (error) {
+      final Map<String, dynamic> payload = _ensureJsonMap(error.response?.data);
+      final String serverErrorCode = (payload['error'] as String? ?? '').trim();
+      if (serverErrorCode.isNotEmpty) {
+        throw StateError(serverErrorCode);
+      }
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> clearSession() async {
     await _appShared.clearSupabaseAuthSession();
   }
@@ -1254,8 +1298,9 @@ class CloudAccountRepository implements ICloudAccountRepository {
   );
 
   String _requireAccessToken() {
-    final String accessToken = (_appShared.getSupabaseAccessToken() ?? '')
-        .trim();
+    final String accessToken = _normalizeAuthToken(
+      _appShared.getSupabaseAccessToken() ?? '',
+    );
     if (accessToken.isEmpty) {
       throw StateError('supabase_missing_access_token');
     }
@@ -1263,9 +1308,10 @@ class CloudAccountRepository implements ICloudAccountRepository {
   }
 
   Map<String, String> _authHeaders({required String accessToken}) {
+    final String normalizedAccessToken = _normalizeAuthToken(accessToken);
     return <String, String>{
       'apikey': _supabaseConfig.resolvedAnonKey,
-      'Authorization': 'Bearer $accessToken',
+      'Authorization': 'Bearer $normalizedAccessToken',
       'Content-Type': 'application/json',
     };
   }
@@ -1274,9 +1320,9 @@ class CloudAccountRepository implements ICloudAccountRepository {
     Future<Response<dynamic>> Function(String accessToken) request, {
     String? initialAccessToken,
   }) async {
-    final String token =
-        (initialAccessToken ?? _appShared.getSupabaseAccessToken() ?? '')
-            .trim();
+    final String token = _normalizeAuthToken(
+      initialAccessToken ?? _appShared.getSupabaseAccessToken() ?? '',
+    );
     if (token.isEmpty) {
       throw StateError('supabase_missing_access_token');
     }
@@ -1300,8 +1346,9 @@ class CloudAccountRepository implements ICloudAccountRepository {
   }
 
   Future<bool> _refreshSession() async {
-    final String refreshToken = (_appShared.getSupabaseRefreshToken() ?? '')
-        .trim();
+    final String refreshToken = _normalizeAuthToken(
+      _appShared.getSupabaseRefreshToken() ?? '',
+    );
     if (refreshToken.isEmpty) {
       return false;
     }
@@ -1365,10 +1412,12 @@ class CloudAccountRepository implements ICloudAccountRepository {
     Object? payloadRaw,
   ) {
     final Map<String, dynamic> payload = _ensureJsonMap(payloadRaw);
-    final String accessToken = (payload['access_token'] as String? ?? '')
-        .trim();
-    final String refreshToken = (payload['refresh_token'] as String? ?? '')
-        .trim();
+    final String accessToken = _normalizeAuthToken(
+      payload['access_token'] as String? ?? '',
+    );
+    final String refreshToken = _normalizeAuthToken(
+      payload['refresh_token'] as String? ?? '',
+    );
     final Map<String, dynamic> user = _ensureJsonMap(payload['user']);
     final String userId = (user['id'] as String? ?? '').trim();
     if (accessToken.isEmpty || refreshToken.isEmpty || userId.isEmpty) {
@@ -1419,5 +1468,16 @@ class CloudAccountRepository implements ICloudAccountRepository {
       return _ensureJsonList(decoded);
     }
     return <Map<String, dynamic>>[];
+  }
+
+  String _normalizeAuthToken(String raw) {
+    String token = raw.trim();
+    if (token.length >= 2 && token.startsWith('"') && token.endsWith('"')) {
+      token = token.substring(1, token.length - 1).trim();
+    }
+    if (token.toLowerCase().startsWith('bearer ')) {
+      token = token.substring(7).trim();
+    }
+    return token;
   }
 }

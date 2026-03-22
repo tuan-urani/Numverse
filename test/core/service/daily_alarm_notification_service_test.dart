@@ -51,6 +51,19 @@ void main() {
       expect(next.minute, 0);
     });
 
+    test('supports second precision when server provides HH:mm:ss', () {
+      final tz.TZDateTime now = tz.TZDateTime(tz.local, 2026, 3, 21, 8, 0, 10);
+      final tz.TZDateTime next = DailyAlarmNotificationService.nextTriggerAt(
+        timeString: '08:00:30',
+        now: now,
+      );
+
+      expect(next.day, 21);
+      expect(next.hour, 8);
+      expect(next.minute, 0);
+      expect(next.second, 30);
+    });
+
     test('falls back to 08:00 when input time is invalid', () {
       final tz.TZDateTime now = tz.TZDateTime(tz.local, 2026, 3, 21, 7, 59);
       final tz.TZDateTime next = DailyAlarmNotificationService.nextTriggerAt(

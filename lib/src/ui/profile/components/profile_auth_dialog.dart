@@ -285,48 +285,39 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_isBusy,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Dialog(
-          insetPadding: EdgeInsets.zero,
-          backgroundColor: AppColors.transparent,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.card.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AppColors.border.withValues(alpha: 0.9),
+      child: Dialog(
+        insetPadding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+        insetAnimationDuration: const Duration(milliseconds: 180),
+        insetAnimationCurve: Curves.easeOut,
+        backgroundColor: AppColors.transparent,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.card.withValues(alpha: 0.98),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.9)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: AppColors.midnight.withValues(alpha: 0.65),
+                blurRadius: 40,
+                spreadRadius: 2,
               ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: AppColors.midnight.withValues(alpha: 0.65),
-                  blurRadius: 40,
-                  spreadRadius: 2,
-                ),
-                BoxShadow(
-                  color: AppColors.richGold.withValues(alpha: 0.18),
-                  blurRadius: 24,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  child: _isSuccess ? _buildSuccess() : _buildAuthContent(),
-                ),
+              BoxShadow(
+                color: AppColors.richGold.withValues(alpha: 0.18),
+                blurRadius: 24,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: _isSuccess ? _buildSuccess() : _buildAuthContent(),
               ),
             ),
           ),

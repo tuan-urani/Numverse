@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/utils/app_pages.dart';
 
+const String kProfileDeleteUserDataMenuItemId = 'delete_user_data';
+
 class ProfileState extends Equatable {
   const ProfileState({required this.menuItems});
 
@@ -38,6 +40,14 @@ class ProfileState extends Equatable {
           route: AppPages.help,
           icon: Icons.help_outline_rounded,
         ),
+        ProfileMenuItem(
+          id: kProfileDeleteUserDataMenuItemId,
+          titleKey: LocaleKey.profileDeleteUserDataTitle,
+          subtitleKey: LocaleKey.profileDeleteUserDataSubtitle,
+          route: AppPages.settings,
+          icon: Icons.delete_forever_outlined,
+          isDestructive: true,
+        ),
       ],
     );
   }
@@ -55,6 +65,7 @@ class ProfileMenuItem extends Equatable {
     required this.subtitleKey,
     required this.route,
     required this.icon,
+    this.isDestructive = false,
   });
 
   final String id;
@@ -62,7 +73,15 @@ class ProfileMenuItem extends Equatable {
   final String subtitleKey;
   final String route;
   final IconData icon;
+  final bool isDestructive;
 
   @override
-  List<Object?> get props => <Object?>[id, titleKey, subtitleKey, route, icon];
+  List<Object?> get props => <Object?>[
+    id,
+    titleKey,
+    subtitleKey,
+    route,
+    icon,
+    isDestructive,
+  ];
 }

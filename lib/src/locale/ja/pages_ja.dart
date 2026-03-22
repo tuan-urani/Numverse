@@ -261,6 +261,14 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.profileLogoutSubtitle: 'アカウントから退出',
   PagesLocaleKey.profileLogoutConfirmTitle: 'ログアウト確認',
   PagesLocaleKey.profileLogoutConfirmBody: 'ログアウトしてもよろしいですか？',
+  PagesLocaleKey.profileDeleteUserDataTitle: 'ユーザーデータを削除',
+  PagesLocaleKey.profileDeleteUserDataSubtitle: '現在のアカウントと保存データをすべて削除します',
+  PagesLocaleKey.profileDeleteUserDataConfirmTitle: 'データ削除の確認',
+  PagesLocaleKey.profileDeleteUserDataConfirmBody:
+      'この操作により、現在のアカウントと関連データはすべて完全に削除されます。',
+  PagesLocaleKey.profileDeleteUserDataProcessing: 'ユーザーデータを削除中...',
+  PagesLocaleKey.profileDeleteUserDataPlanActiveError:
+      '現在有効なプランがあります。データ削除の前にプランを解約してください。',
   PagesLocaleKey.myProfileTitle: 'マイプロフィール',
   PagesLocaleKey.savedProfilesTitle: '保存プロフィール',
   PagesLocaleKey.subscriptionTitle: 'ポイント購入',

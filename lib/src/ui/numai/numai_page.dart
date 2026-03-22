@@ -1133,10 +1133,14 @@ class _NumAiComposer extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.send_rounded,
-                        size: 20,
-                        color: AppColors.midnight,
+                      child: SvgPicture.asset(
+                        AppAssets.iconSendSvg,
+                        width: 20,
+                        height: 20,
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.midnight,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),

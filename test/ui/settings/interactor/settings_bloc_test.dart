@@ -219,6 +219,11 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
   }
 
   @override
+  Future<void> deleteMyAccount() async {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> clearSession() async {
     throw UnimplementedError();
   }

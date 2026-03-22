@@ -51,6 +51,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     on<MainSessionLoginRequested>(_onLoginRequested);
     on<MainSessionRegisterRequested>(_onRegisterRequested);
     on<MainSessionLogoutRequested>(_onLogoutRequested);
+    on<MainSessionUserDataDeletionRequested>(_onUserDataDeletionRequested);
     on<MainSessionProfileAdded>(_onProfileAdded);
     on<MainSessionProfileSwitched>(_onProfileSwitched);
     on<MainSessionProfileUpdated>(_onProfileUpdated);
@@ -393,6 +394,13 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     await completer.future;
   }
 
+  /// API public xoá dữ liệu người dùng: xoá cloud account (nếu có) và bootstrap session mới.
+  Future<void> deleteUserData() async {
+    final Completer<void> completer = Completer<void>();
+    add(MainSessionUserDataDeletionRequested(completer: completer));
+    await completer.future;
+  }
+
   /// Xử lý đăng xuất: clear session cloud và cập nhật trạng thái local.
   Future<void> _onLogoutRequested(
     MainSessionLogoutRequested event,
@@ -434,6 +442,61 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         emit,
         recomputeMetrics: true,
         forceRecomputeMetrics: true,
+        runCloudPostSyncEffects: false,
+      );
+      _completeVoid(event.completer);
+    } catch (error, stackTrace) {
+      _completeError(event.completer, error, stackTrace);
+    }
+  }
+
+  /// Xử lý xoá dữ liệu người dùng rồi tạo lại anonymous session mới.
+  Future<void> _onUserDataDeletionRequested(
+    MainSessionUserDataDeletionRequested event,
+    Emitter<MainSessionState> emit,
+  ) async {
+    try {
+      final bool hasCloudSession = state.hasCloudSession;
+      if (_cloudAccountRepository.isConfigured && hasCloudSession) {
+        await _cloudAccountRepository.deleteMyAccount();
+      }
+
+      await _cloudAccountRepository.clearSession();
+      await _sessionRepository.clear();
+      emit(
+        MainSessionState.initial().copyWith(
+          viewState: AppViewStateStatus.success,
+        ),
+      );
+      if (!_cloudAccountRepository.isConfigured) {
+        _completeVoid(event.completer);
+        return;
+      }
+
+      await _cloudAccountRepository.ensureAnonymousSession();
+      final AppSessionSnapshot cloudSnapshot = await _cloudAccountRepository
+          .fetchCloudSessionSnapshot(
+            fallbackEmail: '',
+            fallbackDisplayName: '',
+          );
+      final String resolvedCloudUserId =
+          (_cloudAccountRepository.currentUserId ?? cloudSnapshot.cloudUserId)
+              ?.trim() ??
+          '';
+      await _applySnapshotToState(
+        cloudSnapshot.copyWith(
+          isAuthenticated: true,
+          authMode: SessionAuthMode.anonymous,
+          pendingAnonymousBootstrap: false,
+          cloudUserId: resolvedCloudUserId.isEmpty ? null : resolvedCloudUserId,
+          clearCloudUserId: resolvedCloudUserId.isEmpty,
+          clearUserEmail: true,
+          clearUserName: true,
+        ),
+        emit,
+        recomputeMetrics: true,
+        forceRecomputeMetrics: true,
+        runCloudPostSyncEffects: false,
       );
       _completeVoid(event.completer);
     } catch (error, stackTrace) {
@@ -1482,6 +1545,7 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
     Emitter<MainSessionState> emit, {
     required bool recomputeMetrics,
     bool forceRecomputeMetrics = false,
+    bool runCloudPostSyncEffects = true,
   }) async {
     // Apply snapshot vào state runtime, rồi tùy chọn recompute metrics để đồng bộ dữ liệu.
     final UserProfile? currentProfile = _profileService.resolveCurrentProfile(
@@ -1530,6 +1594,9 @@ class MainSessionBloc extends Bloc<MainSessionEvent, MainSessionState> {
         emit,
         force: forceRecomputeMetrics,
       );
+    }
+    if (!runCloudPostSyncEffects) {
+      return;
     }
     await _tryRefreshCompatibilityHistoryFromCloud(emit);
     await _tryAutoClaimDailyCheckInFromCloud(emit);

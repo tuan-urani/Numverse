@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 const String kCloudErrorProfileLimitReached = 'profile_limit_reached';
+const String kCloudErrorPlanActive = 'plan_active';
 
 String? extractCloudErrorCode(Object error) {
   final List<String> candidates = <String>[];
@@ -11,13 +12,13 @@ String? extractCloudErrorCode(Object error) {
 
   if (error is DioException) {
     final dynamic raw = error.response?.data;
-    if (raw is Map<String, dynamic>) {
+    if (raw is Map) {
       candidates
-        ..add(raw['error'] as String? ?? '')
-        ..add(raw['message'] as String? ?? '')
-        ..add(raw['msg'] as String? ?? '')
-        ..add(raw['code'] as String? ?? '')
-        ..add(raw['error_description'] as String? ?? '');
+        ..add(_cloudErrorFieldToString(raw['error']))
+        ..add(_cloudErrorFieldToString(raw['message']))
+        ..add(_cloudErrorFieldToString(raw['msg']))
+        ..add(_cloudErrorFieldToString(raw['code']))
+        ..add(_cloudErrorFieldToString(raw['error_description']));
     }
     candidates.add(error.message ?? '');
   }
@@ -56,10 +57,23 @@ String _normalizeCloudErrorCode(String raw) {
   if (value.contains(kCloudErrorProfileLimitReached)) {
     return kCloudErrorProfileLimitReached;
   }
+  if (value.contains(kCloudErrorPlanActive)) {
+    return kCloudErrorPlanActive;
+  }
 
   if (RegExp(r'^[a-z0-9_]+$').hasMatch(value)) {
     return value;
   }
 
   return '';
+}
+
+String _cloudErrorFieldToString(dynamic value) {
+  return switch (value) {
+    null => '',
+    final String stringValue => stringValue,
+    final num numberValue => numberValue.toString(),
+    final bool boolValue => boolValue.toString(),
+    _ => '',
+  };
 }

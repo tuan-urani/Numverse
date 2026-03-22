@@ -15,6 +15,7 @@ import 'package:test/src/ui/main/interactor/main_session_bloc.dart';
 import 'package:test/src/ui/main/interactor/main_session_state.dart';
 import 'package:test/src/ui/widgets/app_glow_text.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
+import 'package:test/src/ui/widgets/app_reward_celebration_overlay.dart';
 import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_dimensions.dart';
@@ -358,7 +359,6 @@ class _DailyCheckInCard extends StatefulWidget {
 class _DailyCheckInCardState extends State<_DailyCheckInCard>
     with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
-  OverlayEntry? _celebrationOverlayEntry;
   late final AnimationController _ambientController;
   int _lastCelebratedEventId = 0;
 
@@ -374,8 +374,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
 
   @override
   void dispose() {
-    _celebrationOverlayEntry?.remove();
-    _celebrationOverlayEntry = null;
     _ambientController.dispose();
     super.dispose();
   }
@@ -418,84 +416,19 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
     required int streak,
     required _CheckInMilestone? milestone,
   }) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
-      _celebrationOverlayEntry?.remove();
-
-      final OverlayState overlayState = Overlay.of(context, rootOverlay: true);
-
-      final OverlayEntry entry = OverlayEntry(
-        builder: (BuildContext context) {
-          final String title = milestone != null
-              ? '${LocaleKey.todayCheckInMilestoneCelebration.tr} ${milestone.labelKey.tr}!'
-              : LocaleKey.todayCheckInCelebrationSuccess.tr;
-          return Positioned.fill(
-            child: IgnorePointer(
-              child: Material(
-                color: AppColors.midnight.withValues(alpha: 0.74),
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 230),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.midnightSoft.withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.richGold.withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const Icon(
-                          Icons.emoji_events_rounded,
-                          size: 36,
-                          color: AppColors.richGold,
-                        ),
-                        8.height,
-                        Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: AppStyles.h5(
-                            color: AppColors.richGold,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        8.height,
-                        Text(
-                          '+$reward ${LocaleKey.todayRewardPointsSuffix.tr}',
-                          style: AppStyles.h3(
-                            color: AppColors.richGold,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          '${LocaleKey.todayDailyStreak.tr}: $streak ${LocaleKey.todayCheckInDays.tr}',
-                          style: AppStyles.caption(color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
-
-      overlayState.insert(entry);
-      _celebrationOverlayEntry = entry;
-
-      Future<void>.delayed(const Duration(milliseconds: 2800), () {
-        if (_celebrationOverlayEntry == entry) {
-          entry.remove();
-          _celebrationOverlayEntry = null;
-        }
-      });
-    });
+    if (!mounted) {
+      return;
+    }
+    final String title = milestone != null
+        ? '${LocaleKey.todayCheckInMilestoneCelebration.tr} ${milestone.labelKey.tr}!'
+        : LocaleKey.todayCheckInCelebrationSuccess.tr;
+    AppRewardCelebrationOverlay.show(
+      context,
+      reward: reward,
+      title: title,
+      subtitle:
+          '${LocaleKey.todayDailyStreak.tr}: $streak ${LocaleKey.todayCheckInDays.tr}',
+    );
   }
 
   _CheckInMilestone _nextMilestone(int streak) {
@@ -664,7 +597,8 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                                         color:
                                                             widget.currentStreak >
                                                                 0
-                                                            ? AppColors.energyOrange
+                                                            ? AppColors
+                                                                  .energyOrange
                                                             : AppColors
                                                                   .textMuted,
                                                         fontWeight:

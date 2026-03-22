@@ -19,7 +19,7 @@ class AppAssets {
   static const String iconTodaySvg = 'assets/icons/today.svg';
   static const String iconCompatibilitySvg = 'assets/icons/compatibility.svg';
   static const String iconNumberSvg = 'assets/icons/number.svg';
-  static const String iconCalendarSvg = 'assets/icons/calendar.svg';
+static const String iconCalendarSvg = 'assets/icons/calendar.svg';
   static const String iconSelfSvg = 'assets/icons/self.svg';
   static const String iconLoveSvg = 'assets/icons/love.svg';
   static const String iconCareerSvg = 'assets/icons/career.svg';
@@ -39,5 +39,6 @@ class AppAssets {
   static const String iconMissionPng = 'assets/icons/mission.png';
   static const String iconNumerologySecondPng = 'assets/icons/numerology_second.png';
   static const String iconRoundMapPng = 'assets/icons/roadmap.png';
+  static const String iconSendSvg = 'assets/icons/send.svg';
 
 }

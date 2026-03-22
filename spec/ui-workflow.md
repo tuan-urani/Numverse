@@ -792,12 +792,12 @@ Features:
 **Path**: /Users/uranidev/Documents/Numverse/lib/src/ui/profile
 
 ### 1. Description
-Goal: Match Figma `/profile` with personal identity card, account warnings, utility menu, and authenticated logout action.
+Goal: Match Figma `/profile` with personal identity card, account warnings, utility menu, authenticated logout action, and destructive user-data deletion flow.
 Features:
 - Header title “Tôi”.
 - Subtitle switches by auth state: normal subtitle vs “chưa được sao lưu” for guest with profile.
 - Identity card with avatar initial, name/birth date, Soul Points badge.
-- Menu entries: Settings, Privacy, Help.
+- Menu entries: Settings, Privacy, Help, Delete user data.
 - Logout action card shown only when authenticated.
 
 ### 2. UI Structure
@@ -819,11 +819,16 @@ Features:
 - no profile -> open profile input dialog and create profile,
 - has profile but not authenticated -> navigate to Login,
 - has profile + authenticated -> open My Profile route.
-4) Menu cards navigate to `/settings`, `/privacy`, `/help`.
-5) Authenticated users can logout via confirmation dialog and return to main route.
+4) Menu cards navigate to `/settings`, `/privacy`, `/help`; `Delete user data` opens destructive confirmation dialog.
+5) Confirming delete user data triggers account/data deletion flow:
+- call cloud delete-account API (for both anonymous and registered sessions),
+- if account has active subscription -> server returns `PLAN_ACTIVE` and UI asks user to cancel plan first,
+- clear local session snapshot,
+- bootstrap a fresh anonymous session.
+6) Authenticated users can logout via confirmation dialog and return to main route.
 
 ### 4. Key Dependencies
-- `MainSessionCubit` (profile/auth/soul points/logout).
+- `MainSessionBloc` (profile/auth/soul points/logout/delete user data).
 - `ProfileBloc` for menu model state.
 - `CompatibilityProfileInputDialog` reused for profile creation flow.
 

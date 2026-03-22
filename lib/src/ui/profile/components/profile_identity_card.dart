@@ -309,6 +309,10 @@ class _AvatarBadge extends StatelessWidget {
       height: 64,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
+        border: Border.all(
+          color: AppColors.richGold.withValues(alpha: 0.3),
+          width: 2,
+        ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

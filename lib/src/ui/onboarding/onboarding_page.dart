@@ -414,7 +414,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               progressLabel: LocaleKey.onboardingLoadingProgress.tr,
               progressPercent: progressPercent,
             ),
-            16.height,
+            2.height,
             DecoratedBox(
               decoration: BoxDecoration(
                 color: AppColors.energyBlue.withValues(alpha: 0.08),
@@ -426,7 +426,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 12,
+                  vertical: 6,
                 ),
                 child: Text(
                   LocaleKey.onboardingLoadingQuote.tr,

@@ -16,8 +16,7 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.compatibilityTitle: 'Tương hợp',
   PagesLocaleKey.compatibilitySubtitle: 'So với ai hôm nay?',
   PagesLocaleKey.compatibilityStart: 'Bắt đầu so sánh tương hợp',
-  PagesLocaleKey.compatibilityOwnProfileInputTitle:
-      'Nhập thông tin của bạn',
+  PagesLocaleKey.compatibilityOwnProfileInputTitle: 'Nhập thông tin của bạn',
   PagesLocaleKey.compatibilityOwnProfileInputSubtitle:
       'Vui lòng nhập họ tên và ngày sinh của bạn để bắt đầu so sánh tương hợp.',
   PagesLocaleKey.compatibilityCalculatingTitle: 'Đang tính độ tương hợp',
@@ -318,6 +317,16 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.profileLogoutSubtitle: 'Thoát khỏi tài khoản',
   PagesLocaleKey.profileLogoutConfirmTitle: 'Xác nhận đăng xuất',
   PagesLocaleKey.profileLogoutConfirmBody: 'Bạn có chắc chắn muốn đăng xuất?',
+  PagesLocaleKey.profileDeleteUserDataTitle: 'Xóa dữ liệu người dùng',
+  PagesLocaleKey.profileDeleteUserDataSubtitle:
+      'Xóa tài khoản hiện tại và toàn bộ dữ liệu đã lưu',
+  PagesLocaleKey.profileDeleteUserDataConfirmTitle: 'Xác nhận xóa dữ liệu?',
+  PagesLocaleKey.profileDeleteUserDataConfirmBody:
+      'Thao tác này sẽ xóa tài khoản hiện tại cùng toàn bộ dữ liệu liên quan và không thể hoàn tác.',
+  PagesLocaleKey.profileDeleteUserDataProcessing:
+      'Đang xóa dữ liệu người dùng...',
+  PagesLocaleKey.profileDeleteUserDataPlanActiveError:
+      'Tài khoản đang có gói active. Vui lòng hủy gói trước khi xóa dữ liệu.',
   PagesLocaleKey.myProfileTitle: 'Hồ sơ của tôi',
   PagesLocaleKey.savedProfilesTitle: 'Hồ sơ đã lưu',
   PagesLocaleKey.subscriptionTitle: 'Mua point',

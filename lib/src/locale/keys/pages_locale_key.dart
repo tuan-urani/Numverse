@@ -365,6 +365,18 @@ class PagesLocaleKey {
   static const String profileLogoutConfirmTitle =
       'profile_logout_confirm_title';
   static const String profileLogoutConfirmBody = 'profile_logout_confirm_body';
+  static const String profileDeleteUserDataTitle =
+      'profile_delete_user_data_title';
+  static const String profileDeleteUserDataSubtitle =
+      'profile_delete_user_data_subtitle';
+  static const String profileDeleteUserDataConfirmTitle =
+      'profile_delete_user_data_confirm_title';
+  static const String profileDeleteUserDataConfirmBody =
+      'profile_delete_user_data_confirm_body';
+  static const String profileDeleteUserDataProcessing =
+      'profile_delete_user_data_processing';
+  static const String profileDeleteUserDataPlanActiveError =
+      'profile_delete_user_data_plan_active_error';
 
   static const String myProfileTitle = 'my_profile_title';
   static const String savedProfilesTitle = 'saved_profiles_title';

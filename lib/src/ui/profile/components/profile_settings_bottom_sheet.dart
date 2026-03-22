@@ -130,6 +130,19 @@ class _SettingsMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color accentColor = item.isDestructive
+        ? AppColors.error
+        : AppColors.textSecondary;
+    final Color iconBackgroundColor = item.isDestructive
+        ? AppColors.error.withValues(alpha: 0.14)
+        : AppColors.card.withValues(alpha: 0.75);
+    final Color iconBorderColor = item.isDestructive
+        ? AppColors.error.withValues(alpha: 0.35)
+        : AppColors.border.withValues(alpha: 0.8);
+    final Color trailingColor = item.isDestructive
+        ? AppColors.error.withValues(alpha: 0.75)
+        : AppColors.textMuted;
+
     return Material(
       color: AppColors.transparent,
       child: InkWell(
@@ -143,18 +156,12 @@ class _SettingsMenuItem extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.card.withValues(alpha: 0.75),
+                  color: iconBackgroundColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.border.withValues(alpha: 0.8),
-                  ),
+                  border: Border.all(color: iconBorderColor),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  item.icon,
-                  size: 18,
-                  color: AppColors.textSecondary,
-                ),
+                child: Icon(item.icon, size: 18, color: accentColor),
               ),
               10.width,
               Expanded(
@@ -163,7 +170,10 @@ class _SettingsMenuItem extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       item.titleKey.tr,
-                      style: AppStyles.bodyMedium(fontWeight: FontWeight.w600),
+                      style: AppStyles.bodyMedium(
+                        color: accentColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     1.height,
                     Text(
@@ -173,11 +183,7 @@ class _SettingsMenuItem extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: AppColors.textMuted,
-              ),
+              Icon(Icons.chevron_right_rounded, size: 20, color: trailingColor),
             ],
           ),
         ),

@@ -326,6 +326,15 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.profileLogoutSubtitle: 'Exit your account',
   PagesLocaleKey.profileLogoutConfirmTitle: 'Confirm logout',
   PagesLocaleKey.profileLogoutConfirmBody: 'Are you sure you want to log out?',
+  PagesLocaleKey.profileDeleteUserDataTitle: 'Delete user data',
+  PagesLocaleKey.profileDeleteUserDataSubtitle:
+      'Delete the current account and all saved data',
+  PagesLocaleKey.profileDeleteUserDataConfirmTitle: 'Confirm data deletion?',
+  PagesLocaleKey.profileDeleteUserDataConfirmBody:
+      'This action will permanently remove the current account and all related data.',
+  PagesLocaleKey.profileDeleteUserDataProcessing: 'Deleting user data...',
+  PagesLocaleKey.profileDeleteUserDataPlanActiveError:
+      'Your account has an active plan. Please cancel it before deleting data.',
   PagesLocaleKey.myProfileTitle: 'My profile',
   PagesLocaleKey.savedProfilesTitle: 'Saved profiles',
   PagesLocaleKey.subscriptionTitle: 'Buy points',

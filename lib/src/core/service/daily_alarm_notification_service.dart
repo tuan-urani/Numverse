@@ -147,11 +147,16 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     if (_permissionRequested) {
       return;
     }
-    await _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+    final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+        _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    await androidPlugin?.requestNotificationsPermission();
+    final bool canScheduleExact = await _canScheduleExactNotifications();
+    if (!canScheduleExact) {
+      await androidPlugin?.requestExactAlarmsPermission();
+    }
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
@@ -249,6 +254,8 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
       macOS: darwinDetails,
     );
 
+    final AndroidScheduleMode scheduleMode =
+        await _resolveAndroidScheduleMode();
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     final tz.TZDateTime nextDateTime = nextTriggerAt(
       timeString: timeString,
@@ -262,7 +269,7 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
       nextDateTime,
       details,
       payload: _payloadOpenToday,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: scheduleMode,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -271,7 +278,9 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     required String timeString,
     required tz.TZDateTime now,
   }) {
-    final ({int hour, int minute}) parsed = _parseScheduledTime(timeString);
+    final ({int hour, int minute, int second}) parsed = _parseScheduledTime(
+      timeString,
+    );
     tz.TZDateTime candidate = tz.TZDateTime(
       tz.local,
       now.year,
@@ -279,6 +288,7 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
       now.day,
       parsed.hour,
       parsed.minute,
+      parsed.second,
     );
     if (!candidate.isAfter(now)) {
       candidate = candidate.add(const Duration(days: 1));
@@ -286,21 +296,50 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     return candidate;
   }
 
-  static ({int hour, int minute}) _parseScheduledTime(String rawTime) {
+  static ({int hour, int minute, int second}) _parseScheduledTime(
+    String rawTime,
+  ) {
     final List<String> parts = rawTime.trim().split(':');
     if (parts.length < 2) {
-      return (hour: 8, minute: 0);
+      return (hour: 8, minute: 0, second: 0);
     }
 
     final int? hour = int.tryParse(parts[0]);
     final int? minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) {
-      return (hour: 8, minute: 0);
+    final int? second = parts.length > 2 ? int.tryParse(parts[2]) : 0;
+    if (hour == null || minute == null || second == null) {
+      return (hour: 8, minute: 0, second: 0);
     }
-    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-      return (hour: 8, minute: 0);
+    if (hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59 ||
+        second < 0 ||
+        second > 59) {
+      return (hour: 8, minute: 0, second: 0);
     }
-    return (hour: hour, minute: minute);
+    return (hour: hour, minute: minute, second: second);
+  }
+
+  Future<bool> _canScheduleExactNotifications() async {
+    final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+        _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    if (androidPlugin == null) {
+      return false;
+    }
+    final bool? allowed = await androidPlugin.canScheduleExactNotifications();
+    return allowed == true;
+  }
+
+  Future<AndroidScheduleMode> _resolveAndroidScheduleMode() async {
+    final bool canScheduleExact = await _canScheduleExactNotifications();
+    if (canScheduleExact) {
+      return AndroidScheduleMode.exactAllowWhileIdle;
+    }
+    return AndroidScheduleMode.inexactAllowWhileIdle;
   }
 
   void _onNotificationResponse(NotificationResponse response) {

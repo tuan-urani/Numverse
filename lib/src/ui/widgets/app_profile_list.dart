@@ -231,7 +231,7 @@ String appProfileInitials(String name) {
   if (name.length == 1) {
     return name.toUpperCase();
   }
-  return name.substring(0, 2).toUpperCase();
+  return name.substring(0, 1).toUpperCase();
 }
 
 LinearGradient appProfileAvatarGradient(String profileId) {

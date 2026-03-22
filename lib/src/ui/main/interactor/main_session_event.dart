@@ -56,6 +56,12 @@ final class MainSessionLogoutRequested extends MainSessionEvent {
   final Completer<void> completer;
 }
 
+final class MainSessionUserDataDeletionRequested extends MainSessionEvent {
+  const MainSessionUserDataDeletionRequested({required this.completer});
+
+  final Completer<void> completer;
+}
+
 final class MainSessionProfileAdded extends MainSessionEvent {
   const MainSessionProfileAdded({
     required this.name,

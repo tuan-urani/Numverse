@@ -195,12 +195,80 @@ void main() {
       expect(bloc.state.compatibilityHistory, isEmpty);
     });
   });
+
+  group('MainSessionBloc delete user data', () {
+    test(
+      'deletes cloud account and bootstraps fresh anonymous session',
+      () async {
+        final UserProfile profile = _profile(id: 'profile-a', name: 'A');
+        final _FakeAppSessionRepository sessionRepository =
+            _FakeAppSessionRepository(
+              snapshot: _snapshot(
+                cloudUserId: 'cloud-user-1',
+                profiles: <UserProfile>[profile],
+                currentProfileId: profile.id,
+                compatibilityHistory: const <CompatibilityHistoryItem>[],
+              ),
+            );
+        final _FakeCloudAccountRepository cloudRepository =
+            _FakeCloudAccountRepository()
+              ..currentUserIdValue = 'cloud-user-1'
+              ..cloudSnapshot = _snapshot(
+                cloudUserId: 'cloud-user-1',
+                profiles: <UserProfile>[profile],
+                currentProfileId: profile.id,
+                compatibilityHistory: const <CompatibilityHistoryItem>[],
+              )
+              ..cloudSnapshotAfterDelete = AppSessionSnapshot.initial()
+                  .copyWith(
+                    isAuthenticated: true,
+                    authMode: SessionAuthMode.anonymous,
+                    pendingAnonymousBootstrap: false,
+                    cloudUserId: 'cloud-user-new',
+                  );
+        final MainSessionBloc bloc = MainSessionBloc(
+          sessionRepository,
+          cloudRepository,
+        );
+        addTearDown(bloc.close);
+
+        await bloc.initialize();
+        final int checkInCallsBeforeDelete =
+            cloudRepository.claimDailyCheckInCallCount;
+        final int adStatusCallsBeforeDelete =
+            cloudRepository.getAdRewardStatusCallCount;
+        final int historyCallsBeforeDelete =
+            cloudRepository.fetchCompatibilityHistoryCallCount;
+        await bloc.deleteUserData();
+
+        expect(cloudRepository.deleteMyAccountCallCount, 1);
+        expect(cloudRepository.clearSessionCallCount, 1);
+        expect(
+          cloudRepository.claimDailyCheckInCallCount,
+          checkInCallsBeforeDelete,
+        );
+        expect(
+          cloudRepository.getAdRewardStatusCallCount,
+          adStatusCallsBeforeDelete,
+        );
+        expect(
+          cloudRepository.fetchCompatibilityHistoryCallCount,
+          historyCallsBeforeDelete,
+        );
+        expect(sessionRepository.clearCallCount, 1);
+        expect(bloc.state.authMode, SessionAuthMode.anonymous);
+        expect(bloc.state.hasCloudSession, isTrue);
+        expect(bloc.state.profiles, isEmpty);
+      },
+    );
+  });
 }
 
 class _FakeAppSessionRepository implements IAppSessionRepository {
   _FakeAppSessionRepository({required this.snapshot});
 
   AppSessionSnapshot snapshot;
+  int clearCallCount = 0;
 
   @override
   Future<AppSessionSnapshot> loadSnapshot() async {
@@ -240,7 +308,9 @@ class _FakeAppSessionRepository implements IAppSessionRepository {
   Future<void> clearLastNumAiGuestUserKey() async {}
 
   @override
-  Future<void> clear() async {}
+  Future<void> clear() async {
+    clearCallCount += 1;
+  }
 }
 
 class _FakeCloudAccountRepository implements ICloudAccountRepository {
@@ -251,6 +321,12 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
   List<CompatibilityHistoryItem> compatibilityHistoryResult =
       <CompatibilityHistoryItem>[];
   AppSessionSnapshot cloudSnapshot = AppSessionSnapshot.initial();
+  AppSessionSnapshot? cloudSnapshotAfterDelete;
+  Object? deleteMyAccountError;
+  int deleteMyAccountCallCount = 0;
+  int clearSessionCallCount = 0;
+  int claimDailyCheckInCallCount = 0;
+  int getAdRewardStatusCallCount = 0;
 
   @override
   bool get isConfigured => configured;
@@ -359,6 +435,7 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
 
   @override
   Future<CloudDailyCheckInResult> claimDailyCheckIn({String? requestId}) async {
+    claimDailyCheckInCallCount += 1;
     return const CloudDailyCheckInResult(
       alreadyClaimed: true,
       rewardAwarded: 0,
@@ -373,6 +450,7 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
   Future<CloudAdRewardStatusResult> getAdRewardStatus({
     String? placementCode,
   }) async {
+    getAdRewardStatusCallCount += 1;
     return const CloudAdRewardStatusResult(
       placementCode: 'default_rewarded',
       rewardPerWatch: 5,
@@ -460,7 +538,20 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
   }
 
   @override
-  Future<void> clearSession() async {}
+  Future<void> deleteMyAccount() async {
+    deleteMyAccountCallCount += 1;
+    if (deleteMyAccountError != null) {
+      throw deleteMyAccountError!;
+    }
+    if (cloudSnapshotAfterDelete != null) {
+      cloudSnapshot = cloudSnapshotAfterDelete!;
+    }
+  }
+
+  @override
+  Future<void> clearSession() async {
+    clearSessionCallCount += 1;
+  }
 }
 
 AppSessionSnapshot _snapshot({

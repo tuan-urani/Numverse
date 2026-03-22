@@ -114,5 +114,7 @@ abstract class ICloudAccountRepository {
     String? requestId,
   });
 
+  Future<void> deleteMyAccount();
+
   Future<void> clearSession();
 }

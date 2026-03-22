@@ -155,8 +155,21 @@ export function getBearerToken(req: Request): string {
     throw new HttpError(401, "missing_authorization_header");
   }
 
-  const [scheme, token] = authHeader.split(" ");
-  if (scheme !== "Bearer" || !token) {
+  const normalized = authHeader.trim();
+  if (!normalized.toLowerCase().startsWith("bearer ")) {
+    throw new HttpError(401, "invalid_authorization_header");
+  }
+
+  // Accept and normalize accidental "Bearer Bearer <jwt>" headers
+  // from legacy/stale clients, so we can still authenticate safely.
+  let token = normalized.slice(7).trim();
+  if (token.toLowerCase().startsWith("bearer ")) {
+    token = token.slice(7).trim();
+  }
+  if (token.length >= 2 && token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1).trim();
+  }
+  if (!token) {
     throw new HttpError(401, "invalid_authorization_header");
   }
 
@@ -701,6 +714,28 @@ export async function hasActiveProSubscription(
     .limit(20);
 
   if (error) {
+    const errorCode = typeof error.code === "string" ? error.code : "";
+    const errorMessage = typeof error.message === "string"
+      ? error.message
+      : "";
+    // Backward compatibility: some projects do not have subscription tables yet.
+    // In that case we should treat as "no active plan" instead of hard-failing
+    // the account deletion flow.
+    const normalizedMessage = errorMessage.toLowerCase();
+    const missingSubscriptionsTable =
+      normalizedMessage.includes("subscriptions") &&
+      (
+        normalizedMessage.includes("does not exist") ||
+        normalizedMessage.includes("could not find the table") ||
+        normalizedMessage.includes("schema cache")
+      );
+    if (
+      errorCode === "42P01" ||
+      errorCode === "PGRST205" ||
+      missingSubscriptionsTable
+    ) {
+      return false;
+    }
     throw new HttpError(500, "subscription_lookup_failed", error);
   }
 
