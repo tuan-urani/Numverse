@@ -27,6 +27,9 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
   Object? fetchSettingsError;
   Object? updateSettingsError;
   int updateCallCount = 0;
+  bool? lastUpdateEnabled;
+  String? lastUpdateTime;
+  String? lastUpdateTimezone;
 
   @override
   bool get isConfigured => configured;
@@ -56,6 +59,9 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
     required String timezone,
   }) async {
     updateCallCount += 1;
+    lastUpdateEnabled = enabled;
+    lastUpdateTime = time;
+    lastUpdateTimezone = timezone;
     if (updateSettingsError != null) {
       throw updateSettingsError!;
     }
@@ -220,15 +226,15 @@ class _FakeCloudAccountRepository implements ICloudAccountRepository {
 
 class _FakeDailyAlarmNotificationService
     implements IDailyAlarmNotificationService {
-  final List<bool> applyCalls = <bool>[];
+  final List<DailyAlarmSettings> applyCalls = <DailyAlarmSettings>[];
   String timezoneId = 'Asia/Ho_Chi_Minh';
 
   @override
   Future<void> applyAlarmPreference({
-    required bool enabled,
+    required DailyAlarmSettings settings,
     String? localeCode,
   }) async {
-    applyCalls.add(enabled);
+    applyCalls.add(settings);
   }
 
   @override
@@ -259,6 +265,7 @@ void main() {
           _FakeCloudAccountRepository()
             ..fetchSettingsResult = DailyAlarmSettings.defaults().copyWith(
               enabled: true,
+              time: '06:30:00',
               timezone: 'Asia/Tokyo',
             );
       final _FakeDailyAlarmNotificationService notificationService =
@@ -274,9 +281,14 @@ void main() {
       await _waitForMicrotasks();
 
       expect(bloc.state.dailyAlarmEnabled, isTrue);
+      expect(bloc.state.dailyAlarmTime, '06:30:00');
+      expect(bloc.state.dailyAlarmTimezone, 'Asia/Tokyo');
       expect(appShared.getDailyAlarmEnabled(), isTrue);
+      expect(appShared.getDailyAlarmTime(), '06:30:00');
+      expect(appShared.getDailyAlarmTimezone(), 'Asia/Tokyo');
       expect(notificationService.applyCalls, isNotEmpty);
-      expect(notificationService.applyCalls.last, isTrue);
+      expect(notificationService.applyCalls.last.enabled, isTrue);
+      expect(notificationService.applyCalls.last.time, '06:30:00');
 
       await bloc.close();
     });
@@ -288,7 +300,11 @@ void main() {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final AppShared appShared = AppShared(prefs);
       final _FakeCloudAccountRepository cloudRepository =
-          _FakeCloudAccountRepository();
+          _FakeCloudAccountRepository()
+            ..fetchSettingsResult = DailyAlarmSettings.defaults().copyWith(
+              time: '06:30:00',
+              timezone: 'Asia/Tokyo',
+            );
       final _FakeDailyAlarmNotificationService notificationService =
           _FakeDailyAlarmNotificationService();
 
@@ -308,9 +324,14 @@ void main() {
       await done;
 
       expect(bloc.state.dailyAlarmEnabled, isFalse);
+      expect(bloc.state.dailyAlarmTime, '06:30:00');
       expect(cloudRepository.updateCallCount, 1);
-      expect(notificationService.applyCalls.first, isFalse);
+      expect(cloudRepository.lastUpdateEnabled, isFalse);
+      expect(cloudRepository.lastUpdateTime, '06:30:00');
+      expect(cloudRepository.lastUpdateTimezone, 'Asia/Ho_Chi_Minh');
+      expect(notificationService.applyCalls.first.enabled, isFalse);
       expect(appShared.getDailyAlarmEnabled(), isFalse);
+      expect(appShared.getDailyAlarmTime(), '06:30:00');
 
       await bloc.close();
     });
@@ -323,6 +344,10 @@ void main() {
       final AppShared appShared = AppShared(prefs);
       final _FakeCloudAccountRepository cloudRepository =
           _FakeCloudAccountRepository()
+            ..fetchSettingsResult = DailyAlarmSettings.defaults().copyWith(
+              time: '20:15:00',
+              timezone: 'Asia/Tokyo',
+            )
             ..updateSettingsError = StateError('sync_failed');
       final _FakeDailyAlarmNotificationService notificationService =
           _FakeDailyAlarmNotificationService();
@@ -343,8 +368,13 @@ void main() {
       await done;
 
       expect(bloc.state.dailyAlarmEnabled, isTrue);
-      expect(notificationService.applyCalls, <bool>[false, true]);
+      expect(bloc.state.dailyAlarmTime, '20:15:00');
+      expect(notificationService.applyCalls.map((e) => e.enabled), <bool>[
+        false,
+        true,
+      ]);
       expect(appShared.getDailyAlarmEnabled(), isTrue);
+      expect(appShared.getDailyAlarmTime(), '20:15:00');
 
       await bloc.close();
     });

@@ -44,6 +44,7 @@ class AppPrimaryButton extends StatelessWidget {
           ],
         ),
         child: Stack(
+          alignment: Alignment.center,
           children: <Widget>[
             Positioned.fill(
               child: DecoratedBox(

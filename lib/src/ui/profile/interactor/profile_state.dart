@@ -18,11 +18,18 @@ class ProfileState extends Equatable {
           icon: Icons.settings_outlined,
         ),
         ProfileMenuItem(
-          id: 'privacy',
-          titleKey: LocaleKey.profilePrivacy,
+          id: 'privacy-policy',
+          titleKey: LocaleKey.privacyDocPolicyTitle,
           subtitleKey: LocaleKey.profileMenuPrivacySubtitle,
-          route: AppPages.privacy,
-          icon: Icons.shield_outlined,
+          route: AppPages.privacyPolicy,
+          icon: Icons.description_outlined,
+        ),
+        ProfileMenuItem(
+          id: 'terms-of-use',
+          titleKey: LocaleKey.privacyDocTermsTitle,
+          subtitleKey: LocaleKey.profileMenuPrivacySubtitle,
+          route: AppPages.termsOfUse,
+          icon: Icons.description_outlined,
         ),
         ProfileMenuItem(
           id: 'help',

@@ -23,10 +23,8 @@ class NumAiChatHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.84),
-        border: Border(
-          bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
-        ),
+        color: AppColors.transparent,
+        border: Border(bottom: BorderSide(color: AppColors.transparent)),
       ),
       child: Row(
         children: <Widget>[

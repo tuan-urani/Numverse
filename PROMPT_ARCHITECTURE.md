@@ -730,7 +730,7 @@ Mapping gợi ý:
 
 ### 8.9. Cost strategy
 
-- Chỉ gửi tối đa `20` tin nhắn gần nhất.
+- Chỉ gửi tối đa `4` tin nhắn gần nhất.
 - `thread_summary.summary` nên ngắn, ví dụ `<= 800` ký tự.
 - Không gửi full narrative dài từ `Luận giải`.
 - Dùng `snapshot_facts` làm context nền.

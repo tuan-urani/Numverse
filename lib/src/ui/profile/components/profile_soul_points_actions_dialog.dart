@@ -18,19 +18,16 @@ class ProfileSoulPointsActionsDialog extends StatefulWidget {
   const ProfileSoulPointsActionsDialog({
     required this.sessionBloc,
     required this.onWatchAdTap,
-    required this.onBuyPointsTap,
     super.key,
   });
 
   final MainSessionBloc sessionBloc;
   final ProfileSoulPointsAction onWatchAdTap;
-  final ProfileSoulPointsAction onBuyPointsTap;
 
   static Future<void> show(
     BuildContext context, {
     required MainSessionBloc sessionBloc,
     required ProfileSoulPointsAction onWatchAdTap,
-    required ProfileSoulPointsAction onBuyPointsTap,
   }) {
     return showDialog<void>(
       context: context,
@@ -39,7 +36,6 @@ class ProfileSoulPointsActionsDialog extends StatefulWidget {
         return ProfileSoulPointsActionsDialog(
           sessionBloc: sessionBloc,
           onWatchAdTap: onWatchAdTap,
-          onBuyPointsTap: onBuyPointsTap,
         );
       },
     );
@@ -100,14 +96,6 @@ class _ProfileSoulPointsActionsDialogState
       title: LocaleKey.commonSuccess.tr,
       subtitle: LocaleKey.profileSoulPointsActionWatchAdTitle.tr,
     );
-  }
-
-  Future<void> _handleBuyPointsTap() async {
-    if (_isWatchingAd) {
-      return;
-    }
-    Navigator.of(context).pop();
-    await widget.onBuyPointsTap();
   }
 
   @override
@@ -240,14 +228,6 @@ class _ProfileSoulPointsActionsDialogState
                     enabled: !isAdLimitReached && !_isWatchingAd,
                     isLoading: _isWatchingAd,
                     onTap: () => _handleWatchAdTap(state),
-                  ),
-                  10.height,
-                  _ActionCard(
-                    icon: Icons.shopping_bag_rounded,
-                    title: LocaleKey.profileSoulPointsActionBuyPointTitle.tr,
-                    subtitle: LocaleKey.profileSoulPointsActionBuyPointBody.tr,
-                    enabled: !_isWatchingAd,
-                    onTap: _handleBuyPointsTap,
                   ),
                 ],
               ),

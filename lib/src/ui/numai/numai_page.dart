@@ -21,9 +21,7 @@ import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/ui/widgets/custom_circular_progress.dart';
 import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
-import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
-import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class NumAiPage extends StatefulWidget {
   const NumAiPage({super.key});
@@ -149,6 +147,7 @@ class _NumAiPageState extends State<NumAiPage> {
                           child: _NumAiMessagesPanel(
                             messages: chatState.messages,
                             isLoading: chatState.isLoading,
+                            isHistoryLoading: chatState.isHistoryLoading,
                             typingMessageId: chatState.typingMessageId,
                             emptyHint: emptyHint,
                             scrollController: _scrollController,
@@ -177,7 +176,6 @@ class _NumAiPageState extends State<NumAiPage> {
                                       sessionState.soulPoints)
                                   .clamp(0, NumAiChatBloc.messageCost),
                           canSend: canSend,
-                          isLoading: chatState.isLoading,
                           controller: _controller,
                           inputHint: inputHint,
                           onChanged: (_) => setState(() {}),
@@ -331,7 +329,11 @@ class _NumAiPageState extends State<NumAiPage> {
     if (refreshedProfileId.isEmpty) {
       return;
     }
-    _lastHydratedContextKey = 'profile:$refreshedProfileId';
+    final String nextContextKey = 'profile:$refreshedProfileId';
+    if (_lastHydratedContextKey == nextContextKey) {
+      return;
+    }
+    _lastHydratedContextKey = nextContextKey;
     _chatBloc.loadCloudHistory(
       hasCloudSession: refreshedState.hasCloudSession,
       isAnonymousUser: refreshedState.isAnonymousUser,
@@ -357,12 +359,7 @@ class _NumAiPageState extends State<NumAiPage> {
           placementCode: 'numai_soul_points_dialog',
         );
       },
-      onBuyPointsTap: _onBuyPointsTap,
     );
-  }
-
-  Future<void> _onBuyPointsTap() async {
-    await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
   }
 
   void _resetConversation() {
@@ -489,29 +486,29 @@ class _NumAiHeaderBar extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (activeDomainLabel != null) ...<Widget>[
-                  8.width,
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.richGold.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: AppColors.richGold.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Text(
-                      activeDomainLabel!,
-                      style: AppStyles.caption(
-                        color: AppColors.richGold,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
+                // if (activeDomainLabel != null) ...<Widget>[
+                //   8.width,
+                //   Container(
+                //     padding: const EdgeInsets.symmetric(
+                //       horizontal: 10,
+                //       vertical: 3,
+                //     ),
+                //     decoration: BoxDecoration(
+                //       color: AppColors.richGold.withValues(alpha: 0.15),
+                //       borderRadius: BorderRadius.circular(999),
+                //       border: Border.all(
+                //         color: AppColors.richGold.withValues(alpha: 0.25),
+                //       ),
+                //     ),
+                //     child: Text(
+                //       activeDomainLabel!,
+                //       style: AppStyles.caption(
+                //         color: AppColors.richGold,
+                //         fontWeight: FontWeight.w700,
+                //       ),
+                //     ),
+                //   ),
+                // ],
               ],
             ),
           ),
@@ -573,6 +570,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
   const _NumAiMessagesPanel({
     required this.messages,
     required this.isLoading,
+    required this.isHistoryLoading,
     required this.typingMessageId,
     required this.emptyHint,
     required this.scrollController,
@@ -586,6 +584,7 @@ class _NumAiMessagesPanel extends StatelessWidget {
 
   final List<NumAiChatMessage> messages;
   final bool isLoading;
+  final bool isHistoryLoading;
   final String? typingMessageId;
   final String emptyHint;
   final ScrollController scrollController;
@@ -598,6 +597,10 @@ class _NumAiMessagesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isHistoryLoading) {
+      return const _NumAiHistoryLoadingState();
+    }
+
     if (messages.isEmpty) {
       if (isLoading) {
         return const _NumAiHistoryLoadingState();
@@ -1006,7 +1009,6 @@ class _NumAiComposer extends StatelessWidget {
     required this.canAffordMessage,
     required this.missingPoints,
     required this.canSend,
-    required this.isLoading,
     required this.controller,
     required this.inputHint,
     required this.onChanged,
@@ -1021,7 +1023,6 @@ class _NumAiComposer extends StatelessWidget {
   final bool canAffordMessage;
   final int missingPoints;
   final bool canSend;
-  final bool isLoading;
   final TextEditingController controller;
   final String inputHint;
   final ValueChanged<String> onChanged;
@@ -1132,20 +1133,11 @@ class _NumAiComposer extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.midnight,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.send_rounded,
-                              size: 20,
-                              color: AppColors.midnight,
-                            ),
+                      child: const Icon(
+                        Icons.send_rounded,
+                        size: 20,
+                        color: AppColors.midnight,
+                      ),
                     ),
                   ),
                 ),

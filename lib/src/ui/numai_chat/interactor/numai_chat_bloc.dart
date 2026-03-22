@@ -132,6 +132,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
     emit(
       state.copyWith(
         isLoading: true,
+        isHistoryLoading: true,
         showInsufficientPointsWarning: false,
         clearTypingMessageId: true,
         messages: shouldClearForContextChange
@@ -148,6 +149,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: guestFallbackMessages,
           isLoading: false,
+          isHistoryLoading: false,
           clearThreadId: true,
           clearActiveProfileId: true,
           clearTypingMessageId: true,
@@ -172,6 +174,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: fallbackMessages,
           isLoading: false,
+          isHistoryLoading: false,
           activeProfileId: profileId,
           clearTypingMessageId: true,
         ),
@@ -196,6 +199,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
             result.messages.map(_toChatMessageFromCloud),
           ),
           isLoading: false,
+          isHistoryLoading: false,
           threadId: result.threadId.isEmpty ? null : result.threadId,
           activeProfileId: profileId,
           clearTypingMessageId: true,
@@ -217,6 +221,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: fallbackMessages,
           isLoading: false,
+          isHistoryLoading: false,
           activeProfileId: profileId,
           clearTypingMessageId: true,
         ),
@@ -297,6 +302,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       state.copyWith(
         messages: nextMessages,
         isLoading: true,
+        isHistoryLoading: false,
         showInsufficientPointsWarning: false,
         clearThreadId: true,
         clearActiveProfileId: true,
@@ -343,6 +349,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: allMessages,
           isLoading: false,
+          isHistoryLoading: false,
           clearPendingProfileQuestion: true,
           clearThreadId: true,
           clearActiveProfileId: true,
@@ -367,6 +374,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           state.copyWith(
             messages: previousMessages,
             isLoading: false,
+            isHistoryLoading: false,
             showInsufficientPointsWarning: true,
             clearThreadId: true,
             clearActiveProfileId: true,
@@ -380,6 +388,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: previousMessages,
           isLoading: false,
+          isHistoryLoading: false,
           clearThreadId: true,
           clearActiveProfileId: true,
           clearTypingMessageId: true,
@@ -416,6 +425,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
       state.copyWith(
         messages: nextMessages,
         isLoading: true,
+        isHistoryLoading: false,
         showInsufficientPointsWarning: false,
         activeProfileId: profileId,
         clearTypingMessageId: true,
@@ -449,6 +459,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: <NumAiChatMessage>[...nextMessages, assistantMessage],
           isLoading: false,
+          isHistoryLoading: false,
           clearPendingProfileQuestion: true,
           threadId: result.threadId.isEmpty ? null : result.threadId,
           activeProfileId: profileId,
@@ -466,6 +477,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
           state.copyWith(
             messages: previousMessages,
             isLoading: false,
+            isHistoryLoading: false,
             showInsufficientPointsWarning: true,
             activeProfileId: profileId,
           ),
@@ -478,6 +490,7 @@ class NumAiChatBloc extends Bloc<NumAiChatEvent, NumAiChatState> {
         state.copyWith(
           messages: previousMessages,
           isLoading: false,
+          isHistoryLoading: false,
           activeProfileId: profileId,
           clearTypingMessageId: true,
         ),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 
 class AppMysticalScaffold extends StatelessWidget {
@@ -24,6 +25,24 @@ class AppMysticalScaffold extends StatelessWidget {
       bottomNavigationBar: bottomNavigationBar,
       body: Stack(
         children: <Widget>[
+          Positioned.fill(child: ColoredBox(color: AppColors.background)),
+          // Positioned.fill(
+          //   child: Image.asset(
+          //     AppAssets.imagesGeneratedMysticalBackgroundPng,
+          //     fit: BoxFit.cover,
+          //     alignment: Alignment.topCenter,
+          //     errorBuilder:
+          //         (BuildContext context, Object error, StackTrace? stackTrace) {
+          //           return DecoratedBox(
+          //             decoration: BoxDecoration(
+          //               gradient: AppColors.appBackgroundGradient(),
+          //             ),
+          //           );
+          //         },
+          //   ),
+          // ),
+          // Old painter-based cosmic background is temporarily disabled
+          // for performance review:
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -50,6 +69,7 @@ class AppMysticalScaffold extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _SacredPatternPainter extends CustomPainter {
   static const int _starCount = 176;
 

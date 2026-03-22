@@ -16,6 +16,7 @@ class AppProfileList extends StatelessWidget {
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
     this.physics,
+    this.interactionsEnabled = true,
   });
 
   final List<UserProfile> profiles;
@@ -26,6 +27,7 @@ class AppProfileList extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
+  final bool interactionsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +44,7 @@ class AppProfileList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         final UserProfile profile = profiles[index];
         final bool isActive = profile.id == currentProfileId;
+        final bool canInteract = interactionsEnabled;
         final bool canEdit = onEditProfile != null;
         final bool canDelete = onDeleteProfile != null;
         return _AppProfileRowCard(
@@ -49,9 +52,13 @@ class AppProfileList extends StatelessWidget {
           isActive: isActive,
           canEdit: canEdit,
           canDelete: canDelete,
-          onSelect: () => onSelectProfile(profile.id),
-          onEdit: canEdit ? () => onEditProfile?.call(profile.id) : null,
-          onDelete: canDelete ? () => onDeleteProfile?.call(profile.id) : null,
+          onSelect: canInteract ? () => onSelectProfile(profile.id) : null,
+          onEdit: canInteract && canEdit
+              ? () => onEditProfile?.call(profile.id)
+              : null,
+          onDelete: canInteract && canDelete
+              ? () => onDeleteProfile?.call(profile.id)
+              : null,
         );
       },
     );
@@ -73,7 +80,7 @@ class _AppProfileRowCard extends StatelessWidget {
   final bool isActive;
   final bool canEdit;
   final bool canDelete;
-  final VoidCallback onSelect;
+  final VoidCallback? onSelect;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 

@@ -14,6 +14,15 @@ final Map<String, String> pagesJa = <String, String>{
   PagesLocaleKey.compatibilityTitle: '相性',
   PagesLocaleKey.compatibilitySubtitle: '今日は誰と比べますか？',
   PagesLocaleKey.compatibilityStart: '相性鑑定を開始',
+  PagesLocaleKey.compatibilityOwnProfileInputTitle: 'あなたのプロフィール情報を入力',
+  PagesLocaleKey.compatibilityOwnProfileInputSubtitle:
+      '相性比較を始めるために、あなたの名前と生年月日を入力してください。',
+  PagesLocaleKey.compatibilityCalculatingTitle: '相性を計算中',
+  PagesLocaleKey.compatibilityCalculatingSubtitle:
+      '@primary と @target のエネルギー相性を分析しています',
+  PagesLocaleKey.compatibilityCalculatingStepSync: '波長を同期しています',
+  PagesLocaleKey.compatibilityCalculatingStepEnergy: 'コアエネルギーを解析しています',
+  PagesLocaleKey.compatibilityCalculatingStepInsight: '結果をまとめています',
   PagesLocaleKey.compatibilityInsightOne: '感情軸は強く、対話の改善余地があります。',
   PagesLocaleKey.compatibilityInsightTwo: '共感と目標志向のバランスが鍵です。',
   PagesLocaleKey.compatibilityOwnProfileLabel: 'あなたのプロフィール',

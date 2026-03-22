@@ -860,28 +860,28 @@ class _CompareButtonState extends State<_CompareButton>
                 ).copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            if (!emphasizeNeedMore) ...<Widget>[
-              8.width,
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: foregroundColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      '${widget.comparisonCost}',
-                      style: AppStyles.caption(
-                        color: foregroundColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            // if (!emphasizeNeedMore) ...<Widget>[
+            //   8.width,
+            //   Container(
+            //     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            //     decoration: BoxDecoration(
+            //       color: foregroundColor.withValues(alpha: 0.2),
+            //       borderRadius: BorderRadius.circular(999),
+            //     ),
+            //     child: Row(
+            //       mainAxisSize: MainAxisSize.min,
+            //       children: <Widget>[
+            //         Text(
+            //           '${widget.comparisonCost}',
+            //           style: AppStyles.caption(
+            //             color: foregroundColor,
+            //             fontWeight: FontWeight.w700,
+            //           ),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ],
           ],
         ),
       ),
@@ -955,7 +955,8 @@ class _HistoryItemCard extends StatelessWidget {
                   ),
                   2.height,
                   Text(
-                    '$relationLabel • ${dateFormat.format(item.createdAt)}',
+                    // '$relationLabel • ${dateFormat.format(item.createdAt)}',
+                    dateFormat.format(item.createdAt),
                     style: AppStyles.caption(color: AppColors.textMuted),
                   ),
                 ],

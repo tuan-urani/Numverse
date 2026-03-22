@@ -320,7 +320,7 @@ class _IntroCard extends StatelessWidget {
             ),
             6.height,
             Text(
-              'Bạn đang ở tuổi $currentAge. Chạm vào từng đỉnh trong chart để xem chi tiết.',
+              'Bạn đang ở tuổi $currentAge. Chạm vào từng đỉnh trong biểu đồ để xem chi tiết.',
               style: AppStyles.bodySmall(color: AppColors.textSecondary),
             ),
           ],
@@ -384,7 +384,6 @@ class _CurrentStageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _StageStatusMeta status = _stageStatusMeta(item.status);
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: AppColors.mysticalCardGradient(),
@@ -410,7 +409,6 @@ class _CurrentStageCard extends StatelessWidget {
                     style: AppStyles.h5(fontWeight: FontWeight.w600),
                   ),
                 ),
-                _StageStatusChip(meta: status),
               ],
             ),
             10.height,
@@ -497,57 +495,6 @@ class _NumberTag extends StatelessWidget {
         style: AppStyles.caption(color: color, fontWeight: FontWeight.w600),
       ),
     );
-  }
-}
-
-class _StageStatusChip extends StatelessWidget {
-  const _StageStatusChip({required this.meta});
-
-  final _StageStatusMeta meta;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: meta.color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        meta.label,
-        style: AppStyles.caption(
-          color: meta.color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _StageStatusMeta {
-  const _StageStatusMeta({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-}
-
-_StageStatusMeta _stageStatusMeta(LifeCycleStatus status) {
-  switch (status) {
-    case LifeCycleStatus.active:
-      return const _StageStatusMeta(
-        label: 'Đang active',
-        color: AppColors.primary,
-      );
-    case LifeCycleStatus.passed:
-      return const _StageStatusMeta(
-        label: 'Đã qua',
-        color: AppColors.textMuted,
-      );
-    case LifeCycleStatus.future:
-      return const _StageStatusMeta(
-        label: 'Sắp tới',
-        color: AppColors.energyPurple,
-      );
   }
 }
 
@@ -692,9 +639,13 @@ class _RadarChartViewState extends State<_RadarChartView>
         return LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             final double maxWidth = constraints.maxWidth;
-            const double sideLabelWidth = 70;
-            const double sideGap = 10;
-            const double sideMargin = 8;
+            final double sideLabelWidth = _clampDouble(
+              maxWidth * 0.28,
+              min: 92,
+              max: 126,
+            );
+            const double sideGap = 16;
+            const double sideMargin = 10;
             final double maxChartBySide =
                 ((maxWidth / 2) - sideLabelWidth - sideGap - sideMargin) / 0.4;
             final double chartSize = _clampDouble(
@@ -703,8 +654,8 @@ class _RadarChartViewState extends State<_RadarChartView>
               max: 300,
             );
             final double chartLeft = (maxWidth - chartSize) / 2;
-            const double chartTop = 28;
-            final double containerHeight = chartSize + 96;
+            const double chartTop = 34;
+            final double containerHeight = chartSize + 120;
             final double centerX = chartLeft + (chartSize / 2);
             final double centerY = chartTop + (chartSize / 2);
             final double radarRadius = chartSize * 0.4;
@@ -943,66 +894,96 @@ class _VertexMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color markerColor = isActive
+        ? AppColors.goldBright
+        : AppColors.primaryLight.withValues(alpha: 0.95);
+    final Color fillColor = isActive
+        ? AppColors.goldBright.withValues(alpha: 0.95)
+        : AppColors.primary.withValues(alpha: 0.96);
+    final double coreSize = isActive ? 18 : 17;
+
     return Positioned(
-      left: center.dx - 16,
-      top: center.dy - 16,
+      left: center.dx - 22,
+      top: center.dy - 22,
       child: Opacity(
         opacity: opacity,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            color: AppColors.transparent,
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                if (isActive)
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.goldBright.withValues(alpha: 0.7),
-                        width: 1.8,
-                      ),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: AppColors.goldBright.withValues(alpha: 0.34),
-                          blurRadius: 12,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkResponse(
+              onTap: onTap,
+              radius: 26,
+              containedInkWell: false,
+              splashFactory: InkRipple.splashFactory,
+              splashColor: markerColor.withValues(alpha: 0.35),
+              highlightColor: markerColor.withValues(alpha: 0.16),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: markerColor.withValues(alpha: 0.36),
+                          width: 1.2,
                         ),
-                      ],
-                    ),
-                  ),
-                Container(
-                  width: isActive ? 18 : 17,
-                  height: isActive ? 18 : 17,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isActive
-                          ? AppColors.goldBright
-                          : AppColors.primaryLight.withValues(alpha: 0.95),
-                      width: isActive ? 2.8 : 2.4,
-                    ),
-                    color: isActive
-                        ? AppColors.goldBright.withValues(alpha: 0.95)
-                        : AppColors.primary.withValues(alpha: 0.96),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color:
-                            (isActive
-                                    ? AppColors.goldBright
-                                    : AppColors.primaryLight)
-                                .withValues(alpha: isActive ? 0.42 : 0.2),
-                        blurRadius: isActive ? 12 : 8,
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: markerColor.withValues(alpha: 0.24),
+                            blurRadius: 12,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    if (isActive)
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.goldBright.withValues(alpha: 0.7),
+                            width: 1.8,
+                          ),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: AppColors.goldBright.withValues(
+                                alpha: 0.34,
+                              ),
+                              blurRadius: 12,
+                            ),
+                          ],
+                        ),
+                      ),
+                    Container(
+                      width: coreSize,
+                      height: coreSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: markerColor,
+                          width: isActive ? 2.8 : 2.4,
+                        ),
+                        color: fillColor,
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: markerColor.withValues(
+                              alpha: isActive ? 0.42 : 0.2,
+                            ),
+                            blurRadius: isActive ? 12 : 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1076,6 +1057,8 @@ class _VertexLabel extends StatelessWidget {
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 ),
                 textAlign: placement.textAlign,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -1090,13 +1073,13 @@ class _VertexLabel extends StatelessWidget {
     double width,
     double sideWidth,
   ) {
-    final double topWidth = (width * 0.44).clamp(130.0, 190.0);
-    const double sideGap = 22;
+    final double topWidth = (width * 0.46).clamp(132.0, 200.0);
+    const double sideGap = 18;
     switch (index) {
       case 0:
         return _Placement(
           left: center.dx - (topWidth / 2),
-          top: center.dy - 78,
+          top: center.dy - 88,
           width: topWidth,
           crossAxisAlignment: CrossAxisAlignment.center,
           textAlign: TextAlign.center,
@@ -1104,15 +1087,15 @@ class _VertexLabel extends StatelessWidget {
       case 1:
         return _Placement(
           left: center.dx + sideGap,
-          top: center.dy - 22,
+          top: center.dy - 58,
           width: sideWidth,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          textAlign: TextAlign.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          textAlign: TextAlign.left,
         );
       case 2:
         return _Placement(
           left: center.dx - (topWidth / 2),
-          top: center.dy + 16,
+          top: center.dy + 24,
           width: topWidth,
           crossAxisAlignment: CrossAxisAlignment.center,
           textAlign: TextAlign.center,
@@ -1120,10 +1103,10 @@ class _VertexLabel extends StatelessWidget {
       default:
         return _Placement(
           left: center.dx - sideWidth - sideGap,
-          top: center.dy - 22,
+          top: center.dy - 58,
           width: sideWidth,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          textAlign: TextAlign.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          textAlign: TextAlign.right,
         );
     }
   }

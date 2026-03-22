@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:test/src/core/model/daily_alarm_settings.dart';
 import 'package:test/src/core/model/daily_alarm_template.dart';
 import 'package:test/src/core/repository/interface/i_cloud_account_repository.dart';
 import 'package:test/src/core/service/interface/i_daily_alarm_notification_service.dart';
@@ -32,37 +33,37 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
   bool _initialized = false;
   bool _permissionRequested = false;
   bool _pendingOpenTodayIntent = false;
-  String _currentTimezoneId = 'Asia/Ho_Chi_Minh';
+  String _currentTimezoneId = DailyAlarmSettings.defaultTimezone;
 
   @override
   Future<void> bootstrap({String? localeCode}) async {
     await _initializeIfNeeded();
     await _requestPermission();
+    await _resolveAndApplyLocalTimezone();
 
-    bool enabled = _appShared.getDailyAlarmEnabled();
+    DailyAlarmSettings settings = _loadCachedSettings();
     if (_cloudAccountRepository.isConfigured) {
       try {
-        final settings = await _cloudAccountRepository
-            .fetchDailyAlarmSettings();
-        enabled = settings.enabled;
-        await _appShared.setDailyAlarmEnabled(enabled);
+        settings = await _cloudAccountRepository.fetchDailyAlarmSettings();
+        await _cacheSettings(settings);
       } catch (_) {
         // Keep local cache value when cloud settings fail.
       }
     }
 
-    await applyAlarmPreference(enabled: enabled, localeCode: localeCode);
+    await applyAlarmPreference(settings: settings, localeCode: localeCode);
   }
 
   @override
   Future<void> applyAlarmPreference({
-    required bool enabled,
+    required DailyAlarmSettings settings,
     String? localeCode,
   }) async {
     await _initializeIfNeeded();
-    await _appShared.setDailyAlarmEnabled(enabled);
+    await _resolveAndApplyLocalTimezone();
+    await _cacheSettings(settings);
 
-    if (!enabled) {
+    if (!settings.enabled) {
       await _notificationsPlugin.cancel(_notificationId);
       return;
     }
@@ -71,7 +72,7 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     final DailyAlarmTemplate template = await _resolveTemplate(
       localeCode: resolvedLocale,
     );
-    await _scheduleDailyAlarm(template: template);
+    await _scheduleDailyAlarm(template: template, timeString: settings.time);
   }
 
   @override
@@ -84,6 +85,7 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
   @override
   Future<String> resolveCurrentTimezoneId() async {
     await _initializeIfNeeded();
+    await _resolveAndApplyLocalTimezone();
     return _currentTimezoneId;
   }
 
@@ -136,7 +138,7 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     try {
       tz.setLocalLocation(tz.getLocation(_currentTimezoneId));
     } catch (_) {
-      _currentTimezoneId = 'Asia/Ho_Chi_Minh';
+      _currentTimezoneId = DailyAlarmSettings.defaultTimezone;
       tz.setLocalLocation(tz.getLocation(_currentTimezoneId));
     }
   }
@@ -194,6 +196,24 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     );
   }
 
+  Future<void> _cacheSettings(DailyAlarmSettings settings) async {
+    await _appShared.setDailyAlarmEnabled(settings.enabled);
+    await _appShared.setDailyAlarmTime(settings.time);
+    await _appShared.setDailyAlarmTimezone(settings.timezone);
+  }
+
+  DailyAlarmSettings _loadCachedSettings() {
+    final String cachedTime =
+        _appShared.getDailyAlarmTime() ?? DailyAlarmSettings.defaultTime;
+    final String cachedTimezone =
+        _appShared.getDailyAlarmTimezone() ?? _currentTimezoneId;
+    return DailyAlarmSettings(
+      enabled: _appShared.getDailyAlarmEnabled(),
+      time: cachedTime,
+      timezone: cachedTimezone,
+    );
+  }
+
   DailyAlarmTemplate? _loadCachedTemplate(String localeCode) {
     final String? raw = _appShared.getDailyAlarmTemplate(localeCode);
     if (raw == null || raw.trim().isEmpty) {
@@ -212,12 +232,13 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
 
   Future<void> _scheduleDailyAlarm({
     required DailyAlarmTemplate template,
+    required String timeString,
   }) async {
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'daily_energy_alarm_channel',
           'Daily Energy Alarm',
-          channelDescription: 'Daily 8:00 energy reminder notifications',
+          channelDescription: 'Daily energy reminder notifications',
           importance: Importance.max,
           priority: Priority.high,
         );
@@ -229,7 +250,10 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     );
 
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    final tz.TZDateTime nextDateTime = nextEightAm(now);
+    final tz.TZDateTime nextDateTime = nextTriggerAt(
+      timeString: timeString,
+      now: now,
+    );
 
     await _notificationsPlugin.zonedSchedule(
       _notificationId,
@@ -243,18 +267,40 @@ class DailyAlarmNotificationService implements IDailyAlarmNotificationService {
     );
   }
 
-  static tz.TZDateTime nextEightAm(tz.TZDateTime now) {
+  static tz.TZDateTime nextTriggerAt({
+    required String timeString,
+    required tz.TZDateTime now,
+  }) {
+    final ({int hour, int minute}) parsed = _parseScheduledTime(timeString);
     tz.TZDateTime candidate = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
       now.day,
-      8,
+      parsed.hour,
+      parsed.minute,
     );
     if (!candidate.isAfter(now)) {
       candidate = candidate.add(const Duration(days: 1));
     }
     return candidate;
+  }
+
+  static ({int hour, int minute}) _parseScheduledTime(String rawTime) {
+    final List<String> parts = rawTime.trim().split(':');
+    if (parts.length < 2) {
+      return (hour: 8, minute: 0);
+    }
+
+    final int? hour = int.tryParse(parts[0]);
+    final int? minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) {
+      return (hour: 8, minute: 0);
+    }
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return (hour: 8, minute: 0);
+    }
+    return (hour: hour, minute: minute);
   }
 
   void _onNotificationResponse(NotificationResponse response) {

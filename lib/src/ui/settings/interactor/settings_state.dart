@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:test/src/core/model/daily_alarm_settings.dart';
 
 enum SettingsThemeMode { light, dark }
 
@@ -11,6 +12,8 @@ class SettingsState extends Equatable {
     required this.soundEnabled,
     required this.pushNotificationsEnabled,
     required this.dailyAlarmEnabled,
+    required this.dailyAlarmTime,
+    required this.dailyAlarmTimezone,
     required this.dailyAlarmSyncing,
   });
 
@@ -21,6 +24,8 @@ class SettingsState extends Equatable {
       soundEnabled: true,
       pushNotificationsEnabled: true,
       dailyAlarmEnabled: true,
+      dailyAlarmTime: DailyAlarmSettings.defaultTime,
+      dailyAlarmTimezone: DailyAlarmSettings.defaultTimezone,
       dailyAlarmSyncing: false,
     );
   }
@@ -30,6 +35,8 @@ class SettingsState extends Equatable {
   final bool soundEnabled;
   final bool pushNotificationsEnabled;
   final bool dailyAlarmEnabled;
+  final String dailyAlarmTime;
+  final String dailyAlarmTimezone;
   final bool dailyAlarmSyncing;
 
   SettingsState copyWith({
@@ -38,6 +45,8 @@ class SettingsState extends Equatable {
     bool? soundEnabled,
     bool? pushNotificationsEnabled,
     bool? dailyAlarmEnabled,
+    String? dailyAlarmTime,
+    String? dailyAlarmTimezone,
     bool? dailyAlarmSyncing,
   }) {
     return SettingsState(
@@ -47,6 +56,9 @@ class SettingsState extends Equatable {
       pushNotificationsEnabled:
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       dailyAlarmEnabled: dailyAlarmEnabled ?? this.dailyAlarmEnabled,
+      dailyAlarmTime: (dailyAlarmTime ?? this.dailyAlarmTime).trim(),
+      dailyAlarmTimezone: (dailyAlarmTimezone ?? this.dailyAlarmTimezone)
+          .trim(),
       dailyAlarmSyncing: dailyAlarmSyncing ?? this.dailyAlarmSyncing,
     );
   }
@@ -58,6 +70,8 @@ class SettingsState extends Equatable {
     soundEnabled,
     pushNotificationsEnabled,
     dailyAlarmEnabled,
+    dailyAlarmTime,
+    dailyAlarmTimezone,
     dailyAlarmSyncing,
   ];
 }

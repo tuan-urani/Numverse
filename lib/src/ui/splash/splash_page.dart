@@ -23,7 +23,13 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   static const Duration _minSplashDuration = Duration(seconds: 3);
+  static const Duration _fadeDuration = Duration(milliseconds: 550);
+  static const Duration _logoScaleDuration = Duration(milliseconds: 2500);
 
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
+  late final AnimationController _logoScaleController;
+  late final Animation<double> _logoScaleAnimation;
   late final AnimationController _glowController;
   late final AnimationController _dotController;
   late final Future<void> _bootstrapFuture;
@@ -32,6 +38,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _setupAnimationControllers();
+    _logoScaleController.forward();
     _bootstrapFuture = _runBootstrapWithRetry();
     unawaited(_startNavigationFlow());
   }
@@ -40,14 +47,31 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SplashVisual(
-        glowAnimation: _glowController,
-        dotAnimation: _dotController,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SplashVisual(
+          logoScaleAnimation: _logoScaleAnimation,
+          glowAnimation: _glowController,
+          dotAnimation: _dotController,
+        ),
       ),
     );
   }
 
   void _setupAnimationControllers() {
+    _fadeController = AnimationController(vsync: this, duration: _fadeDuration);
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+    _logoScaleController = AnimationController(
+      vsync: this,
+      duration: _logoScaleDuration,
+    );
+    _logoScaleAnimation = CurvedAnimation(
+      parent: _logoScaleController,
+      curve: Curves.easeOutCubic,
+    );
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -59,10 +83,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Future<void> _startNavigationFlow() async {
+    await _fadeController.forward();
     await Future.wait<void>(<Future<void>>[
       Future<void>.delayed(_minSplashDuration),
       _bootstrapFuture,
     ]);
+    if (!mounted) {
+      return;
+    }
+    await _fadeController.reverse();
     if (!mounted) {
       return;
     }
@@ -175,6 +204,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _disposeAnimationControllers() {
+    _fadeController.dispose();
+    _logoScaleController.dispose();
     _glowController.dispose();
     _dotController.dispose();
   }

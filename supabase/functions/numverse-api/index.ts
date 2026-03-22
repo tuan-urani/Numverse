@@ -30,7 +30,6 @@ class HttpError extends Error {
 
 const ENGINE_VERSION = Deno.env.get("NUMEROLOGY_ENGINE_VERSION") ?? "v1";
 const DEFAULT_LOCALE = "vi-VN";
-const DEFAULT_TIMEZONE = "Asia/Ho_Chi_Minh";
 const NUMAI_OPENAI_MODEL = Deno.env.get("NUMAI_CHAT_MODEL") ?? "gpt-5-nano";
 const NUMAI_SOUL_POINT_COST = 3;
 const NUMAI_RECENT_MESSAGES_LIMIT = 4;
@@ -905,27 +904,6 @@ async function ensureCurrentSnapshot(
   }
 }
 
-async function resolveAppUserProfile(
-  admin: SupabaseClient,
-  ownerUserId: string,
-): Promise<JsonObject> {
-  const { data, error } = await admin
-    .from("user_profiles")
-    .select("*")
-    .eq("id", ownerUserId)
-    .maybeSingle();
-
-  if (error) {
-    throw new HttpError(500, "user_profile_lookup_failed", error);
-  }
-
-  return (data as JsonObject | null) ?? {
-    id: ownerUserId,
-    locale: DEFAULT_LOCALE,
-    timezone: DEFAULT_TIMEZONE,
-  };
-}
-
 async function ensureWallet(
   admin: SupabaseClient,
   ownerUserId: string,
@@ -1097,7 +1075,6 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
   }
 
   const locale = String(body.locale ?? DEFAULT_LOCALE);
-  const appUserProfile = await resolveAppUserProfile(admin, user.id);
   let thread: JsonObject;
 
   if (body.thread_id) {
@@ -1225,10 +1202,6 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
   }
 
   const contextJson: JsonObject = {
-    thread_summary: {
-      summary: String(thread.thread_summary ?? ""),
-      updated_at: thread.thread_summary_updated_at ?? null,
-    },
     recent_messages: (recentMessages ?? [])
       .slice()
       .reverse()
@@ -1239,9 +1212,7 @@ async function handleSendNumaiMessage(req: Request): Promise<JsonObject> {
     active_profile: {
       profile_id: activeProfile.id,
       display_name: activeProfile.display_name,
-      profile_kind: activeProfile.profile_kind,
-      relation_kind: activeProfile.relation_kind,
-      timezone: appUserProfile.timezone ?? DEFAULT_TIMEZONE,
+      birth_date: activeProfile.birth_date ?? null,
     },
     snapshot_facts: {
       core_numbers: snapshot.core_numbers_json,

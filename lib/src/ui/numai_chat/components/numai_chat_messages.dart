@@ -14,6 +14,7 @@ class NumAiChatMessages extends StatefulWidget {
   const NumAiChatMessages({
     required this.messages,
     required this.isLoading,
+    this.isHistoryLoading = false,
     required this.typingMessageId,
     required this.onAssistantTypingCompleted,
     required this.onActionTap,
@@ -23,6 +24,7 @@ class NumAiChatMessages extends StatefulWidget {
 
   final List<NumAiChatMessage> messages;
   final bool isLoading;
+  final bool isHistoryLoading;
   final String? typingMessageId;
   final ValueChanged<String> onAssistantTypingCompleted;
   final VoidCallback onActionTap;
@@ -79,6 +81,10 @@ class _NumAiChatMessagesState extends State<NumAiChatMessages> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isHistoryLoading) {
+      return const _HistoryLoadingState();
+    }
+
     if (widget.messages.isEmpty) {
       if (widget.isLoading) {
         return const _HistoryLoadingState();

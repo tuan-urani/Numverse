@@ -21,6 +21,14 @@ class MainBloc extends Bloc<MainEvent, MainState> {
     add(OnChangeTabEvent(page));
   }
 
+  void popTabToRoot(BottomNavigationPage page) {
+    final NavigatorState? navigator = tabNavKeys[page.index].currentState;
+    if (navigator == null) {
+      return;
+    }
+    navigator.popUntil((Route<dynamic> route) => route.isFirst);
+  }
+
   void _onInitialized(MainInitialized event, Emitter<MainState> emit) {
     emit(state.copyWith(currentPage: BottomNavigationPage.today));
   }

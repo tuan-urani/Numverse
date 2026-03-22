@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
@@ -8,7 +10,9 @@ import 'package:test/src/core/model/user_profile.dart';
 import 'package:test/src/core/service/admob_rewarded_ad_service.dart';
 import 'package:test/src/helper/compatibility_scoring.dart';
 import 'package:test/src/helper/numerology_helper.dart';
+import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_add_profile_dialog.dart';
+import 'package:test/src/ui/compatibility/components/compatibility_calculation_dialog.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_content.dart';
 import 'package:test/src/ui/compatibility/components/compatibility_profile_input_dialog.dart';
 import 'package:test/src/ui/compatibility/interactor/compatibility_constants.dart';
@@ -128,6 +132,8 @@ class CompatibilityPage extends StatelessWidget {
     if (latestSessionState.currentProfile == null) {
       await CompatibilityProfileInputDialog.show(
         context,
+        title: LocaleKey.compatibilityOwnProfileInputTitle.tr,
+        subtitle: LocaleKey.compatibilityOwnProfileInputSubtitle.tr,
         onSubmit: (String name, DateTime birthDate) async {
           await sessionCubit.addProfile(name: name, birthDate: birthDate);
         },
@@ -141,13 +147,27 @@ class CompatibilityPage extends StatelessWidget {
       }
     }
 
+    final UserProfile selfProfile = latestSessionState.currentProfile!;
+    final CompatibilityHistoryItem? existingHistoryItem =
+        _findLatestHistoryForPair(
+          history: latestSessionState.compatibilityHistoryForCurrentProfile,
+          primaryProfileId: selfProfile.id,
+          targetProfileId: selected.id,
+        );
+    if (existingHistoryItem != null) {
+      await TabNavigationHelper.pushCommonRoute(
+        AppPages.comparisonResult,
+        arguments: existingHistoryItem.toJson(),
+      );
+      return;
+    }
+
     if (latestSessionState.soulPoints < kCompatibilityComparisonCost) {
       await SoulPointsInsufficientDialog.show(
         context,
         sessionBloc: sessionCubit,
         requiredPoints: kCompatibilityComparisonCost,
         onWatchAdTap: () => _onWatchAdTap(sessionCubit, adMobRewardedAdService),
-        onBuyPointsTap: _onBuyPointsTap,
       );
       return;
     }
@@ -171,23 +191,29 @@ class CompatibilityPage extends StatelessWidget {
         sessionBloc: sessionCubit,
         requiredPoints: kCompatibilityComparisonCost,
         onWatchAdTap: () => _onWatchAdTap(sessionCubit, adMobRewardedAdService),
-        onBuyPointsTap: _onBuyPointsTap,
       );
       return;
     }
 
-    final UserProfile selfProfile = latestSessionState.currentProfile!;
     final CompatibilityHistoryItem historyItem = _buildHistoryItem(
       selfProfile: selfProfile,
       targetProfile: selected,
       comparedAt: comparedAt,
       requestId: requestId,
     );
-    try {
-      await sessionCubit.saveCompatibilityHistory(historyItem);
-    } catch (_) {
-      // Keep navigation flow smooth even if history persistence fails.
-    }
+    unawaited(
+      _saveCompatibilityHistorySafely(
+        sessionCubit: sessionCubit,
+        historyItem: historyItem,
+      ),
+    );
+
+    await CompatibilityCalculationDialog.show(
+      context,
+      primaryName: selfProfile.name,
+      targetName: selected.name,
+    );
+
     if (!context.mounted) {
       return;
     }
@@ -196,6 +222,35 @@ class CompatibilityPage extends StatelessWidget {
       AppPages.comparisonResult,
       arguments: historyItem.toJson(),
     );
+  }
+
+  CompatibilityHistoryItem? _findLatestHistoryForPair({
+    required List<CompatibilityHistoryItem> history,
+    required String primaryProfileId,
+    required String targetProfileId,
+  }) {
+    CompatibilityHistoryItem? latest;
+    for (final CompatibilityHistoryItem item in history) {
+      if (item.primaryProfileId != primaryProfileId ||
+          item.targetProfileId != targetProfileId) {
+        continue;
+      }
+      if (latest == null || item.createdAt.isAfter(latest.createdAt)) {
+        latest = item;
+      }
+    }
+    return latest;
+  }
+
+  Future<void> _saveCompatibilityHistorySafely({
+    required MainSessionBloc sessionCubit,
+    required CompatibilityHistoryItem historyItem,
+  }) async {
+    try {
+      await sessionCubit.saveCompatibilityHistory(historyItem);
+    } catch (_) {
+      // Keep navigation flow smooth even if history persistence fails.
+    }
   }
 
   Future<void> _onWatchAdTap(
@@ -226,12 +281,7 @@ class CompatibilityPage extends StatelessWidget {
           placementCode: 'compatibility_soul_points_dialog',
         );
       },
-      onBuyPointsTap: _onBuyPointsTap,
     );
-  }
-
-  Future<void> _onBuyPointsTap() async {
-    await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
   }
 
   CompatibilityHistoryItem _buildHistoryItem({

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/comparison_result/interactor/comparison_result_state.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -56,25 +58,25 @@ class _ComparisonResultContentState extends State<ComparisonResultContent> {
       _AspectInsightData(
         title: LocaleKey.comparisonAspectCoreTitle.tr,
         score: state.coreScore,
-        icon: Icons.auto_awesome_rounded,
+        iconAsset: AppAssets.iconCharacterSvg,
         content: state.lifePathInsight,
       ),
       _AspectInsightData(
         title: LocaleKey.comparisonAspectCommunicationTitle.tr,
         score: state.expressionScore,
-        icon: Icons.mic_rounded,
+        iconAsset: AppAssets.iconCommunitySvg,
         content: state.expressionInsight,
       ),
       _AspectInsightData(
         title: LocaleKey.comparisonAspectSoulTitle.tr,
         score: state.soulScore,
-        icon: Icons.favorite_rounded,
+        iconAsset: AppAssets.iconEmotionSvg,
         content: state.soulInsight,
       ),
       _AspectInsightData(
         title: LocaleKey.comparisonAspectPersonalityTitle.tr,
         score: state.personalityScore,
-        icon: Icons.lightbulb_outline_rounded,
+        iconAsset: AppAssets.iconPersonalitySvg,
         content: state.personalityInsight,
       ),
     ];
@@ -282,13 +284,13 @@ class _OverallScoreCardState extends State<_OverallScoreCard>
 
   Color _scoreColor(int score) {
     if (score >= 80) {
-      return AppColors.richGold;
-    }
-    if (score >= 70) {
       return AppColors.success;
     }
+    if (score >= 70) {
+      return AppColors.richGold;
+    }
     if (score >= 60) {
-      return AppColors.warning;
+      return AppColors.energyIndigo;
     }
     return AppColors.error;
   }
@@ -440,13 +442,13 @@ class _AspectInsightData {
   const _AspectInsightData({
     required this.title,
     required this.score,
-    required this.icon,
+    required this.iconAsset,
     required this.content,
   });
 
   final String title;
   final int score;
-  final IconData icon;
+  final String iconAsset;
   final ComparisonAspectInsight content;
 }
 
@@ -485,11 +487,23 @@ class _AspectInsightCard extends StatelessWidget {
                 Container(
                   width: 34,
                   height: 34,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: AppColors.richGold.withValues(alpha: 0.2),
                   ),
-                  child: Icon(data.icon, size: 18, color: AppColors.richGold),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      data.iconAsset,
+                      width: 18,
+                      height: 18,
+                      fit: BoxFit.contain,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.richGold,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
                 ),
                 10.width,
                 Expanded(
@@ -558,10 +572,10 @@ class _AspectInsightCard extends StatelessWidget {
 
   Color _scoreColor(int score) {
     if (score >= 80) {
-      return AppColors.richGold;
+      return AppColors.success;
     }
     if (score >= 70) {
-      return AppColors.success;
+      return AppColors.richGold;
     }
     if (score >= 60) {
       return AppColors.warning;

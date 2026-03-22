@@ -287,7 +287,7 @@ class _UsageCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 9),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   const Padding(
                     padding: EdgeInsets.only(top: 1),
@@ -340,7 +340,7 @@ class _SituationsCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 9),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   const Padding(
                     padding: EdgeInsets.only(top: 1),

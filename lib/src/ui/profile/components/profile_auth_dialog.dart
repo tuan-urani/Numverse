@@ -413,7 +413,7 @@ class _ProfileAuthDialogState extends State<ProfileAuthDialog> {
                 ),
               ),
               child: const Icon(
-                Icons.auto_awesome_rounded,
+                Icons.security,
                 size: 18,
                 color: AppColors.energyAmber,
               ),

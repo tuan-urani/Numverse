@@ -152,19 +152,11 @@ class NumAiChatInputBar extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.all(14),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.midnight,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.send_rounded,
-                            size: 20,
-                            color: AppColors.midnight,
-                          ),
+                    child: const Icon(
+                      Icons.send_rounded,
+                      size: 20,
+                      color: AppColors.midnight,
+                    ),
                   ),
                 ),
               ),

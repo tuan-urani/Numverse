@@ -24,7 +24,15 @@ class AppBottomNavigationBar extends StatelessWidget {
           items: buildMainBottomNavItems(),
           currentIndex: state.currentPage.index,
           onTap: (int index) {
-            bloc.add(OnChangeTabEvent(resolveBottomNavigationPage(index)));
+            final BottomNavigationPage selectedPage =
+                resolveBottomNavigationPage(index);
+
+            if (selectedPage == state.currentPage) {
+              bloc.popTabToRoot(selectedPage);
+              return;
+            }
+
+            bloc.add(OnChangeTabEvent(selectedPage));
           },
         );
       },

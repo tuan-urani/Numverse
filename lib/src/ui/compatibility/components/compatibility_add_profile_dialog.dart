@@ -38,10 +38,11 @@ class CompatibilityAddProfileDialog extends StatefulWidget {
 
 class _CompatibilityAddProfileDialogState
     extends State<CompatibilityAddProfileDialog> {
+  static const String _defaultRelationValue = 'other';
+
   late final TextEditingController _nameController;
   late final TextEditingController _birthDateController;
   DateTime? _birthDate;
-  String? _relation;
 
   @override
   void initState() {
@@ -59,41 +60,6 @@ class _CompatibilityAddProfileDialogState
 
   @override
   Widget build(BuildContext context) {
-    final List<_RelationOption> options = <_RelationOption>[
-      _RelationOption(
-        value: 'lover',
-        label: LocaleKey.compatibilityRelationLover.tr,
-      ),
-      _RelationOption(
-        value: 'spouse',
-        label: LocaleKey.compatibilityRelationSpouse.tr,
-      ),
-      _RelationOption(
-        value: 'friend',
-        label: LocaleKey.compatibilityRelationFriend.tr,
-      ),
-      _RelationOption(
-        value: 'coworker',
-        label: LocaleKey.compatibilityRelationCoworker.tr,
-      ),
-      _RelationOption(
-        value: 'mother',
-        label: LocaleKey.compatibilityRelationMother.tr,
-      ),
-      _RelationOption(
-        value: 'father',
-        label: LocaleKey.compatibilityRelationFather.tr,
-      ),
-      _RelationOption(
-        value: 'sibling',
-        label: LocaleKey.compatibilityRelationSibling.tr,
-      ),
-      _RelationOption(
-        value: 'other',
-        label: LocaleKey.compatibilityRelationOther.tr,
-      ),
-    ];
-
     return Dialog(
       backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 18),
@@ -120,7 +86,7 @@ class _CompatibilityAddProfileDialogState
                   Expanded(
                     child: Text(
                       LocaleKey.compatibilityAddDialogTitle.tr,
-                      style: AppStyles.numberSmall(
+                      style: AppStyles.bodyMedium(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
                       ).copyWith(fontSize: 24, height: 1.2),
@@ -149,43 +115,6 @@ class _CompatibilityAddProfileDialogState
               _DialogInputField(
                 controller: _nameController,
                 hintText: LocaleKey.compatibilityAddDialogNameHint.tr,
-              ),
-              12.height,
-              _FieldLabel(
-                text: LocaleKey.compatibilityAddDialogRelationLabel.tr,
-                icon: Icons.favorite_border_rounded,
-              ),
-              6.height,
-              _InputContainer(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isDense: true,
-                    isExpanded: true,
-                    value: _relation,
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.richGold,
-                    ),
-                    hint: Text(
-                      LocaleKey.compatibilityAddDialogRelationPlaceholder.tr,
-                      style: AppStyles.bodySmall(color: AppColors.textMuted),
-                    ),
-                    dropdownColor: AppColors.midnightSoft,
-                    borderRadius: BorderRadius.circular(12),
-                    style: AppStyles.bodyMedium(),
-                    items: options.map((_RelationOption item) {
-                      return DropdownMenuItem<String>(
-                        value: item.value,
-                        child: Text(item.label),
-                      );
-                    }).toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        _relation = value;
-                      });
-                    },
-                  ),
-                ),
               ),
               12.height,
               _FieldLabel(
@@ -309,14 +238,14 @@ class _CompatibilityAddProfileDialogState
 
   void _submit() {
     final String name = _nameController.text.trim();
-    if (name.isEmpty || _relation == null || _birthDate == null) {
+    if (name.isEmpty || _birthDate == null) {
       return;
     }
 
     Navigator.of(context).pop(
       CompatibilityAddProfileResult(
         name: name,
-        relation: _relation!,
+        relation: _defaultRelationValue,
         birthDate: _birthDate!,
       ),
     );
@@ -343,27 +272,6 @@ class _FieldLabel extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _InputContainer extends StatelessWidget {
-  const _InputContainer({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.75)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: child,
-      ),
     );
   }
 }
@@ -429,11 +337,4 @@ class _DialogInputField extends StatelessWidget {
       ),
     );
   }
-}
-
-class _RelationOption {
-  const _RelationOption({required this.value, required this.label});
-
-  final String value;
-  final String label;
 }

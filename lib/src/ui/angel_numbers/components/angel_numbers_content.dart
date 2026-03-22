@@ -2,12 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/ui/angel_numbers/interactor/angel_numbers_state.dart';
 import 'package:test/src/ui/widgets/app_mystical_card.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
@@ -36,7 +38,7 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
   double? _measuredActionHeaderExtent;
   bool _isIntroExpanded = false;
 
-  static const double _actionHeaderVerticalPadding = 16;
+  static const double _actionHeaderBottomPadding = 8;
   static const bool _showPopularNumbers = false;
 
   @override
@@ -168,7 +170,7 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
 
   double _actionHeaderExtent(BuildContext context, double viewportWidth) {
     const double sliverHorizontalPadding = 16 * 2;
-    const double sliverVerticalPadding = 8 * 2;
+    const double sliverVerticalPadding = _actionHeaderBottomPadding;
     const double cardVerticalPadding = 16 * 2;
 
     final double contentWidth = (viewportWidth - sliverHorizontalPadding).clamp(
@@ -270,7 +272,7 @@ class _AngelNumbersContentState extends State<AngelNumbersContent> {
         return;
       }
 
-      final double measuredExtent = size.height + _actionHeaderVerticalPadding;
+      final double measuredExtent = size.height + _actionHeaderBottomPadding;
       final double previous = _measuredActionHeaderExtent ?? 0;
       if ((previous - measuredExtent).abs() < 0.5) {
         return;
@@ -327,23 +329,9 @@ class _ActionHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[
-            AppColors.background,
-            AppColors.background,
-            AppColors.background.withValues(alpha: 0.2),
-          ],
-          stops: const <double>[0, 0.86, 1],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: child,
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: child,
     );
   }
 
@@ -375,7 +363,13 @@ class _ActionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SoftCard(
-      backgroundColor: AppColors.transparent,
+      backgroundColor: AppColors.card,
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.zero,
+        topRight: Radius.zero,
+        bottomLeft: Radius.circular(18),
+        bottomRight: Radius.circular(18),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -416,10 +410,14 @@ class _IntroCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: Row(
               children: <Widget>[
-                const Icon(
-                  Icons.info_outline,
-                  size: 20,
-                  color: AppColors.richGold,
+                SvgPicture.asset(
+                  AppAssets.iconAngelSvg,
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.richGold,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 8.width,
                 Expanded(
@@ -543,10 +541,18 @@ class _SearchCard extends StatelessWidget {
                     color: AppColors.richGold.withValues(alpha: 0.3),
                   ),
                 ),
-                child: const Icon(
-                  Icons.search,
-                  size: 18,
-                  color: AppColors.richGold,
+                child: Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: SvgPicture.asset(
+                      AppAssets.iconFindSvg,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.richGold,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -661,10 +667,14 @@ class _ResultSection extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    const Icon(
-                      Icons.psychology_alt_outlined,
-                      size: 20,
-                      color: AppColors.richGold,
+                    SvgPicture.asset(
+                      AppAssets.iconMeaningSvg,
+                      width: 20,
+                      height: 20,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.richGold,
+                        BlendMode.srcIn,
+                      ),
                     ),
                     8.width,
                     Text(
@@ -718,10 +728,14 @@ class _ResultSection extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  const Icon(
-                    Icons.favorite_border,
-                    size: 20,
-                    color: AppColors.richGold,
+                  SvgPicture.asset(
+                    AppAssets.iconGuideSvg,
+                    width: 20,
+                    height: 20,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.richGold,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   8.width,
                   Text(
@@ -755,7 +769,7 @@ class _BulletTextList extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 9),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   const Padding(
                     padding: EdgeInsets.only(top: 1),
@@ -953,18 +967,20 @@ class _SoftCard extends StatelessWidget {
     required this.child,
     this.highlighted = false,
     this.backgroundColor,
+    this.borderRadius,
   });
 
   final Widget child;
   final bool highlighted;
   final Color? backgroundColor;
+  final BorderRadiusGeometry? borderRadius;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.card.withValues(alpha: 0.56),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: borderRadius ?? BorderRadius.circular(18),
         border: Border.all(
           color: highlighted
               ? AppColors.richGold.withValues(alpha: 0.58)

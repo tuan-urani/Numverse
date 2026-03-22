@@ -21,10 +21,10 @@ class LuckyNumberHeader extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.card.withValues(alpha: 0.8),
+            color: AppColors.transparent,
             border: Border(
               bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
+                color: AppColors.transparent,
               ),
             ),
           ),

@@ -16,6 +16,18 @@ final Map<String, String> pagesVi = <String, String>{
   PagesLocaleKey.compatibilityTitle: 'Tương hợp',
   PagesLocaleKey.compatibilitySubtitle: 'So với ai hôm nay?',
   PagesLocaleKey.compatibilityStart: 'Bắt đầu so sánh tương hợp',
+  PagesLocaleKey.compatibilityOwnProfileInputTitle:
+      'Nhập thông tin của bạn',
+  PagesLocaleKey.compatibilityOwnProfileInputSubtitle:
+      'Vui lòng nhập họ tên và ngày sinh của bạn để bắt đầu so sánh tương hợp.',
+  PagesLocaleKey.compatibilityCalculatingTitle: 'Đang tính độ tương hợp',
+  PagesLocaleKey.compatibilityCalculatingSubtitle:
+      'Đang phân tích kết nối năng lượng giữa @primary và @target',
+  PagesLocaleKey.compatibilityCalculatingStepSync: 'Đồng bộ tần số của hai bạn',
+  PagesLocaleKey.compatibilityCalculatingStepEnergy:
+      'Phân tích các chỉ số cốt lõi',
+  PagesLocaleKey.compatibilityCalculatingStepInsight:
+      'Tổng hợp kết quả tương hợp',
   PagesLocaleKey.compatibilityInsightOne:
       'Trục cảm xúc hòa hợp tốt, cần tăng rõ ràng trong giao tiếp.',
   PagesLocaleKey.compatibilityInsightTwo:
@@ -466,7 +478,7 @@ final Map<String, String> pagesVi = <String, String>{
       'Hãy nhập số có từ 2 đến 4 chữ số để tra cứu số thiên thần.',
   PagesLocaleKey.angelNumbersInputError:
       'Vui lòng nhập đúng định dạng gồm 2-4 chữ số.',
-  PagesLocaleKey.angelNumbersIntroTitle: 'Angel Numbers',
+  PagesLocaleKey.angelNumbersIntroTitle: 'Số thiên thần là gì?',
   PagesLocaleKey.angelNumbersIntroBody:
       'Số thiên thần là những dãy số lặp lại mà bạn thường xuyên nhìn thấy (như 111, 222, 333...). Chúng được cho là thông điệp và dấu hiệu từ vũ trụ hoặc các vị thiên thần hướng dẫn.',
   PagesLocaleKey.angelNumbersInputTitle: 'Nhập số bạn thường thấy',

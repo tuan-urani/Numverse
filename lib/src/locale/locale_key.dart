@@ -359,6 +359,20 @@ class LocaleKey {
   static const String compatibilitySubtitle =
       PagesLocaleKey.compatibilitySubtitle;
   static const String compatibilityStart = PagesLocaleKey.compatibilityStart;
+  static const String compatibilityOwnProfileInputTitle =
+      PagesLocaleKey.compatibilityOwnProfileInputTitle;
+  static const String compatibilityOwnProfileInputSubtitle =
+      PagesLocaleKey.compatibilityOwnProfileInputSubtitle;
+  static const String compatibilityCalculatingTitle =
+      PagesLocaleKey.compatibilityCalculatingTitle;
+  static const String compatibilityCalculatingSubtitle =
+      PagesLocaleKey.compatibilityCalculatingSubtitle;
+  static const String compatibilityCalculatingStepSync =
+      PagesLocaleKey.compatibilityCalculatingStepSync;
+  static const String compatibilityCalculatingStepEnergy =
+      PagesLocaleKey.compatibilityCalculatingStepEnergy;
+  static const String compatibilityCalculatingStepInsight =
+      PagesLocaleKey.compatibilityCalculatingStepInsight;
   static const String compatibilityInsightOne =
       PagesLocaleKey.compatibilityInsightOne;
   static const String compatibilityInsightTwo =

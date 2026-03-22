@@ -17,7 +17,6 @@ import 'package:test/src/ui/widgets/app_mystical_scaffold.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
 import 'package:test/src/ui/widgets/soul_points_insufficient_dialog.dart';
 import 'package:test/src/utils/app_pages.dart';
-import 'package:test/src/utils/tab_navigation_helper.dart';
 
 class NumAiChatPage extends StatefulWidget {
   const NumAiChatPage({super.key});
@@ -100,6 +99,7 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
                         child: NumAiChatMessages(
                           messages: state.messages,
                           isLoading: state.isLoading,
+                          isHistoryLoading: state.isHistoryLoading,
                           typingMessageId: state.typingMessageId,
                           onAssistantTypingCompleted:
                               bloc.completeTypingMessage,
@@ -242,7 +242,11 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
     if (refreshedProfileId.isEmpty) {
       return;
     }
-    _lastHydratedContextKey = 'profile:$refreshedProfileId';
+    final String nextContextKey = 'profile:$refreshedProfileId';
+    if (_lastHydratedContextKey == nextContextKey) {
+      return;
+    }
+    _lastHydratedContextKey = nextContextKey;
     bloc.loadCloudHistory(
       hasCloudSession: refreshedState.hasCloudSession,
       isAnonymousUser: refreshedState.isAnonymousUser,
@@ -269,7 +273,6 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       sessionBloc: sessionCubit,
       requiredPoints: requiredPoints,
       onWatchAdTap: _onWatchAdTap,
-      onBuyPointsTap: _onBuyPointsTap,
     );
   }
 
@@ -279,9 +282,5 @@ class _NumAiChatPageState extends State<NumAiChatPage> {
       LocaleKey.commonComingSoon.tr,
       snackPosition: SnackPosition.BOTTOM,
     );
-  }
-
-  Future<void> _onBuyPointsTap() async {
-    await TabNavigationHelper.pushCommonRoute(AppPages.subscription);
   }
 }

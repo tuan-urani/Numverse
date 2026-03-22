@@ -17,6 +17,18 @@ final Map<String, String> pagesEn = <String, String>{
   PagesLocaleKey.compatibilitySubtitle:
       'Who do you want to compare with today?',
   PagesLocaleKey.compatibilityStart: 'Start compatibility reading',
+  PagesLocaleKey.compatibilityOwnProfileInputTitle:
+      'Enter your profile information',
+  PagesLocaleKey.compatibilityOwnProfileInputSubtitle:
+      'Please enter your full name and birth date to start compatibility comparison.',
+  PagesLocaleKey.compatibilityCalculatingTitle: 'Calculating compatibility',
+  PagesLocaleKey.compatibilityCalculatingSubtitle:
+      'Analyzing the energy connection between @primary and @target',
+  PagesLocaleKey.compatibilityCalculatingStepSync: 'Synchronizing frequency',
+  PagesLocaleKey.compatibilityCalculatingStepEnergy:
+      'Decoding core energy patterns',
+  PagesLocaleKey.compatibilityCalculatingStepInsight:
+      'Composing your compatibility insight',
   PagesLocaleKey.compatibilityInsightOne:
       'Strong emotional axis with potential growth in communication.',
   PagesLocaleKey.compatibilityInsightTwo:

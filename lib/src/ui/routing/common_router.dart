@@ -13,6 +13,7 @@ import 'package:test/src/ui/daily_message/binding/daily_message_binding.dart';
 import 'package:test/src/ui/daily_message/daily_message_page.dart';
 import 'package:test/src/ui/help/binding/help_binding.dart';
 import 'package:test/src/ui/help/help_page.dart';
+import 'package:test/src/ui/legal_webview/legal_webview_page.dart';
 import 'package:test/src/ui/life_path/binding/life_path_binding.dart';
 import 'package:test/src/ui/life_path/life_path_page.dart';
 import 'package:test/src/ui/login/binding/login_binding.dart';
@@ -185,6 +186,16 @@ class CommonRouter {
           binding: PrivacyBinding(),
           pageBuilder: (_) => const PrivacyPage(),
         );
+      case AppPages.privacyPolicy:
+        return _buildRoute(
+          settings: settings,
+          pageBuilder: (_) => LegalWebviewPage.privacyPolicy(),
+        );
+      case AppPages.termsOfUse:
+        return _buildRoute(
+          settings: settings,
+          pageBuilder: (_) => LegalWebviewPage.termsOfUse(),
+        );
       case AppPages.help:
         return _buildRoute(
           settings: settings,
@@ -235,6 +246,46 @@ class CommonRouter {
     Bindings? binding,
   }) {
     binding?.dependencies();
-    return MaterialPageRoute<void>(settings: settings, builder: pageBuilder);
+    return PageRouteBuilder<void>(
+      settings: settings,
+      pageBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) {
+            return pageBuilder(context);
+          },
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 240),
+      transitionsBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+            Widget child,
+          ) {
+            final Animation<double> fadeAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
+            final Animation<Offset> slideAnimation =
+                Tween<Offset>(
+                  begin: const Offset(0.06, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                    reverseCurve: Curves.easeInCubic,
+                  ),
+                );
+            return FadeTransition(
+              opacity: fadeAnimation,
+              child: SlideTransition(position: slideAnimation, child: child),
+            );
+          },
+    );
   }
 }

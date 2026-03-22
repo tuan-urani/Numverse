@@ -4,6 +4,7 @@ class NumAiChatState extends Equatable {
   const NumAiChatState({
     required this.messages,
     required this.isLoading,
+    required this.isHistoryLoading,
     required this.pendingProfileQuestion,
     required this.showInsufficientPointsWarning,
     required this.threadId,
@@ -15,6 +16,7 @@ class NumAiChatState extends Equatable {
     return const NumAiChatState(
       messages: <NumAiChatMessage>[],
       isLoading: false,
+      isHistoryLoading: false,
       pendingProfileQuestion: null,
       showInsufficientPointsWarning: false,
       threadId: null,
@@ -25,6 +27,7 @@ class NumAiChatState extends Equatable {
 
   final List<NumAiChatMessage> messages;
   final bool isLoading;
+  final bool isHistoryLoading;
   final String? pendingProfileQuestion;
   final bool showInsufficientPointsWarning;
   final String? threadId;
@@ -36,6 +39,7 @@ class NumAiChatState extends Equatable {
   NumAiChatState copyWith({
     List<NumAiChatMessage>? messages,
     bool? isLoading,
+    bool? isHistoryLoading,
     String? pendingProfileQuestion,
     bool clearPendingProfileQuestion = false,
     bool? showInsufficientPointsWarning,
@@ -49,6 +53,7 @@ class NumAiChatState extends Equatable {
     return NumAiChatState(
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
+      isHistoryLoading: isHistoryLoading ?? this.isHistoryLoading,
       pendingProfileQuestion: clearPendingProfileQuestion
           ? null
           : pendingProfileQuestion ?? this.pendingProfileQuestion,
@@ -68,6 +73,7 @@ class NumAiChatState extends Equatable {
   List<Object?> get props => <Object?>[
     messages,
     isLoading,
+    isHistoryLoading,
     pendingProfileQuestion,
     showInsufficientPointsWarning,
     threadId,

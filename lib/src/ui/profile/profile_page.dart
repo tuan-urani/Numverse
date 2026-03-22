@@ -18,6 +18,7 @@ import 'package:test/src/ui/profile/components/profile_settings_bottom_sheet.dar
 import 'package:test/src/ui/profile/interactor/profile_state.dart';
 import 'package:test/src/ui/widgets/ad_reward_claim_flow.dart';
 import 'package:test/src/ui/widgets/app_state_view.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -140,9 +141,6 @@ class _ProfilePageState extends State<ProfilePage> {
           placementCode: 'profile_soul_points_dialog',
         );
       },
-      onBuyPointsTap: () async {
-        TabNavigationHelper.pushCommonRoute(AppPages.subscription);
-      },
     );
   }
 
@@ -229,7 +227,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ProfileReadingSectionItem(
           id: 'core',
           route: AppPages.coreNumbers,
-          icon: Icons.star_rounded,
+          iconAssetPath: AppAssets.iconNumerologySecondPng,
           title: LocaleKey.readingCoreNumbersTitle.tr,
           description: LocaleKey.readingCoreNumbersBody.tr,
           lockedDescription: LocaleKey.readingCoreNumbersBody.tr,
@@ -253,7 +251,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ProfileReadingSectionItem(
           id: 'lifepath',
           route: AppPages.lifePath,
-          icon: Icons.trending_up_rounded,
+          iconAssetPath: AppAssets.iconRoundMapPng,
           title: LocaleKey.readingLifePathTitle.tr,
           description: LocaleKey.readingLifePathBody.tr,
           lockedDescription: LocaleKey.readingLifePathBody.tr,

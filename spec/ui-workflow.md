@@ -604,19 +604,22 @@ Features:
 - Compare-profile list with selected state.
 - Add compare-profile modal (name/relation/birth date).
 - Soul-point summary card + compare CTA with cost badge.
+- Calculation simulation dialog (2-person energy sync effect) before result page.
+- Guest compare flow uses own-profile copy in unlock modal (title + subtitle).
 - If points are insufficient, compare button switches to inline CTA text:
 `Cần thêm @points point để so sánh. Kiếm thêm`.
 - Compatibility history list under compare CTA.
 - Guard flow:
 - no own profile -> unlock profile dialog,
 - insufficient soul points -> insufficient modal,
-- success -> deduct points, persist history item, and navigate to comparison result.
+- success -> deduct points, show calculation simulation, then navigate to comparison result.
 
 ### 2. UI Structure
 - `compatibility_page.dart`
 - Components:
   - `components/compatibility_content.dart`
   - `components/compatibility_add_profile_dialog.dart`
+  - `components/compatibility_calculation_dialog.dart`
   - `components/compatibility_profile_input_dialog.dart`
   - `components/compatibility_insufficient_points_dialog.dart`
 - Interactor:
@@ -629,8 +632,9 @@ Features:
 3) User selects target profile.
 4) On compare tap:
 - If no own profile -> profile unlock dialog appears.
+- If current/target pair already has history -> open latest result immediately (no point deduction, no simulate dialog).
 - If soul points < 20 -> insufficient modal appears.
-- Else deduct 20 soul points, create/save a compatibility history item, and navigate to `/comparison-result` with history payload.
+- Else deduct 20 soul points, create/save a compatibility history item, open a short calculation simulation dialog, then navigate to `/comparison-result` with history payload.
 5) When soul points are insufficient, tapping the compare button CTA opens
 `ProfileSoulPointsActionsDialog` (watch ad / buy points).
 6) User can tap any history item to reopen comparison result in view-only mode (no additional point deduction).

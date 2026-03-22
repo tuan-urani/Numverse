@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:test/src/core/model/numerology_reading_models.dart';
 import 'package:test/src/extensions/int_extensions.dart';
 import 'package:test/src/ui/core_numbers/interactor/core_numbers_state.dart';
+import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_pages.dart';
 import 'package:test/src/utils/app_styles.dart';
@@ -59,8 +61,8 @@ class _LoadedContentState extends State<_LoadedContent> {
       _CoreNumberCardData(
         number: state.lifePathNumber,
         title: 'Số chủ đạo',
-        subtitle: 'Life Path Number',
-        icon: Icons.star_rounded,
+        subtitle: 'Con đường định hình bạn trở thành ai',
+        iconAssetPath: AppAssets.iconNumerologySecondPng,
         intro:
             'Con số định hướng cuộc đời, mục đích sống và bài học lớn nhất bạn cần trải nghiệm.',
         content: state.lifePathContent,
@@ -68,8 +70,8 @@ class _LoadedContentState extends State<_LoadedContent> {
       _CoreNumberCardData(
         number: state.soulUrgeNumber,
         title: 'Số linh hồn',
-        subtitle: 'Soul Urge Number',
-        icon: Icons.favorite_rounded,
+        subtitle: 'Nguồn động lực ẩn bên trong bạn',
+        iconAssetPath: AppAssets.iconLotusPng,
         intro:
             'Khát khao sâu thẳm bên trong, động lực thúc đẩy và mong muốn của trái tim.',
         content: state.soulUrgeContent,
@@ -77,8 +79,8 @@ class _LoadedContentState extends State<_LoadedContent> {
       _CoreNumberCardData(
         number: state.expressionNumber,
         title: 'Số biểu đạt',
-        subtitle: 'Expression Number',
-        icon: Icons.person_rounded,
+        subtitle: 'Cách bạn thể hiện mình ra bên ngoài',
+        iconAssetPath: AppAssets.iconPresentationPng,
         intro:
             'Nguồn năng lượng biểu đạt và cách bạn thể hiện tài năng ra thế giới.',
         content: state.expressionContent,
@@ -86,8 +88,8 @@ class _LoadedContentState extends State<_LoadedContent> {
       _CoreNumberCardData(
         number: state.missionNumber,
         title: 'Số sứ mệnh',
-        subtitle: 'Mission Number',
-        icon: Icons.track_changes_rounded,
+        subtitle: 'Sứ mệnh cuộc đời bạn được trao',
+        iconAssetPath: AppAssets.iconMissionPng,
         intro:
             'Sứ mệnh và mục đích cuộc đời, điều bạn được sinh ra để hoàn thành.',
         content: state.missionContent,
@@ -379,10 +381,22 @@ class _CoreNumberCard extends StatelessWidget {
                         children: <Widget>[
                           Row(
                             children: <Widget>[
-                              Icon(
-                                data.icon,
-                                size: 16,
-                                color: AppColors.richGold,
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: data.iconAssetPath.endsWith('.svg')
+                                    ? SvgPicture.asset(
+                                        data.iconAssetPath,
+                                        colorFilter: const ColorFilter.mode(
+                                          AppColors.richGold,
+                                          BlendMode.srcIn,
+                                        ),
+                                      )
+                                    : Image.asset(
+                                        data.iconAssetPath,
+                                        color: AppColors.richGold,
+                                        colorBlendMode: BlendMode.srcIn,
+                                      ),
                               ),
                               6.width,
                               Expanded(
@@ -398,7 +412,7 @@ class _CoreNumberCard extends StatelessWidget {
                           3.height,
                           Text(
                             data.subtitle,
-                            style: AppStyles.caption(
+                            style: AppStyles.bodySmall(
                               color: AppColors.textMuted,
                             ),
                           ),
@@ -418,11 +432,11 @@ class _CoreNumberCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                12.height,
-                Text(
-                  data.intro,
-                  style: AppStyles.bodySmall(color: AppColors.textSecondary),
-                ),
+                // 12.height,
+                // Text(
+                //   data.intro,
+                //   style: AppStyles.bodySmall(color: AppColors.textSecondary),
+                // ),
                 TweenAnimationBuilder<double>(
                   tween: Tween<double>(end: isExpanded ? 1 : 0),
                   duration: const Duration(milliseconds: 220),
@@ -512,7 +526,7 @@ class _CoreNumberCardData {
     required this.number,
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.iconAssetPath,
     required this.intro,
     required this.content,
   });
@@ -520,7 +534,7 @@ class _CoreNumberCardData {
   final int number;
   final String title;
   final String subtitle;
-  final IconData icon;
+  final String iconAssetPath;
   final String intro;
   final CoreNumberContent content;
 }

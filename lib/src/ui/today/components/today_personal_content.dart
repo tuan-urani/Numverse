@@ -533,9 +533,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
           _ambientController.value,
         );
         final double glowFactor = 0.82 + (0.38 * pulse);
-        final double shimmerDx = (_ambientController.value * 2) - 1;
-        final double statsBorderAlpha = (0.22 + (0.26 * pulse)).clamp(0, 1);
-        final double statsGlowAlpha = (0.08 + (0.08 * pulse)).clamp(0, 1);
 
         return Stack(
           children: <Widget>[
@@ -543,7 +540,7 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: AppColors.richGold.withValues(alpha: 0.3),
+                  color: AppColors.richGold.withValues(alpha: 0.6),
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -554,52 +551,11 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                     AppColors.card.withValues(alpha: 0.3),
                   ],
                 ),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.richGold.withValues(
-                      alpha: (0.1 + (0.08 * pulse)).clamp(0, 1),
-                    ),
-                    blurRadius: 18 + (4 * pulse),
-                    spreadRadius: 1,
-                  ),
-                  BoxShadow(
-                    color: AppColors.deepViolet.withValues(alpha: 0.5),
-                    blurRadius: 24,
-                    spreadRadius: 1,
-                  ),
-                ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18),
                 child: Stack(
                   children: <Widget>[
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: Opacity(
-                          opacity: 0.15,
-                          child: FractionalTranslation(
-                            translation: Offset(shimmerDx, 0),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: FractionallySizedBox(
-                                widthFactor: 0.45,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: <Color>[
-                                        AppColors.transparent,
-                                        AppColors.white.withValues(alpha: 0.08),
-                                        AppColors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                     Column(
                       children: <Widget>[
                         Padding(
@@ -616,12 +572,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                 ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppColors.richGold.withValues(
-                                      alpha: statsBorderAlpha,
-                                    ),
-                                    width: 1.2 + (0.4 * pulse),
-                                  ),
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
@@ -632,15 +582,6 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                       AppColors.transparent,
                                     ],
                                   ),
-                                  boxShadow: <BoxShadow>[
-                                    BoxShadow(
-                                      color: AppColors.richGold.withValues(
-                                        alpha: statsGlowAlpha,
-                                      ),
-                                      blurRadius: 10 + (8 * pulse),
-                                      spreadRadius: 0.6,
-                                    ),
-                                  ],
                                 ),
                                 child: Row(
                                   children: <Widget>[
@@ -683,7 +624,8 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                                               .withValues(
                                                                 alpha:
                                                                     (0.32 +
-                                                                            (0.22 * pulse))
+                                                                            (0.22 *
+                                                                                pulse))
                                                                         .clamp(
                                                                           0,
                                                                           1,
@@ -709,7 +651,7 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                                 CrossAxisAlignment.end,
                                             children: <Widget>[
                                               Text(
-                                                LocaleKey.todayDailyStreak.tr,
+                                                "Chuỗi Ngày",
                                                 style: AppStyles.caption(
                                                   color: AppColors.textMuted,
                                                   fontWeight: FontWeight.w600,
@@ -722,7 +664,7 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                                         color:
                                                             widget.currentStreak >
                                                                 0
-                                                            ? AppColors.richGold
+                                                            ? AppColors.energyOrange
                                                             : AppColors
                                                                   .textMuted,
                                                         fontWeight:
@@ -734,18 +676,18 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                                                 0
                                                             ? <Shadow>[
                                                                 Shadow(
-                                                                  color: AppColors
-                                                                      .richGold
-                                                                      .withValues(
-                                                                        alpha:
-                                                                            (0.3 +
-                                                                                    (0.2 * pulse))
-                                                                                .clamp(
-                                                                                  0,
-                                                                                  1,
-                                                                                ),
-                                                                      ),
-                                                                  blurRadius: 12,
+                                                                  color: AppColors.richGold.withValues(
+                                                                    alpha:
+                                                                        (0.3 +
+                                                                                (0.2 *
+                                                                                    pulse))
+                                                                            .clamp(
+                                                                              0,
+                                                                              1,
+                                                                            ),
+                                                                  ),
+                                                                  blurRadius:
+                                                                      12,
                                                                 ),
                                                               ]
                                                             : null,
@@ -755,17 +697,17 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                                       text:
                                                           '${widget.currentStreak}',
                                                     ),
-                                                    TextSpan(
-                                                      text:
-                                                          ' ${LocaleKey.todayCheckInDays.tr}',
-                                                      style:
-                                                          AppStyles.bodySmall(
-                                                            color: AppColors
-                                                                .textMuted,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                    ),
+                                                    // TextSpan(
+                                                    //   text:
+                                                    //       ' ${LocaleKey.todayCheckInDays.tr}',
+                                                    //   style:
+                                                    //       AppStyles.bodySmall(
+                                                    //         color: AppColors
+                                                    //             .textMuted,
+                                                    //         fontWeight:
+                                                    //             FontWeight.w600,
+                                                    //       ),
+                                                    // ),
                                                   ],
                                                 ),
                                               ),
@@ -775,9 +717,8 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                           _HeaderOrb(
                                             size: 48,
                                             glowColor: AppColors.energyOrange,
-                                            icon: Icons.local_fire_department,
-                                            iconColor:
-                                                widget.currentStreak > 0
+                                            iconAsset: AppAssets.iconFireSvg,
+                                            iconColor: widget.currentStreak > 0
                                                 ? AppColors.energyOrange
                                                 : AppColors.textMuted,
                                             active: widget.currentStreak > 0,
@@ -837,15 +778,17 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                             child: Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                              padding: const EdgeInsets.fromLTRB(
+                                12,
+                                10,
+                                12,
+                                12,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.richGold.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppColors.richGold.withValues(
-                                    alpha: 0.2,
-                                  ),
+                                color: AppColors.richGold.withValues(
+                                  alpha: 0.08,
                                 ),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
                                 children: <Widget>[
@@ -929,7 +872,9 @@ class _DailyCheckInCardState extends State<_DailyCheckInCard>
                                   Align(
                                     alignment: Alignment.centerLeft,
                                     child: Text(
-                                      LocaleKey.todayCheckInMilestoneGridTitle.tr,
+                                      LocaleKey
+                                          .todayCheckInMilestoneGridTitle
+                                          .tr,
                                       style: AppStyles.bodySmall(
                                         color: AppColors.textPrimary.withValues(
                                           alpha: 0.75,
@@ -1126,15 +1071,6 @@ class _MilestoneRewardTile extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: <Color>[startColor, endColor],
         ),
-        boxShadow: isCurrent
-            ? <BoxShadow>[
-                BoxShadow(
-                  color: AppColors.richGold.withValues(alpha: 0.14),
-                  blurRadius: 10,
-                  spreadRadius: 0.4,
-                ),
-              ]
-            : null,
       ),
       child: Row(
         children: <Widget>[
@@ -1867,7 +1803,7 @@ class _InlineCtaRow extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(top: 2),
-                child: Icon(icon, size: 14, color: iconColor),
+                child: Icon(icon, size: 15, color: iconColor),
               ),
               8.width,
               Expanded(

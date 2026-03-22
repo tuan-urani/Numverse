@@ -36,6 +36,7 @@ Future<void> _pumpChat(
   WidgetTester tester, {
   required List<NumAiChatMessage> messages,
   required bool isLoading,
+  bool isHistoryLoading = false,
   String? typingMessageId,
 }) async {
   await tester.pumpWidget(
@@ -47,6 +48,7 @@ Future<void> _pumpChat(
             key: const ValueKey<String>('chat-messages'),
             messages: messages,
             isLoading: isLoading,
+            isHistoryLoading: isHistoryLoading,
             typingMessageId: typingMessageId,
             onAssistantTypingCompleted: (_) {},
             onActionTap: () {},
@@ -59,6 +61,23 @@ Future<void> _pumpChat(
 }
 
 void main() {
+  testWidgets(
+    'shows blocking loader and hides message list while history is loading',
+    (WidgetTester tester) async {
+      final List<NumAiChatMessage> baseMessages = _buildMessages(6);
+      await _pumpChat(
+        tester,
+        messages: baseMessages,
+        isLoading: true,
+        isHistoryLoading: true,
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.textContaining('message 0 content'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    },
+  );
+
   testWidgets(
     'keeps position on loading-only, jumps on user send, animates on assistant append',
     (WidgetTester tester) async {

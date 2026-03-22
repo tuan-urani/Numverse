@@ -15,6 +15,7 @@ import 'package:test/src/ui/daily_message/binding/daily_message_binding.dart';
 import 'package:test/src/ui/daily_message/daily_message_page.dart';
 import 'package:test/src/ui/help/binding/help_binding.dart';
 import 'package:test/src/ui/help/help_page.dart';
+import 'package:test/src/ui/legal_webview/legal_webview_page.dart';
 import 'package:test/src/ui/life_path/binding/life_path_binding.dart';
 import 'package:test/src/ui/life_path/life_path_page.dart';
 import 'package:test/src/ui/login/binding/login_binding.dart';
@@ -95,6 +96,8 @@ class AppPages {
   static const String settings = '/settings';
   static const String notifications = '/notifications';
   static const String privacy = '/privacy';
+  static const String privacyPolicy = '/privacy-policy';
+  static const String termsOfUse = '/terms-of-use';
   static const String help = '/help';
 
   static const String universalDay = '/universal-day';
@@ -237,6 +240,8 @@ class AppPages {
       page: () => const PrivacyPage(),
       binding: PrivacyBinding(),
     ),
+    GetPage(name: privacyPolicy, page: LegalWebviewPage.privacyPolicy),
+    GetPage(name: termsOfUse, page: LegalWebviewPage.termsOfUse),
     GetPage(name: help, page: () => const HelpPage(), binding: HelpBinding()),
     GetPage(
       name: universalDay,

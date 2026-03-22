@@ -94,16 +94,18 @@ class ProfileReadingSectionItem {
   const ProfileReadingSectionItem({
     required this.id,
     required this.route,
-    required this.icon,
+    this.icon,
+    this.iconAssetPath,
     required this.title,
     required this.description,
     required this.lockedDescription,
     required this.gradient,
-  });
+  }) : assert(icon != null || iconAssetPath != null);
 
   final String id;
   final String route;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAssetPath;
   final String title;
   final String description;
   final String lockedDescription;
@@ -185,11 +187,19 @@ class _ReadingItemCard extends StatelessWidget {
                             ],
                           ),
                           alignment: Alignment.center,
-                          child: Icon(
-                            item.icon,
-                            size: 22,
-                            color: AppColors.richGold,
-                          ),
+                          child: item.iconAssetPath != null
+                              ? Image.asset(
+                                  item.iconAssetPath!,
+                                  width: 22,
+                                  height: 22,
+                                  color: AppColors.richGold,
+                                  colorBlendMode: BlendMode.srcIn,
+                                )
+                              : Icon(
+                                  item.icon ?? Icons.auto_awesome_rounded,
+                                  size: 22,
+                                  color: AppColors.richGold,
+                                ),
                         ),
                         12.width,
                         Expanded(

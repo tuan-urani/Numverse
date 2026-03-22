@@ -15,6 +15,8 @@ class AppShared {
   static const String _keyNumAiLastGuestUserKey =
       'numverse_numai_last_guest_user_key';
   static const String _keyDailyAlarmEnabled = 'numverse_daily_alarm_enabled';
+  static const String _keyDailyAlarmTime = 'numverse_daily_alarm_time';
+  static const String _keyDailyAlarmTimezone = 'numverse_daily_alarm_timezone';
   static const String _keyDailyAlarmTemplatePrefix =
       'numverse_daily_alarm_template_';
 
@@ -106,6 +108,40 @@ class AppShared {
 
   Future<void> setDailyAlarmEnabled(bool value) async {
     await _prefs.setBool(_keyDailyAlarmEnabled, value);
+  }
+
+  String? getDailyAlarmTime() {
+    final String? value = _prefs.getString(_keyDailyAlarmTime);
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return value.trim();
+  }
+
+  Future<void> setDailyAlarmTime(String value) async {
+    final String normalized = value.trim();
+    if (normalized.isEmpty) {
+      await _prefs.remove(_keyDailyAlarmTime);
+      return;
+    }
+    await _prefs.setString(_keyDailyAlarmTime, normalized);
+  }
+
+  String? getDailyAlarmTimezone() {
+    final String? value = _prefs.getString(_keyDailyAlarmTimezone);
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return value.trim();
+  }
+
+  Future<void> setDailyAlarmTimezone(String value) async {
+    final String normalized = value.trim();
+    if (normalized.isEmpty) {
+      await _prefs.remove(_keyDailyAlarmTimezone);
+      return;
+    }
+    await _prefs.setString(_keyDailyAlarmTimezone, normalized);
   }
 
   String? getDailyAlarmTemplate(String localeCode) {

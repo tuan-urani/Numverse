@@ -2,6 +2,8 @@ class AppAssets {
   AppAssets._();
 
   static const String imagesSplashPng = 'assets/images/splash.png';
+  static const String imagesGeneratedMysticalBackgroundPng =
+      'assets/images/generated/mystical_background.png';
   static const String imagesIconAppPng = 'assets/images/icon_app.png';
   static const String iconsInputRequiredSvg =
       'assets/images/icons/input_required.svg';
@@ -23,4 +25,19 @@ class AppAssets {
   static const String iconCareerSvg = 'assets/icons/career.svg';
   static const String iconInfoSvg = 'assets/icons/info.svg';
   static const String iconNumerologySvg = 'assets/icons/numerology.svg';
+  static const String iconAngelSvg = 'assets/icons/angel.svg';
+  static const String iconMeaningSvg = 'assets/icons/meaning.svg';
+  static const String iconGuideSvg = 'assets/icons/guide.svg';
+  static const String iconFindSvg = 'assets/icons/find.svg';
+  static const String iconFireSvg = 'assets/icons/fire.svg';
+  static const String iconCharacterSvg = 'assets/icons/character.svg';
+  static const String iconCommunitySvg = 'assets/icons/community.svg';
+  static const String iconEmotionSvg = 'assets/icons/emotion.svg';
+  static const String iconPersonalitySvg = 'assets/icons/personality.svg';
+  static const String iconLotusPng = 'assets/icons/lotus.png';
+  static const String iconPresentationPng = 'assets/icons/presentation.png';
+  static const String iconMissionPng = 'assets/icons/mission.png';
+  static const String iconNumerologySecondPng = 'assets/icons/numerology_second.png';
+  static const String iconRoundMapPng = 'assets/icons/roadmap.png';
+
 }

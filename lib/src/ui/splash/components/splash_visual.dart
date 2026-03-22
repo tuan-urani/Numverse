@@ -3,21 +3,21 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
 
 import 'package:test/src/extensions/int_extensions.dart';
-import 'package:test/src/locale/locale_key.dart';
 import 'package:test/src/utils/app_assets.dart';
 import 'package:test/src/utils/app_colors.dart';
 import 'package:test/src/utils/app_styles.dart';
 
 class SplashVisual extends StatelessWidget {
   const SplashVisual({
+    required this.logoScaleAnimation,
     required this.glowAnimation,
     required this.dotAnimation,
     super.key,
   });
 
+  final Animation<double> logoScaleAnimation;
   final Animation<double> glowAnimation;
   final Animation<double> dotAnimation;
 
@@ -48,6 +48,7 @@ class SplashVisual extends StatelessWidget {
         ),
         Center(
           child: _CenterBrandSection(
+            logoScaleAnimation: logoScaleAnimation,
             glowAnimation: glowAnimation,
             dotAnimation: dotAnimation,
           ),
@@ -97,10 +98,12 @@ class _PatternLayer extends StatelessWidget {
 
 class _CenterBrandSection extends StatelessWidget {
   const _CenterBrandSection({
+    required this.logoScaleAnimation,
     required this.glowAnimation,
     required this.dotAnimation,
   });
 
+  final Animation<double> logoScaleAnimation;
   final Animation<double> glowAnimation;
   final Animation<double> dotAnimation;
 
@@ -109,12 +112,12 @@ class _CenterBrandSection extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _LogoOrb(glowAnimation: glowAnimation),
+        _LogoOrb(logoScaleAnimation: logoScaleAnimation),
         16.height,
         Text(
-          'NumVerse',
+          'NUMVERSE',
           style:
-              AppStyles.h40(
+              AppStyles.h1(
                 color: AppColors.richGold,
                 fontWeight: FontWeight.w700,
               ).copyWith(
@@ -131,14 +134,14 @@ class _CenterBrandSection extends StatelessWidget {
                 ],
               ),
         ),
-        12.height,
-        Text(
-          LocaleKey.splashTagline.tr.toUpperCase(),
-          style: AppStyles.caption(
-            color: AppColors.textPrimary.withValues(alpha: 0.7),
-            fontWeight: FontWeight.w500,
-          ).copyWith(letterSpacing: 2.4, height: 1.2),
-        ),
+        // 12.height,
+        // Text(
+        //   LocaleKey.splashTagline.tr.toUpperCase(),
+        //   style: AppStyles.caption(
+        //     color: AppColors.textPrimary.withValues(alpha: 0.7),
+        //     fontWeight: FontWeight.w500,
+        //   ).copyWith(letterSpacing: 2.4, height: 1.2),
+        // ),
         24.height,
         _BouncingDots(animation: dotAnimation),
       ],
@@ -147,14 +150,14 @@ class _CenterBrandSection extends StatelessWidget {
 }
 
 class _LogoOrb extends StatelessWidget {
-  const _LogoOrb({required this.glowAnimation});
+  const _LogoOrb({required this.logoScaleAnimation});
 
-  final Animation<double> glowAnimation;
+  final Animation<double> logoScaleAnimation;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: glowAnimation,
+      animation: logoScaleAnimation,
       child: SvgPicture.asset(
         AppAssets.iconNumerologySvg,
         width: 136,
@@ -166,8 +169,8 @@ class _LogoOrb extends StatelessWidget {
         ),
       ),
       builder: (BuildContext context, Widget? child) {
-        final double scale = 1.02 + (glowAnimation.value * 0.14);
-        final double glowAlpha = 0.08 + (glowAnimation.value * 0.08);
+        final double scale = 1.02 + (logoScaleAnimation.value * 0.14);
+        final double glowAlpha = 0.08 + (logoScaleAnimation.value * 0.08);
         return Transform.scale(
           scale: scale,
           child: DecoratedBox(

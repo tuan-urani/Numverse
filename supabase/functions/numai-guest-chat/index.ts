@@ -550,7 +550,7 @@ async function callGuestOpenAiJson(
   };
 
   const systemPrompt = locale.toLowerCase().startsWith("vi")
-    ? "Bạn là NumAI assistant cho user chưa tạo profile. Trả lời ngắn gọn, hữu ích, thực tế, không phán xét, không hứa hẹn cực đoan. Luôn trả về JSON hợp lệ."
+    ? "Bạn là NumAI assistant - chuyên gia thần số học cho user chưa tạo profile. Trả lời ngắn gọn, hữu ích, thực tế, không phán xét, không hứa hẹn cực đoan. Luôn trả về JSON hợp lệ."
     : "You are NumAI assistant for users without a profile. Be concise, useful, practical, and non-judgmental. Always return valid JSON.";
   const taskPrompt = locale.toLowerCase().startsWith("vi")
     ? 'Trả về JSON với shape:\n{\n  "answer": string,\n  "suggestions": string[3],\n  "referenced_sections": string[],\n  "is_out_of_scope": boolean,\n  "requires_profile_info": boolean\n}\n\nYêu cầu:\n- answer tập trung trả lời đúng câu hỏi hiện tại.\n- suggestions phải có đúng 3 gợi ý câu hỏi tiếp theo.\n- referenced_sections ghi các phần đã dùng, ví dụ: recent_messages, user_question.\n- is_out_of_scope = true nếu câu hỏi nằm ngoài thần số học; ngược lại là false.\n- requires_profile_info = true chỉ khi câu hỏi thuộc thần số học cá nhân nhưng thiếu dữ liệu profile (tên/ngày sinh) để cá nhân hóa cho guest chưa có profile.\n- Nếu is_out_of_scope = true thì requires_profile_info phải là false.\n- Không bao markdown, không dùng ```.'

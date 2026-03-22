@@ -37,27 +37,31 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     SettingsInitialized event,
     Emitter<SettingsState> emit,
   ) async {
-    bool effectiveEnabled = _appShared.getDailyAlarmEnabled();
-    if (state.dailyAlarmEnabled != effectiveEnabled) {
-      emit(state.copyWith(dailyAlarmEnabled: effectiveEnabled));
-    }
+    DailyAlarmSettings effectiveSettings = _loadCachedAlarmSettings();
+    _emitAlarmSettings(
+      emit,
+      settings: effectiveSettings,
+      syncing: state.dailyAlarmSyncing,
+    );
 
     if (_cloudAccountRepository.isConfigured) {
       try {
         final DailyAlarmSettings settings = await _cloudAccountRepository
             .fetchDailyAlarmSettings();
-        effectiveEnabled = settings.enabled;
-        await _appShared.setDailyAlarmEnabled(effectiveEnabled);
-        if (state.dailyAlarmEnabled != effectiveEnabled) {
-          emit(state.copyWith(dailyAlarmEnabled: effectiveEnabled));
-        }
+        effectiveSettings = settings;
+        await _persistAlarmSettings(settings);
+        _emitAlarmSettings(
+          emit,
+          settings: effectiveSettings,
+          syncing: state.dailyAlarmSyncing,
+        );
       } catch (_) {
         // Keep local cache when cloud read fails.
       }
     }
 
     await _dailyAlarmNotificationService.applyAlarmPreference(
-      enabled: effectiveEnabled,
+      settings: effectiveSettings,
       localeCode: _localeCodeProvider(),
     );
   }
@@ -108,16 +112,22 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       return;
     }
 
-    final bool previousValue = state.dailyAlarmEnabled;
-    final bool nextValue = !previousValue;
+    final DailyAlarmSettings previousSettings = DailyAlarmSettings(
+      enabled: state.dailyAlarmEnabled,
+      time: state.dailyAlarmTime,
+      timezone: state.dailyAlarmTimezone,
+    );
+    final DailyAlarmSettings nextSettings = previousSettings.copyWith(
+      enabled: !previousSettings.enabled,
+    );
     final String localeCode = _localeCodeProvider();
 
-    emit(state.copyWith(dailyAlarmEnabled: nextValue, dailyAlarmSyncing: true));
+    _emitAlarmSettings(emit, settings: nextSettings, syncing: true);
 
     try {
-      await _appShared.setDailyAlarmEnabled(nextValue);
+      await _persistAlarmSettings(nextSettings);
       await _dailyAlarmNotificationService.applyAlarmPreference(
-        enabled: nextValue,
+        settings: nextSettings,
         localeCode: localeCode,
       );
 
@@ -126,33 +136,70 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             .resolveCurrentTimezoneId();
         final DailyAlarmSettings cloudSettings = await _cloudAccountRepository
             .updateDailyAlarmSettings(
-              enabled: nextValue,
-              time: DailyAlarmSettings.defaultTime,
+              enabled: nextSettings.enabled,
+              time: nextSettings.time,
               timezone: timezoneId,
             );
-        await _appShared.setDailyAlarmEnabled(cloudSettings.enabled);
-        emit(
-          state.copyWith(
-            dailyAlarmEnabled: cloudSettings.enabled,
-            dailyAlarmSyncing: false,
-          ),
+        await _persistAlarmSettings(cloudSettings);
+        await _dailyAlarmNotificationService.applyAlarmPreference(
+          settings: cloudSettings,
+          localeCode: localeCode,
         );
+        _emitAlarmSettings(emit, settings: cloudSettings, syncing: false);
         return;
       }
 
-      emit(state.copyWith(dailyAlarmSyncing: false));
+      _emitAlarmSettings(emit, settings: nextSettings, syncing: false);
     } catch (_) {
-      await _appShared.setDailyAlarmEnabled(previousValue);
+      await _persistAlarmSettings(previousSettings);
       await _dailyAlarmNotificationService.applyAlarmPreference(
-        enabled: previousValue,
+        settings: previousSettings,
         localeCode: localeCode,
       );
-      emit(
-        state.copyWith(
-          dailyAlarmEnabled: previousValue,
-          dailyAlarmSyncing: false,
-        ),
-      );
+      _emitAlarmSettings(emit, settings: previousSettings, syncing: false);
     }
+  }
+
+  DailyAlarmSettings _loadCachedAlarmSettings() {
+    final String time =
+        _appShared.getDailyAlarmTime() ?? DailyAlarmSettings.defaultTime;
+    final String timezone =
+        _appShared.getDailyAlarmTimezone() ??
+        DailyAlarmSettings.defaultTimezone;
+    return DailyAlarmSettings(
+      enabled: _appShared.getDailyAlarmEnabled(),
+      time: time,
+      timezone: timezone,
+    );
+  }
+
+  Future<void> _persistAlarmSettings(DailyAlarmSettings settings) async {
+    await _appShared.setDailyAlarmEnabled(settings.enabled);
+    await _appShared.setDailyAlarmTime(settings.time);
+    await _appShared.setDailyAlarmTimezone(settings.timezone);
+  }
+
+  void _emitAlarmSettings(
+    Emitter<SettingsState> emit, {
+    required DailyAlarmSettings settings,
+    required bool syncing,
+  }) {
+    final bool isUnchanged =
+        state.dailyAlarmEnabled == settings.enabled &&
+        state.dailyAlarmTime == settings.time &&
+        state.dailyAlarmTimezone == settings.timezone &&
+        state.dailyAlarmSyncing == syncing;
+    if (isUnchanged) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        dailyAlarmEnabled: settings.enabled,
+        dailyAlarmTime: settings.time,
+        dailyAlarmTimezone: settings.timezone,
+        dailyAlarmSyncing: syncing,
+      ),
+    );
   }
 }

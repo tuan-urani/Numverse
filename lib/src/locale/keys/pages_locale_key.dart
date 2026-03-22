@@ -15,6 +15,20 @@ class PagesLocaleKey {
   static const String compatibilityTitle = 'compatibility_title';
   static const String compatibilitySubtitle = 'compatibility_subtitle';
   static const String compatibilityStart = 'compatibility_start';
+  static const String compatibilityOwnProfileInputTitle =
+      'compatibility_own_profile_input_title';
+  static const String compatibilityOwnProfileInputSubtitle =
+      'compatibility_own_profile_input_subtitle';
+  static const String compatibilityCalculatingTitle =
+      'compatibility_calculating_title';
+  static const String compatibilityCalculatingSubtitle =
+      'compatibility_calculating_subtitle';
+  static const String compatibilityCalculatingStepSync =
+      'compatibility_calculating_step_sync';
+  static const String compatibilityCalculatingStepEnergy =
+      'compatibility_calculating_step_energy';
+  static const String compatibilityCalculatingStepInsight =
+      'compatibility_calculating_step_insight';
   static const String compatibilityInsightOne = 'compatibility_insight_one';
   static const String compatibilityInsightTwo = 'compatibility_insight_two';
   static const String compatibilityOwnProfileLabel =

@@ -18,21 +18,18 @@ class SoulPointsInsufficientDialog extends StatefulWidget {
     required this.sessionBloc,
     required this.requiredPoints,
     required this.onWatchAdTap,
-    required this.onBuyPointsTap,
     super.key,
   });
 
   final MainSessionBloc sessionBloc;
   final int requiredPoints;
   final SoulPointsDialogAction onWatchAdTap;
-  final SoulPointsDialogAction onBuyPointsTap;
 
   static Future<void> show(
     BuildContext context, {
     required MainSessionBloc sessionBloc,
     required int requiredPoints,
     required SoulPointsDialogAction onWatchAdTap,
-    required SoulPointsDialogAction onBuyPointsTap,
   }) {
     return showDialog<void>(
       context: context,
@@ -42,7 +39,6 @@ class SoulPointsInsufficientDialog extends StatefulWidget {
           sessionBloc: sessionBloc,
           requiredPoints: requiredPoints,
           onWatchAdTap: onWatchAdTap,
-          onBuyPointsTap: onBuyPointsTap,
         );
       },
     );
@@ -103,14 +99,6 @@ class _SoulPointsInsufficientDialogState
       title: LocaleKey.commonSuccess.tr,
       subtitle: LocaleKey.soulPointsWatchAdAction.tr,
     );
-  }
-
-  Future<void> _handleBuyTap() async {
-    if (_isWatchingAd) {
-      return;
-    }
-    Navigator.of(context).pop();
-    await widget.onBuyPointsTap();
   }
 
   @override
@@ -239,67 +227,38 @@ class _SoulPointsInsufficientDialogState
                     ),
                   ],
                   const SizedBox(height: 18),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: (!_isWatchingAd && !isAdLimitReached)
-                              ? () => _handleWatchAdTap(state)
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textSecondary,
-                            side: BorderSide(
-                              color: AppColors.border.withValues(alpha: 0.9),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _isWatchingAd
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.richGold,
-                                  ),
-                                )
-                              : Text(
-                                  LocaleKey.soulPointsWatchAdAction.tr,
-                                  style: AppStyles.buttonMedium(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: (!_isWatchingAd && !isAdLimitReached)
+                          ? () => _handleWatchAdTap(state)
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: BorderSide(
+                          color: AppColors.border.withValues(alpha: 0.9),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: AppColors.primaryGradient(),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isWatchingAd ? null : _handleBuyTap,
-                            style: ElevatedButton.styleFrom(
-                              elevation: 0,
-                              backgroundColor: AppColors.transparent,
-                              shadowColor: AppColors.transparent,
-                              foregroundColor: AppColors.midnight,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                      child: _isWatchingAd
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.richGold,
+                              ),
+                            )
+                          : Text(
+                              LocaleKey.soulPointsWatchAdAction.tr,
+                              style: AppStyles.buttonMedium(
+                                color: AppColors.textSecondary,
                               ),
                             ),
-                            child: Text(
-                              LocaleKey.soulPointsBuyAction.tr,
-                              style: AppStyles.buttonMedium(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
