@@ -33,20 +33,20 @@ class ProfileState extends Equatable {
           route: AppPages.termsOfUse,
           icon: Icons.description_outlined,
         ),
-        ProfileMenuItem(
-          id: 'help',
-          titleKey: LocaleKey.profileHelp,
-          subtitleKey: LocaleKey.profileMenuHelpSubtitle,
-          route: AppPages.help,
-          icon: Icons.help_outline_rounded,
-        ),
+        // ProfileMenuItem(
+        //   id: 'help',
+        //   titleKey: LocaleKey.profileHelp,
+        //   subtitleKey: LocaleKey.profileMenuHelpSubtitle,
+        //   route: AppPages.help,
+        //   icon: Icons.help_outline_rounded,
+        // ),
         ProfileMenuItem(
           id: kProfileDeleteUserDataMenuItemId,
           titleKey: LocaleKey.profileDeleteUserDataTitle,
           subtitleKey: LocaleKey.profileDeleteUserDataSubtitle,
           route: AppPages.settings,
           icon: Icons.delete_forever_outlined,
-          isDestructive: true,
+          // isDestructive: true,
         ),
       ],
     );

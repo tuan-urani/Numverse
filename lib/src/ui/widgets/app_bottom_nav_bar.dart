@@ -217,7 +217,7 @@ class AppBottomNavBar extends StatelessWidget {
                                                     color: foregroundColor,
                                                     fontWeight: FontWeight.w500,
                                                   ).copyWith(
-                                                    fontSize: 10,
+                                                    fontSize: 11,
                                                     height: 1.2,
                                                   ),
                                             ),
